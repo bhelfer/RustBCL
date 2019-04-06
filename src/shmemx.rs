@@ -1,7 +1,6 @@
 extern crate libc;
 
-#[link(name="sma", kind="static")]
-#[link(name="pmi_simple", kind="static")]
+#[link(name="oshmem", kind="dylib")]
 extern {
     fn shmem_init();
     fn shmem_finalize();
