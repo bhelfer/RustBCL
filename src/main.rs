@@ -1,9 +1,7 @@
-use crate::global_pointer::GlobalPointer;
-
 mod global_pointer;
 
 fn main() {
-	let mut p1 = GlobalPointer::new(0, 0, 100);
+	let mut p1 = global_pointer::GlobalPointer::new(0, 0);
 	println!("{:?}", p1);
 	println!("{:?}", p1 + 1);
 	println!("deref: {}", *p1);

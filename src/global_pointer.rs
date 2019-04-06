@@ -1,91 +1,95 @@
+use std::marker::PhantomData;
+
 use std::ops;
-use std::ptr;
+
+trait GlobalPointable{}
 
 trait GlobalRefTrait<T> {
 	fn assign(value: T);
 }
 
-struct GlobalRef<T> {
-
-}
-
 pub trait GlobalPointerTrait<T>: ops::Add<isize> + ops::AddAssign<isize> + ops::Sub<isize> + ops::SubAssign<isize> + ops::Index<usize> + ops::IndexMut<usize> + ops::Deref + ops::DerefMut {
 	fn new(rank: usize, ptr: usize) -> Self;
 	// fn new(ptr: ptr::null) -> Self;
-
 }
 
-#[derive(Debug)]
-pub struct GlobalPointer<T> {
+/*
+----GlobalRef----
+*/
+// to deal with "*p = 1" and "p[0] = 1"
+#[derive(Debug, Copy, Clone)]
+struct GlobalRef<T: GlobalPointable> {
+	ptr: GlobalPointer<T>
+}
+
+impl<T: GlobalPointable> GlobalRef<T> {
+	fn new(p: &GlobalPointer<T>) -> GlobalRef<T> {
+		GlobalRef{ ptr: *p }
+	}
+}
+
+/*
+----GlobalPointer----
+*/
+#[derive(Debug, Copy, Clone)]
+pub struct GlobalPointer<T: GlobalPointable> {
 	rank: usize,
 	ptr: usize,
-	fake_value: T
+	refer_type: PhantomData<T>
 }
 
-impl<T> GlobalPointer<T> {
-	pub fn new(rank: usize, ptr: usize, value: T) -> GlobalPointer<T> {
-		GlobalPointer {
-        	rank: rank,
-        	ptr: ptr,
-        	fake_value: value
-        }
-	}
-
-	fn derefer(&self, i: usize) -> &T {
-		&self.fake_value
-	}
-
-	fn dereferMut(&mut self, i: usize) -> &mut T {
-		&mut self.fake_value
+// implement GlobalPointer
+impl<T: GlobalPointable> GlobalPointer<T> {
+	pub fn new(rank: usize, ptr: usize) -> GlobalPointer<T> {
+		GlobalPointer{ rank, ptr, refer_type: PhantomData }
 	}
 }
 
-impl<T> ops::Add<usize> for GlobalPointer<T> {
+// overload operator+
+impl<T: GlobalPointable> ops::Add<usize> for GlobalPointer<T> {
     type Output = GlobalPointer<T>;
 
     fn add(self, n: usize) -> GlobalPointer<T> {
         GlobalPointer {
         	rank: self.rank,
         	ptr: self.ptr + n,
-        	fake_value: self.fake_value
+        	refer_type: PhantomData
         }
     }
 }
 
-impl<T> ops::AddAssign<usize> for GlobalPointer<T> {
+// overload operator+=
+impl<T: GlobalPointable> ops::AddAssign<usize> for GlobalPointer<T> {
     fn add_assign(&mut self, n: usize) {
-        *self = GlobalPointer {
-        	rank: self.rank,
-        	ptr: self.ptr + n,
-        	fake_value: self.fake_value
-        }
+        self.ptr += n;
     }
 }
 
-impl<T> ops::Index<usize> for GlobalPointer<T> {
-    type Output = T;
+// overload operator[](right)
+impl<T: GlobalPointable> ops::Index<usize> for GlobalPointer<T> {
+    type Output = GlobalRef<T>;
 
-    fn index(&self, i: usize) -> &T {
-        self.derefer(i)
+    fn index(&self, i: usize) -> &GlobalRef<T> {
+        &GlobalRef::new(self)
     }
 }
 
-impl<T> ops::IndexMut<usize> for GlobalPointer<T> {
+impl<T: GlobalPointable> ops::IndexMut<usize> for GlobalPointer<T> {
     fn index_mut(&mut self, i: usize) -> &mut GlobalRef<T> {
-        self.dereferMut(i)
+        &mut GlobalRef::new(self)
     }
 }
 
-impl<T> ops::Deref for GlobalPointer<T> {
-    type Target = T;
+impl<T: GlobalPointable> ops::Deref for GlobalPointer<T> {
+    type Target = GlobalRef<T>;
 
-    fn deref(&self) -> &T {
-        self.derefer(0)
+    fn deref(&self) -> &GlobalRef<T> {
+        &GlobalRef::new(self)
     }
 }
 
-impl<T> ops::DerefMut for GlobalPointer<T> {
+impl<T: GlobalPointable> ops::DerefMut for GlobalPointer<T> {
     fn deref_mut(&mut self) -> &mut GlobalRef<T> {
-        self.dereferMut(0)
+        &mut GlobalRef::new(self)
     }
 }
