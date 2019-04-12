@@ -4,6 +4,9 @@ use shmemx;
 use std::marker::PhantomData;
 use std::ops;
 use std::mem::size_of;
+use shmemx::shmem_free;
+use Config;
+use std::ptr;
 
 //pub trait GlobalPointerTrait<T>: ops::Add<isize> + ops::AddAssign<isize> + ops::Sub<isize> + ops::SubAssign<isize> + ops::Index<usize> + ops::IndexMut<usize> + ops::Deref + ops::DerefMut {
 //	fn new(rank: usize, ptr: usize) -> Self;
@@ -26,75 +29,39 @@ use std::mem::size_of;
 //}
 
 /*
-----Config----
-  Since global mutable variable is a dangerous idea, so I use a struct and pass its reference to
-to every where it's needed.
-*/
-#[derive(Debug, Copy, Clone)]
-pub struct Config {
-    shared_segment_size: usize,
-    smem_base_ptr: *mut u64, // mut?
-    pub rank: usize,
-    pub rankn: usize
-}
-
-impl Config {
-    pub fn init(shared_segment_size_m: usize) -> Config {
-        shmemx::init();
-
-        let my_pe = shmemx::my_pe();
-        let n_pes = shmemx::n_pes();
-        let shared_segment_size = shared_segment_size_m*1024*1024;
-        let smem_base_ptr = unsafe{ shmemx::shmem_malloc(shared_segment_size) } as *mut u64;
-        // TODO: need check null?
-
-        shmemx::barrier();
-        Config {
-            shared_segment_size,
-            smem_base_ptr,
-            rank: my_pe,
-            rankn: n_pes,
-        }
-    }
-
-    pub fn finalize(self) {
-        shmemx::barrier();
-        unsafe{shmemx::shmem_free(self.smem_base_ptr as *mut u8)};
-        shmemx::finalize();
-    }
-}
-
-/*
 ----GlobalPointer----
 */
 #[derive(Debug, Copy, Clone)]
-pub struct GlobalPointer<T> {
-    shared_segment_size: usize,
-    smem_base_ptr: *mut T,
-	rank: usize,
-	offset: usize,  // count by size_of(T)
-	refer_type: PhantomData<T>
+pub struct GlobalPointer<'a, T> {
+    pub config: &'a Config,
+	pub rank: usize,
+	pub offset: usize,  // count by size_of(T)
+	pub refer_type: PhantomData<T>
 }
 
 // implement GlobalPointer
-impl<T> GlobalPointer<T> {
-	pub fn new(config: &Config, rank: usize, offset: usize) -> GlobalPointer<T> {
-		GlobalPointer{
-            shared_segment_size: config.shared_segment_size,
-            smem_base_ptr: config.smem_base_ptr as *mut T,
-            rank, offset, refer_type: PhantomData }
+impl<'a, T> GlobalPointer<'a, T> {
+    pub fn local(&mut self) -> *mut T {
+    	let t = ptr::null_mut::<T>() as *mut T;
+        if self.rank != self.config.rank {
+            eprintln!("error: calling local() on a remote GlobalPtr");
+            return ptr::null_mut::<T>() as *mut T;
+        }
+        unsafe{ self.config.smem_base_ptr.add(self.offset * size_of::<T>()) as *mut T}
+    }
+
+	pub fn rput(&mut self, value: T) -> &mut Self {
+        let type_size = size_of::<T>();
+        unsafe{ shmemx::shmem_putmem(self.config.smem_base_ptr.add(self.offset * type_size), &value as *const T as *const u8, type_size, self.rank as i32) };
+
+		self
 	}
 
-	pub fn rput(&self, value: T) -> &Self {
-        unsafe{ shmemx::shmem_putmem(self.smem_base_ptr.add(self.offset) as *mut u8, &value as *const T as *const u8, size_of::<T>(), self.rank as i32) };
-
-		&self
-	}
-
-	// have to get a default value, or "use of possible uninitialized variable"
+	// have to get a default value, or error "use of possibly uninitialized variable"
 	pub fn rget(&self, default: T) -> T {
         let mut value: T = default;
-        unsafe{ shmemx::shmem_getmem(&mut value as *mut T as *mut u8, self.smem_base_ptr.add(self.offset) as *const u8, size_of::<T>(), self.rank as i32) };
+        let type_size = size_of::<T>();
+        unsafe{ shmemx::shmem_getmem(&mut value as *mut T as *mut u8, self.config.smem_base_ptr.add(self.offset * type_size), type_size, self.rank as i32) };
         value
 	}
 }

@@ -31,14 +31,14 @@ pub fn finalize() {
 
 pub fn n_pes() -> usize {
     unsafe {
-        let npes: usize = shmem_n_pes() as usize;
+        let npes = shmem_n_pes() as usize;
         npes
     }
 }
 
 pub fn my_pe() -> usize {
     unsafe {
-        let mype: usize = shmem_my_pe() as usize;
+        let mype = shmem_my_pe() as usize;
         mype
     }
 }
