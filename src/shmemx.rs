@@ -10,10 +10,10 @@ extern {
     fn shmem_n_pes() -> libc::c_int;
     fn shmem_my_pe() -> libc::c_int;
     fn shmem_barrier_all();
-    fn shmem_malloc(size: libc::size_t) -> *mut u8;
-    fn shmem_free(ptr: *mut u8);
-    fn shmem_putmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
-    fn shmem_getmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
+    pub fn shmem_malloc(size: libc::size_t) -> *mut u8;
+    pub fn shmem_free(ptr: *mut u8);
+    pub fn shmem_putmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
+    pub fn shmem_getmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
 }
 
 pub fn init() {

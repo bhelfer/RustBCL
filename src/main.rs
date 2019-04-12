@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 mod shmemx;
+mod global_pointer;
 
 extern crate libc;
 use self::libc::{c_int, size_t};
 use std::slice;
+use global_pointer::{Config, GlobalPointer};
 
 #[link(name="oshmem", kind="dylib")]
 extern {
@@ -18,8 +20,28 @@ extern {
     fn shmem_getmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
 }
 
-
 fn main() {
+    let config = Config::init(1);
+
+    if config.rankn < 2 {
+        config.finalize();
+        return;
+    }
+    let ptr1 = GlobalPointer::new(&config, 0, 1);
+//    let ptr2 = GlobalPointer::new(&config, 1, 1);
+
+    if config.rank == 1 {
+        ptr1.rput(1);
+    }
+    if config.rank == 0 {
+        let value = ptr1.rget(0);
+        println!("rget: {}", value);
+    }
+
+    config.finalize();
+}
+
+fn test_shmem() {
     // The statements here will be executed when the compiled binary is called
     // Print text to the console
     shmemx::init();
