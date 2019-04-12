@@ -4,7 +4,7 @@ BCL in Rust
 Global Pointer:
 Apr. 12:
   Done:
-    split Config and GlobalPointer;
+    rearrange and split Config and GlobalPointer;
     change all memory related value to usize, void\* pointer to \*u8;
 
 Apr. 11:

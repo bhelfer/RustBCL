@@ -4,6 +4,7 @@ use global_pointer::GlobalPointer;
 use std::marker::PhantomData;
 
 const SMALLEST_MEM_UNIT: usize = 64; // 64bytes
+#[derive(Debug, Copy, Clone)]
 struct Chunk {
     size: usize,
     last: *mut Chunk,
@@ -61,4 +62,16 @@ impl Config {
         unsafe{shmemx::shmem_free(self.smem_base_ptr as *mut u8)};
         shmemx::finalize();
     }
+
+    // malloc part
+    pub fn local_malloc<T>(size: usize) -> GlobalPointer<T> {
+        
+    }
 }
+
+// not sure about Drop trait
+//impl Drop for Config {
+//    fn drop(&mut self) {
+//        self.finalize()
+//    }
+//}
