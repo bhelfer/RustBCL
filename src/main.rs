@@ -14,13 +14,13 @@ fn main() {
     let ptr1 = GlobalPointer::new(&config, 0, 1);
 //    let ptr2 = GlobalPointer::new(&config, 1, 1);
 
-    if config.rank == 1 {
-        ptr1.rput(1);
-    }
-    if config.rank == 0 {
-        let value = ptr1.rget(0);
-        println!("rget: {}", value);
-    }
-
+//    if config.rank == 1 {
+//        ptr1.rput(1);
+//    }
+//    if config.rank == 0 {
+//        let value = ptr1.rget(0);
+//        println!("rget: {}", value);
+//    }
+    shmemx::test_shmem();
     config.finalize();
 }
