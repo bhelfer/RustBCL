@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use std::ops;
 
-trait GlobalPointable{}
+trait GlobalPointable: Clone{}
 
 trait GlobalRefTrait<T> {
 	fn assign(value: T);
@@ -42,6 +42,14 @@ pub struct GlobalPointer<T: GlobalPointable> {
 impl<T: GlobalPointable> GlobalPointer<T> {
 	pub fn new(rank: usize, ptr: usize) -> GlobalPointer<T> {
 		GlobalPointer{ rank, ptr, refer_type: PhantomData }
+	}
+
+	pub fn assign(&self, value: T) -> &Self {
+		&self
+	}
+
+	pub fn deref(&self) -> T {
+
 	}
 }
 

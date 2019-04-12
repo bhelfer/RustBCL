@@ -1,13 +1,19 @@
-extern crate libc;
+#![allow(dead_code)]
 
-#[link(name="sma", kind="static")]
-#[link(name="pmi_simple", kind="static")]
+extern crate libc;
+use self::libc::{c_int, size_t};
+
+#[link(name="oshmem", kind="dylib")]
 extern {
     fn shmem_init();
     fn shmem_finalize();
     fn shmem_n_pes() -> libc::c_int;
     fn shmem_my_pe() -> libc::c_int;
     fn shmem_barrier_all();
+    fn shmem_malloc(size: libc::size_t) -> *mut u8;
+    fn shmem_free(ptr: *mut u8);
+    fn shmem_putmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
+    fn shmem_getmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
 }
 
 pub fn init() {
