@@ -1,8 +1,8 @@
 # RustBCL
 BCL in Rust
 
-##Meeting
-####Apr. 12:
+## Meeting
+#### Apr. 12:
 TODO:
 - Gptr:
   - impl alloc
@@ -16,13 +16,13 @@ TODO:
   - Hash table
   - Queue
 
-##Global Pointer:
-####Apr. 12:
+## Global Pointer:
+#### Apr. 12:
 - Done:
   - rearrange and split Config and GlobalPointer;
   - change all memory related value to usize, void\* pointer to \*u8;
 
-####Apr. 11:
+#### Apr. 11:
 - Done:
   - Config: a struct for "global" variable;
   - GlobalPointer: new, rget, rput;
