@@ -41,6 +41,20 @@ pub struct GlobalPointer<'a, T> {
 
 // implement GlobalPointer
 impl<'a, T> GlobalPointer<'a, T> {
+    pub fn null() -> GlobalPointer<'static, T> {
+        GlobalPointer {
+            config: unsafe{ &*ptr::null::<Config>() },
+            rank: 0,
+            offset: 0,
+            refer_type: PhantomData
+        }
+    }
+
+    pub fn is_null(&self) -> bool {
+        let p = self.config as *const Config;
+        p.is_null()
+    }
+
     pub fn local(&mut self) -> *mut T {
     	let t = ptr::null_mut::<T>() as *mut T;
         if self.rank != self.config.rank {

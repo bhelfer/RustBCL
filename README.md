@@ -28,3 +28,7 @@ TODO:
   - GlobalPointer: new, rget, rput;
 - TODO:
   - malloc part
+  
+#### Question
+1. why `let smem_heap = smem_base_ptr.add(SMALLEST_MEM_UNIT);`
+2. what does the 't' in 'chunk_t' mean?

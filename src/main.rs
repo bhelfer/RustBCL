@@ -6,14 +6,14 @@ mod config;
 use config::Config;
 
 fn main() {
-    let config = Config::init(1);
+    let mut config = Config::init(1);
 
     if config.rankn < 2 {
         config.finalize();
         return;
     }
-    let mut ptr1 = config.new_ptr(0, 1);
-//    let ptr2 = GlobalPointer::new(&config, 1, 1);
+//    let mut ptr1 = config.new_ptr(0, 1);
+    let mut ptr1 = config.alloc(1);
 
     if config.rank == 1 {
         ptr1.rput(1);

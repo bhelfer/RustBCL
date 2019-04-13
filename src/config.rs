@@ -1,7 +1,9 @@
+#![allow(dead_code)]
+#![allow(unused)]
 use shmemx;
-use std::ptr;
 use global_pointer::GlobalPointer;
 use std::marker::PhantomData;
+use std::mem::size_of;
 
 const SMALLEST_MEM_UNIT: usize = 64; // 64bytes
 #[derive(Debug, Copy, Clone)]
@@ -22,7 +24,7 @@ pub struct Config {
     pub rank: usize,
     pub rankn: usize,
     smem_heap: *mut u8,
-    flist: *mut Chunk
+//    flist: *mut Chunk // naive malloc doesn't need this.
 }
 
 impl Config {
@@ -40,12 +42,12 @@ impl Config {
 
         shmemx::barrier();
         Config {
-            shared_segment_size,
+            shared_segment_size, // count by bytes
             smem_base_ptr,
             rank: my_pe,
             rankn: n_pes,
             smem_heap,
-            flist: ptr::null_mut()
+//            flist: ptr::null_mut()
         }
     }
 
@@ -64,8 +66,27 @@ impl Config {
     }
 
     // malloc part
-    pub fn local_malloc<T>(size: usize) -> GlobalPointer<T> {
-        
+    pub fn alloc<'a, 'b: 'a, T>(&'b mut self, mut size: usize) -> GlobalPointer<'a, T> {
+        size *= size_of::<T>(); // byte size
+        size = ((size + SMALLEST_MEM_UNIT - 1) / SMALLEST_MEM_UNIT) * SMALLEST_MEM_UNIT; // align size
+        // if we have run out of heap...
+        if unsafe{self.smem_heap.add(size)} > unsafe{self.smem_base_ptr.add(self.shared_segment_size)} {
+            return GlobalPointer::<T>::null();
+        }
+
+        let allocd: *const u8 = self.smem_heap;
+        unsafe{ self.smem_heap = self.smem_heap.add(size); }
+        println!("alloc memory! smem_base_ptr: {:p}, smem_heap: {:p}, allocd: {:p}, size: {}bytes", self.smem_base_ptr, self.smem_heap, allocd, size);
+        GlobalPointer {
+            config: self as &Self,
+            rank: self.rank,
+            offset: allocd as usize - self.smem_base_ptr as usize,
+            refer_type: PhantomData
+        }
+    }
+
+    pub fn free<T>(&mut self, p: GlobalPointer<T>) {
+        // stupid free does nothing
     }
 }
 
