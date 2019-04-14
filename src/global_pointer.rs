@@ -4,7 +4,6 @@ use shmemx;
 use std::marker::PhantomData;
 use std::ops;
 use std::mem::size_of;
-use shmemx::shmem_free;
 use Config;
 use std::ptr;
 
@@ -86,6 +85,10 @@ impl<T> ops::Add<usize> for GlobalPointer<T> {
     type Output = GlobalPointer<T>;
 
     fn add(self, n: usize) -> GlobalPointer<T> {
+        if self.offset+n >= self.shared_segment_size {
+            eprintln!("GlobalPointer ops add is out of bound!");
+            return self;
+        }
         GlobalPointer {
             shared_segment_size: self.shared_segment_size,
             smem_base_ptr: self.smem_base_ptr,
@@ -99,7 +102,41 @@ impl<T> ops::Add<usize> for GlobalPointer<T> {
 // overload operator+=
 impl<T> ops::AddAssign<usize> for GlobalPointer<T> {
     fn add_assign(&mut self, n: usize) {
+        if self.offset+n >= self.shared_segment_size {
+            eprintln!("GlobalPointer ops add assign is out of bound!");
+            return
+        }
         self.offset += n;
+    }
+}
+
+// overload operator+
+impl<T> ops::Sub<usize> for GlobalPointer<T> {
+    type Output = GlobalPointer<T>;
+
+    fn sub(self, n: usize) -> GlobalPointer<T> {
+        if self.offset < n {
+            eprintln!("GlobalPointer ops sub is out of bound!");
+            return self;
+        }
+        GlobalPointer {
+            shared_segment_size: self.shared_segment_size,
+            smem_base_ptr: self.smem_base_ptr,
+        	rank: self.rank,
+        	offset: self.offset - n,
+        	refer_type: PhantomData
+        }
+    }
+}
+
+// overload operator+=
+impl<T> ops::SubAssign<usize> for GlobalPointer<T> {
+    fn sub_assign(&mut self, n: usize) {
+        if self.offset < n {
+            eprintln!("GlobalPointer ops sub assign is out of bound!");
+            return;
+        }
+        self.offset -= n;
     }
 }
 
