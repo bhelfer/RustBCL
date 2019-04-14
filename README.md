@@ -32,3 +32,5 @@ TODO:
 #### Question
 1. why `let smem_heap = smem_base_ptr.add(SMALLEST_MEM_UNIT);`
 2. what does the 't' in 'chunk_t' mean?
+3. Do we need SMALLEST_MEM_UNIT in simple alloc?
+4. config.barrier does not work? or just println! is slow?

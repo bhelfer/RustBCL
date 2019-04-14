@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use shmemx;
-extern crate libc;
-use self::libc::{c_int, size_t};
+pub extern crate libc;
+use self::libc::{c_int, size_t, c_long};
 use std::slice;
 
 #[link(name="oshmem", kind="dylib")]
@@ -15,8 +15,12 @@ extern {
     pub fn shmem_free(ptr: *mut u8);
     pub fn shmem_putmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
     pub fn shmem_getmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
+    pub fn shmem_broadcast64(target: *mut u64, source: *const u64, nelems: size_t, PE_root: c_int,
+                             PE_start: c_int, logPE_stride: c_int, PE_size: c_int, pSync: *mut c_long); // how to denote *long?
 }
 
+pub static _SHMEM_SYNC_VALUE: c_long = -1;
+pub static _SHMEM_BCAST_SYNC_SIZE: usize = 2;
 pub fn init() {
     unsafe {
         shmem_init();
