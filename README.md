@@ -17,6 +17,9 @@ TODO:
   - Queue
 
 ## Global Pointer:
+#### Apr. 13:
+- Done:
+  - simple alloc; broadcast; ops(add, sub, add/sub assign)
 #### Apr. 12:
 - Done:
   - rearrange and split Config and GlobalPointer;
