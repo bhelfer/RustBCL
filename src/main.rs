@@ -3,10 +3,10 @@ mod shmemx;
 mod global_pointer;
 mod config;
 mod comm;
-
+mod array;
 use config::Config;
 use global_pointer::GlobalPointer;
-
+use array::Array;
 fn main() {
     let mut config = Config::init(1);
 
@@ -51,6 +51,9 @@ fn main() {
     }
     config.barrier();
 
+    let mut arr = Array::<char>::init(100);
+    arr.array(100);
+    
     if config.rank == 0 {
         config.free(ptr1);
     }
