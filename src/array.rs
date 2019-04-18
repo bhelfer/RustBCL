@@ -53,4 +53,3 @@ impl <'a, T: Clone> Array<T> {
         self.ptrs[rank].rput(c);
     }
 }
-
