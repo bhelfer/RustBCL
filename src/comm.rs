@@ -15,7 +15,7 @@ pub fn broadcast<T>(val: &mut T, root: usize) {
 //        shmemx::barrier();
 
         let nelem = (size_of::<T>() + 7) / 8;
-        println!("broadcast: size<t>:{}, nelem={}", size_of::<T>(), nelem);
+//        println!("broadcast: size<t>:{}, nelem={}", size_of::<T>(), nelem);
         let rv = shmemx::shmem_malloc(nelem * 64) as *mut u64;
         if rv.is_null() {
             panic!("BCL: Could not allocate shared memory segment.")

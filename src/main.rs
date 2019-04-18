@@ -9,6 +9,7 @@ use global_pointer::GlobalPointer;
 use array::Array;
 fn main() {
     let mut config = Config::init(1);
+	let rankn = config.rankn;
 
     if config.rankn < 2 {
         config.finalize();
@@ -16,7 +17,6 @@ fn main() {
     }
     let mut ptr1 = GlobalPointer::null();
     if config.rank == 0 {
-	    let rankn = config.rankn;
         ptr1 = config.alloc::<i32>(rankn);
     }
     println!("my_rank: {}, ptr before broadcast: {:?}", config.rank, ptr1);
@@ -51,9 +51,16 @@ fn main() {
     }
     config.barrier();
 
-    let mut arr = Array::<char>::init(100);
-    arr.array(100);
-    
+    let mut arr = Array::<char>::init(&mut config, rankn);
+//    arr.array(100);  // what does this method do?
+    arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
+    config.barrier();
+    if config.rank == 0 {
+        for i in 0..config.rankn {
+            println!("{}: {}", i, arr.read(i));
+        }
+    }
+
     if config.rank == 0 {
         config.free(ptr1);
     }
