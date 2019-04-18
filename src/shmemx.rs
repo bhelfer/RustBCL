@@ -53,9 +53,6 @@ pub fn my_pe() -> usize {
 pub fn barrier() {
     unsafe {
         shmem_barrier_all();
-        shmem_sync_all();
-//        shmem_quiet();
-//        shmem_fence();
     }
 }
 
@@ -90,7 +87,7 @@ pub fn test_shmem() {
 
         if my_pe == 1 {
             println!("Hello World! I am process {} out of {}",
-             my_pe(), n_pes());
+             my_pe, n_pes);
             for i in 0..n_pes {
                 print!(" {}", target_slice[i]);
             }
