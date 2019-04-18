@@ -1,6 +1,7 @@
 use shmemx;
 use std::mem::size_of;
 use shmemx::libc::{c_long, c_void};
+use global_pointer::GlobalPointer;
 
 pub fn broadcast<T>(val: &mut T, root: usize) {
     unsafe{
@@ -35,5 +36,12 @@ pub fn broadcast<T>(val: &mut T, root: usize) {
         shmemx::shmem_free(p_sync_ptr as *mut u8);
         shmemx::shmem_free(rv as *mut u8);
         shmemx::shmem_free(startval as *mut u8);
+    }
+}
+
+pub fn int_compare_and_swap(mut ptr: GlobalPointer<u8>, mut old_val: i32, new_val: i32) -> i32 {
+    unsafe {
+        old_val = shmemx::shmem_int_cswap(ptr.local(), old_val, new_val, ptr.rank);
+        old_val
     }
 }

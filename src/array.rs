@@ -52,4 +52,5 @@ impl <'a, T: Clone> Array<T> {
         let local_idx = idx % self.local_size; // mod % is enough
         self.ptrs[rank].rput(c);
     }
+
 }

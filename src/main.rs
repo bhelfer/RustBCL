@@ -1,9 +1,12 @@
 #![allow(dead_code)]
+#![allow(unused)]
+
 mod shmemx;
 mod global_pointer;
 mod config;
 mod comm;
 mod array;
+mod hash_table;
 use config::Config;
 use global_pointer::GlobalPointer;
 use array::Array;
