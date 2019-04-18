@@ -21,7 +21,6 @@ fn main() {
     ptr.print();
 
     config.finalize();
-
 }
 
 //fn main() {
