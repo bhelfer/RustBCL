@@ -2,18 +2,29 @@
 #![allow(unused)]
 #![allow(non_camel_case_types)]
 
+#![feature(specialization)]
+
 use std::marker::PhantomData;
 use global_pointer::GlobalPointer;
 use std::rc::Rc;
 use std::iter::FromIterator;
 
-#[derive(Debug, Copy, Clone)]
-pub struct serializer<T> {
-    pub refer_type: PhantomData<T>
+pub trait serializer<R> {
+    fn serialize(data: Self) -> R;
+    fn deserialize(data: R) -> Self;
 }
 
-impl serializer<String> {
-    pub fn serialize(data: String) -> serial_ptr<char> {
+impl<T: Copy> serializer<T> for T {
+    fn serialize(data: T) -> T {
+        data
+    }
+    fn deserialize(data: T) -> T {
+        data
+    }
+}
+
+impl serializer<serial_ptr<char>> for String {
+    fn serialize(data: String) -> serial_ptr<char> {
         let mut ptr: serial_ptr<char> = serial_ptr::new(data.len());
         for (i, c) in data.chars().enumerate() {
             ptr.ptr[i] = c;
@@ -21,7 +32,7 @@ impl serializer<String> {
         ptr
     }
 
-    pub fn deserialize(ptr: serial_ptr<char>) -> String {
+    fn deserialize(ptr: serial_ptr<char>) -> String {
         String::from_iter(ptr.ptr.iter())
     }
 }

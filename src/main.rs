@@ -16,10 +16,17 @@ fn main() {
     let mut config = Config::init(1);
     Config::barrier();
 
-//    let data = Box::new(String::from("Hello world!"));
-    let data = String::from("Hello world!");
-    let ptr: serial_ptr<char> = serializer::serialize(data);
-    ptr.print();
+    let src1: String = String::from("Hello world!");
+    let ptr1 = serializer::serialize(src1);
+    ptr1.print();
+
+    let dst1: String = serializer::deserialize(ptr1);
+    println!("{}", dst1);
+
+    let src2: usize = 233;
+    let ptr2 = serializer::serialize(src2);
+    let dst2: usize = serializer::deserialize(ptr2);
+    println!("{}", dst2);
 
     config.finalize();
 }
