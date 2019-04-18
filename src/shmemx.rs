@@ -1,8 +1,11 @@
 #![allow(dead_code)]
-use shmemx;
 pub extern crate libc;
-use self::libc::{c_int, size_t, c_long};
+
 use std::slice;
+
+use shmemx;
+
+use self::libc::{c_int, c_long, size_t};
 
 #[link(name="oshmem", kind="dylib")]
 extern {
@@ -11,6 +14,9 @@ extern {
     fn shmem_n_pes() -> libc::c_int;
     fn shmem_my_pe() -> libc::c_int;
     fn shmem_barrier_all();
+    fn shmem_sync_all();
+    fn shmem_quiet();
+    fn shmem_fence();
     pub fn shmem_malloc(size: libc::size_t) -> *mut u8;
     pub fn shmem_free(ptr: *mut u8);
     pub fn shmem_putmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
@@ -50,6 +56,9 @@ pub fn my_pe() -> usize {
 pub fn barrier() {
     unsafe {
         shmem_barrier_all();
+        shmem_sync_all();
+//        shmem_quiet();
+//        shmem_fence();
     }
 }
 

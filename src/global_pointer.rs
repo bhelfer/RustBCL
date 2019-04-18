@@ -1,11 +1,13 @@
 #![allow(dead_code)]
 #![allow(unused)]
-use shmemx;
+
 use std::marker::PhantomData;
-use std::ops;
 use std::mem::size_of;
-use Config;
+use std::ops;
 use std::ptr;
+
+use Config;
+use shmemx;
 
 //pub trait GlobalPointerTrait<T>: ops::Add<isize> + ops::AddAssign<isize> + ops::Sub<isize> + ops::SubAssign<isize> + ops::Index<usize> + ops::IndexMut<usize> + ops::Deref + ops::DerefMut {
 //	fn new(rank: usize, ptr: usize) -> Self;
@@ -77,7 +79,7 @@ impl<'a, T> GlobalPointer<T> {
         let type_size = size_of::<T>();
         unsafe{ shmemx::shmem_getmem(&mut value as *mut T as *mut u8, self.smem_base_ptr.add(self.offset * type_size), type_size, self.rank as i32) };
         value
-	}
+    }
 }
 
 // overload operator+
@@ -85,7 +87,7 @@ impl<T> ops::Add<usize> for GlobalPointer<T> {
     type Output = GlobalPointer<T>;
 
     fn add(self, n: usize) -> GlobalPointer<T> {
-        if self.offset+n >= self.shared_segment_size {
+        if self.offset + n >= self.shared_segment_size {
             eprintln!("GlobalPointer ops add is out of bound!");
             return self;
         }
@@ -99,10 +101,34 @@ impl<T> ops::Add<usize> for GlobalPointer<T> {
     }
 }
 
+impl<T> ops::Add<usize> for &GlobalPointer<T> {
+    type Output = GlobalPointer<T>;
+
+    fn add(self, n: usize) -> GlobalPointer<T> {
+        if self.offset + n >= self.shared_segment_size {
+            eprintln!("GlobalPointer ops add is out of bound!");
+            return GlobalPointer {
+                shared_segment_size: self.shared_segment_size,
+                smem_base_ptr: self.smem_base_ptr,
+                rank: self.rank,
+                offset: self.offset,
+                refer_type: PhantomData
+            }
+        }
+        GlobalPointer {
+            shared_segment_size: self.shared_segment_size,
+            smem_base_ptr: self.smem_base_ptr,
+            rank: self.rank,
+            offset: self.offset + n,
+            refer_type: PhantomData
+        }
+    }
+}
+
 // overload operator+=
 impl<T> ops::AddAssign<usize> for GlobalPointer<T> {
     fn add_assign(&mut self, n: usize) {
-        if self.offset+n >= self.shared_segment_size {
+        if self.offset + n >= self.shared_segment_size {
             eprintln!("GlobalPointer ops add assign is out of bound!");
             return
         }
@@ -110,7 +136,7 @@ impl<T> ops::AddAssign<usize> for GlobalPointer<T> {
     }
 }
 
-// overload operator+
+// overload operator-
 impl<T> ops::Sub<usize> for GlobalPointer<T> {
     type Output = GlobalPointer<T>;
 
@@ -129,7 +155,7 @@ impl<T> ops::Sub<usize> for GlobalPointer<T> {
     }
 }
 
-// overload operator+=
+// overload operator -=
 impl<T> ops::SubAssign<usize> for GlobalPointer<T> {
     fn sub_assign(&mut self, n: usize) {
         if self.offset < n {
@@ -141,13 +167,14 @@ impl<T> ops::SubAssign<usize> for GlobalPointer<T> {
 }
 
 // overload operator[](right)
-// impl<T> ops::Index<usize> for GlobalPointer<T> {
-//     type Output = T;
-
-//     fn index(&self, i: usize) -> T {
-//         (self + i).rget()
-//     }
-// }
+//impl<T> ops::Index<usize> for GlobalPointer<T> {
+//    type Output = T;
+//
+//    fn index(&self, i: usize) -> &T {
+//        let value = (self + i).rget();
+//        &value
+//    }
+//}
 
 //impl<T: GlobalPointable> ops::IndexMut<usize> for GlobalPointer<T> {
 //    fn index_mut(&mut self, i: usize) -> &mut T {

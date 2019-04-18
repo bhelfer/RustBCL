@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 #![allow(unused)]
-use shmemx;
-use global_pointer::GlobalPointer;
+
 use std::marker::PhantomData;
 use std::mem::size_of;
+
+use global_pointer::GlobalPointer;
+use shmemx;
 
 // simple alloc doesn't need these things
 // const SMALLEST_MEM_UNIT: usize = 64; // 64bytes
@@ -34,7 +36,7 @@ impl Config {
 
         let my_pe = shmemx::my_pe();
         let n_pes = shmemx::n_pes();
-        let shared_segment_size = shared_segment_size_m*1024*1024;
+        let shared_segment_size = shared_segment_size_m * 1024 * 1024;
         let smem_base_ptr = unsafe{ shmemx::shmem_malloc(shared_segment_size) };
         if smem_base_ptr.is_null() {
             panic!("BCL: Could not allocate shared memory segment.")
@@ -63,7 +65,7 @@ impl Config {
 		}
 	}
 
-    pub fn barrier(self) {
+    pub fn barrier() {
         shmemx::barrier();
     }
 
