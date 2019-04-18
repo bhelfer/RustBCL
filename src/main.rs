@@ -16,7 +16,8 @@ fn main() {
     let mut config = Config::init(1);
     Config::barrier();
 
-    let data = Box::new(String::from("Hello world!"));
+//    let data = Box::new(String::from("Hello world!"));
+    let data = String::from("Hello world!");
     let ptr: serial_ptr<char> = serializer::serialize(data);
     ptr.print();
 

@@ -13,8 +13,7 @@ pub struct serializer<T> {
 }
 
 impl serializer<String> {
-    pub fn serialize(data: Box<String>) -> serial_ptr<char> {
-        let data = Box::leak(data);
+    pub fn serialize(data: String) -> serial_ptr<char> {
         let mut ptr: serial_ptr<char> = serial_ptr::new(data.len());
         for (i, c) in data.chars().enumerate() {
             ptr.ptr[i] = c;
@@ -22,8 +21,8 @@ impl serializer<String> {
         ptr
     }
 
-    pub fn deserialize(ptr: serial_ptr<char>) -> Box<String> {
-        Box::new(String::from_iter(ptr.ptr.iter()))
+    pub fn deserialize(ptr: serial_ptr<char>) -> String {
+        String::from_iter(ptr.ptr.iter())
     }
 }
 
