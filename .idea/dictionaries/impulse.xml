@@ -5,6 +5,7 @@
       <w>fflush</w>
       <w>flist</w>
       <w>nelems</w>
+      <w>rankn</w>
       <w>rget</w>
       <w>rput</w>
       <w>shmemx</w>
