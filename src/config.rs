@@ -29,7 +29,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn init(shared_segment_size_m: usize) -> Config {
+    pub fn init(shared_segment_size_m: usize) -> Self {
         shmemx::init();
 
         let my_pe = shmemx::my_pe();
@@ -43,7 +43,7 @@ impl Config {
         let smem_heap = smem_base_ptr;
 
         shmemx::barrier();
-        Config {
+        Self {
             shared_segment_size, // count by bytes
             smem_base_ptr,
             rank: my_pe,

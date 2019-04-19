@@ -15,13 +15,15 @@ use hash_table::HashTable;
 fn main() {
     let mut config = Config::init(1);
     let rankn = config.rankn;
+    config.barrier();
 
     if config.rankn < 2 {
         config.finalize();
         return;
     }
 
-    // array part
+//    array part
+
 //    let mut arr = Array::<char>::init(&mut config, rankn);
 //    arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
 //    config.barrier();
@@ -37,20 +39,22 @@ fn main() {
     config.barrier();
 
     let key: usize = config.rank;
-    let value: char = char::from('a' as u8 + config.rank as u8);
 
+    let value: char = char::from('a' as u8 + config.rank as u8);
     let mut success = hash_table.insert(&key, &value);
-    println!("insert success = {} by rank {}", success, shmemx::my_pe());
+    println!("key is {}, val is {}, insert success = {} by rank {}", key, value, success, shmemx::my_pe());
+    success = hash_table.insert(&key, &value);
+    println!("key is {}, val is {}, insert success = {} by rank {}", key, value, success, shmemx::my_pe());
+
     config.barrier();
 
     let mut res: char = '\0';
-
-    for key in 0..config.rankn {
+    for key in 0..(config.rankn + 1) {
         success = hash_table.find(&key, &mut res);
         if success {
-            println!("find value {:?} by rank {}", res, shmemx::my_pe());
+            println!("key is {}, find value {:?} by rank {}", key, res, shmemx::my_pe());
         } else {
-            println!("find nothing by rank {}", shmemx::my_pe());
+            println!("key is {}, find nothing by rank {}", key, shmemx::my_pe());
         }
     }
 
