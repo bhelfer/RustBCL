@@ -11,7 +11,7 @@ fn main() {
     let mut config = Config::init(1);
 
     if config.rankn < 2 {
-        config.finalize();
+//        config.finalize();
         return;
     }
     let mut ptr1 = GlobalPointer::null();
@@ -54,5 +54,5 @@ fn main() {
     if config.rank == 0 {
         config.free(ptr1);
     }
-    config.finalize();
+//    config.finalize();
 }
