@@ -28,9 +28,9 @@ impl<K, V> HashEntry<K, V>
     pub fn new(key: K, value: V) -> Self {
         Self { key, value }
     }
-    pub fn set(&mut self, key: K, value: V) {
-        self.key = key;
-        self.value = value;
+    pub fn set(&mut self, key: &K, value: &V) {
+        self.key = key.clone();
+        self.value = value.clone();
     }
     pub fn get_key(&self) -> K {
         self.key
@@ -128,7 +128,7 @@ impl<K, V> HashTable<K, V>
     /* Request slot for key. If slot's free, take it.
        If slot's taken (ready_flag), reserve it (reserve_flag),
        so that you can write to it. */
-    fn request_slot(&self, slot: usize, key: K) -> bool {
+    fn request_slot(&self, slot: usize) -> bool {
         let node = slot / self.local_size;
         let node_slot = slot - node * self.local_size;
         let mut used_ptr: GlobalPointer<i32> = self.used[node] + node_slot;
@@ -150,10 +150,17 @@ impl<K, V> HashTable<K, V>
         if origin > 0 { false } else { true }
     }
 
-    pub fn insert(self, key: K, value: V) -> bool {
+    fn get_hash(&self, key: &K) -> u64 {
         let mut hasher =  DefaultHasher::new();
         Hash::hash(&key, &mut hasher);
         let hash = hasher.finish();
+
+        hash
+    }
+
+    pub fn insert(&self, key: &K, value: &V) -> bool {
+        let hash = self.get_hash(&key);
+
         let mut probe: u64 = 0;
         let mut success = false;
 
@@ -163,11 +170,11 @@ impl<K, V> HashTable<K, V>
 
             println!("(cur, dst) = {}, {}, Requesting slot {}, key = {:?}", shmemx::my_pe(), slot / self.local_size, slot, key);
 
-            success = self.request_slot(slot, key);
+            success = self.request_slot(slot);
 
             if success {
                 let mut entry: HE<K, V> = self.get_entry(slot);
-                entry.set(key, value);
+                entry.set(&key, &value);
                 self.set_entry(slot, entry);
 
                 if self.slot_status(slot) == 0 {
@@ -179,5 +186,9 @@ impl<K, V> HashTable<K, V>
         }
 
         success
+    }
+
+    pub fn find(&self, key: &K, value: &mut V) -> bool {
+        false
     }
 }
