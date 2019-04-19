@@ -37,7 +37,8 @@ fn main() {
     config.barrier();
 
     let key: usize = config.rank * 11;
-    let value: char = if config.rank == 0 {'a'} else {'b'};
+    let value: char = char::from('a' as u8 + config.rank as u8);
+//        if config.rank == 0 {'a'} else {'b'};
 
     let mut success = hash_table.insert(&key, &value);
     config.barrier();
@@ -46,9 +47,9 @@ fn main() {
     let mut res: char = '\0';
     success = hash_table.find(&key, &mut res);
     if success {
-        println!("insert value {:?}, find value {:?}", value, res);
+        println!("insert value {:?}, find value {:?} on rank {}", value, res, shmemx::my_pe());
     } else {
-        println!("insert value {:?}, find nothing", value);
+        println!("insert value {:?}, find nothing on rank {}", value, shmemx::my_pe());
     }
 
     config.finalize();
