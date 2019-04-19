@@ -18,7 +18,6 @@ fn main() {
     config.barrier();
 
     if config.rankn < 2 {
-        config.finalize();
         return;
     }
 
@@ -32,7 +31,6 @@ fn main() {
 //            println!("{}: {}", i, arr.read(i));
 //        }
 //    }
-
 
     // hashtable part
     let mut hash_table = HashTable::<usize, char>::new(&mut config, 1024);
@@ -58,5 +56,4 @@ fn main() {
         }
     }
 
-    config.finalize();
 }
