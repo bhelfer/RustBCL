@@ -1,12 +1,16 @@
 #![allow(dead_code)]
+extern crate core;
+
 mod shmemx;
 mod global_pointer;
 mod config;
 mod comm;
 mod array;
+mod queue;
 use config::Config;
 use global_pointer::GlobalPointer;
 use array::Array;
+use queue::Queue;
 fn main() {
     let mut config = Config::init(1);
 	let rankn = config.rankn;
@@ -50,7 +54,7 @@ fn main() {
         }
     }
     config.barrier();
-
+    println!("Debugging array starts here---------------");
     let mut arr = Array::<char>::init(&mut config, rankn);
 //    arr.array(100);  // what does this method do?
     arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
@@ -60,6 +64,29 @@ fn main() {
             println!("{}: {}", i, arr.read(i));
         }
     }
+
+    config.barrier();
+    println!("Debugging queue starts here---------------");
+    config.barrier();
+    let mut queue = Queue::<usize>::init(&mut config);
+    if config.rank == 0 {
+        for i in 0..2 {
+            queue.add(&mut config, i);
+        }
+    }
+    println!("Finished inserting, rank {}.", config.rank);
+    config.barrier();
+    if config.rank == 0 {
+        for i in 0..rankn {
+            let f = queue.remove();
+            let _f = match f {
+                Ok(value) => println!("Value: {}, at index {}", value, i),
+                Err(error) => panic!("Problem {:?}", error),
+            };
+        }
+
+    }
+
 
     if config.rank == 0 {
         config.free(ptr1);
