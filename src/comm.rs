@@ -5,7 +5,7 @@ use global_pointer::GlobalPointer;
 
 pub fn broadcast<T>(val: &mut T, root: usize) {
     unsafe{
-        let p_sync_ptr: *mut c_long= shmemx::shmem_malloc(shmemx::_SHMEM_BCAST_SYNC_SIZE * size_of::<c_long>()) as *mut c_long;
+        let p_sync_ptr: *mut c_long = shmemx::shmem_malloc(shmemx::_SHMEM_BCAST_SYNC_SIZE * size_of::<c_long>()) as *mut c_long;
         if p_sync_ptr.is_null() {
             panic!("BCL: Could not allocate shared memory segment.")
         }
@@ -46,12 +46,13 @@ pub fn int_compare_and_swap(ptr: &mut GlobalPointer<i32>, old_val: i32, new_val:
     println!("ptr: {:?}", ptr);
     println!("rptr: {:?}", ptr.rptr());
 
+    let rank = ptr.rank;
     unsafe {
         shmemx::shmem_int_cswap(
             ptr.rptr() as *mut i32,
             old_val as c_int,
             new_val as c_int,
-            ptr.rank as c_int
+            rank as c_int
         )
     }
 }
