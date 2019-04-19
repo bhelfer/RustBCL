@@ -64,6 +64,11 @@ impl<'a, T> GlobalPointer<T> {
         unsafe{ self.smem_base_ptr.add(self.offset * size_of::<T>()) as *mut T}
     }
 
+    // added by lfz
+    pub fn rptr(&mut self) -> *mut T {
+        unsafe{ self.smem_base_ptr.add(self.offset * size_of::<T>()) as *mut T}
+    }
+
 	pub fn rput(&mut self, value: T) -> &mut Self {
         let type_size = size_of::<T>();
         unsafe{ shmemx::shmem_putmem(self.smem_base_ptr.add(self.offset * type_size), &value as *const T as *const u8, type_size, self.rank as i32) };

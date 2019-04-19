@@ -37,7 +37,8 @@ impl <'a, T: Clone> Array<T> {
 
     pub fn read(&self, idx: usize) -> T {
         let rank: usize = idx / self.local_size;
-        if rank > shmemx::n_pes() {
+        // changed to >= by lfz
+        if rank >= shmemx::n_pes() {
             panic!("Array::read: index {} out of bound!", idx);
         }
         let local_idx: usize = idx % self.local_size; // mod % is enough
@@ -46,7 +47,8 @@ impl <'a, T: Clone> Array<T> {
 
     pub fn write(&mut self, c: T, idx: usize) {
         let rank: usize = idx / self.local_size;
-        if rank > shmemx::n_pes() {
+        // changed to >= by lfz
+        if rank >= shmemx::n_pes() {
             panic!("Array::read: index {} out of bound!", idx);
         }
         let local_idx = idx % self.local_size; // mod % is enough

@@ -11,6 +11,8 @@ use global_pointer::GlobalPointer;
 use shmemx::shmem_broadcast64;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
+use std::fmt::Debug;
+use std::ptr::null;
 
 #[derive(Debug, Copy, Clone)]
 struct HashEntry<K, V> {
@@ -19,7 +21,7 @@ struct HashEntry<K, V> {
 }
 
 impl<K, V> HashEntry<K, V>
-    where K: Clone + Hash + Copy + Default + PartialEq<K>,
+    where K: Clone + Hash + Copy + Default + Debug + PartialEq<K>,
           V: Clone + Copy + Default + PartialEq<V>,
 {
     pub fn new(key: K, value: V) -> Self {
@@ -45,30 +47,31 @@ pub struct HashTable<K, V> {
     pub size: usize,
     pub local_size: usize,
     hash_table: Vec<GlobalPointer<HE<K, V>>>,
-    used: Vec<GlobalPointer<u8>>,
-    free_flag: u8,
-    reserved_flag: u8,
-    ready_flag: u8,
+    used: Vec<GlobalPointer<u32>>,
+    free_flag: u32,
+    reserved_flag: u32,
+    ready_flag: u32,
 }
 
 impl<K, V> HashTable<K, V>
-    where K: Clone + Hash + Copy + Default + PartialEq<K>,
+    where K: Clone + Hash + Copy + Default + Debug + PartialEq<K>,
           V: Clone + Copy + Default + Eq + PartialEq<V>,
 {
     pub fn new(config: &mut Config, size: usize) -> Self {
         let local_size = (size + shmemx::n_pes() - 1) / config.rankn;
 
-        let free_flag = 0;
-        let reserved_flag = 1;
-        let ready_flag = 2;
+        let free_flag: u32 = 0;
+        let reserved_flag: u32 = 1;
+        let ready_flag: u32 = 2;
 
         // used record GlobalPointer
-        let mut used: Vec<GlobalPointer<u8>> = Vec::new();
+        let mut used: Vec<GlobalPointer<u32>> = Vec::new();
         used.resize(shmemx::n_pes(), GlobalPointer::null());
-        used[config.rank] = config.alloc::<u8>(local_size);
+        used[config.rank] = config.alloc::<u32>(local_size);
         config.barrier();
 
-        let local_used: *mut u8 = used[config.rank].local();
+        let local_used: *mut u32 = used[config.rank].local();
+
         for i in 0..local_size {
             unsafe { local_used.add(i).write(free_flag); }
         }
@@ -84,6 +87,7 @@ impl<K, V> HashTable<K, V>
         config.barrier();
 
         let local_table: *mut HE<K, V> = hash_table[config.rank].local();
+
         for i in 0..local_size {
             unsafe {
                 local_table.add(i).write(HashEntry::new(
@@ -113,12 +117,18 @@ impl<K, V> HashTable<K, V>
         let node = slot / self.local_size;
         let node_slot = slot - node * self.local_size;
 
+        if node >= shmemx::n_pes() { panic!("HashTable::get_entry: node {} out of bound!", node); }
+        if node_slot >= self.local_size { panic!("HashTable::get_entry: node_slot {} out of bound!", node_slot); }
+
         (self.hash_table[node] + node_slot).rget()
     }
 
     fn set_entry(&self, slot: usize, entry: HE<K, V>) {
         let node = slot / self.local_size;
         let node_slot = slot - node * self.local_size;
+
+        if node >= shmemx::n_pes() { panic!("HashTable::get_entry: node {} out of bound!", node); }
+        if node_slot >= self.local_size { panic!("HashTable::get_entry: node_slot {} out of bound!", node_slot); }
 
         (self.hash_table[node] + node_slot).rput(entry);
     }
@@ -130,6 +140,7 @@ impl<K, V> HashTable<K, V>
         let node = slot / self.local_size;
         let node_slot = slot - node * self.local_size;
         let used_ptr = self.used[node] + node_slot;
+        println!("rank, node, node_slot = {}, {}, {}", shmemx::my_pe(), node, node_slot);
 
         let mut flag_used = self.free_flag;
         loop {
@@ -166,7 +177,10 @@ impl<K, V> HashTable<K, V>
         loop {
             let slot: usize = ((hash + probe) % (self.size as u64)) as usize;
             probe += 1;
+
+            println!("Requesting slot {}, key = {:?}", slot, key);
             success = self.request_slot(slot, key);
+
             if success {
                 let mut entry: HE<K, V> = self.get_entry(slot);
                 entry.set(key, value);

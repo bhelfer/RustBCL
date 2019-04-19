@@ -17,7 +17,8 @@ extern {
     pub fn shmem_getmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
     pub fn shmem_broadcast64(target: *mut u64, source: *const u64, nelems: size_t, PE_root: c_int,
                              PE_start: c_int, logPE_stride: c_int, PE_size: c_int, pSync: *mut c_long); // how to denote *long?
-    pub fn shmem_int_cswap(target: *mut u8, cond: u8, value: u8, pe: usize) -> u8;
+    // added by lfz
+    pub fn shmem_int_cswap(target: *mut u32, cond: u32, value: u32, pe: usize) -> u32;
 }
 
 pub static _SHMEM_SYNC_VALUE: c_long = -1;

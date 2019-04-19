@@ -39,9 +39,10 @@ pub fn broadcast<T>(val: &mut T, root: usize) {
     }
 }
 
-pub fn int_compare_and_swap(mut ptr: GlobalPointer<u8>, mut old_val: u8, new_val: u8) -> u8 {
+// added by lfz
+pub fn int_compare_and_swap(mut ptr: GlobalPointer<u32>, mut old_val: u32, new_val: u32) -> u32 {
     unsafe {
-        old_val = shmemx::shmem_int_cswap(ptr.local(), old_val, new_val, ptr.rank);
+        old_val = shmemx::shmem_int_cswap(ptr.rptr(), old_val, new_val, ptr.rank);
         old_val
     }
 }

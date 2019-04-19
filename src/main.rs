@@ -24,8 +24,8 @@ fn main() {
     let mut hash_table: HashTable<usize, char> = HashTable::<usize, char>::new(&mut config, 1000);
     config.barrier();
 
-//    hash_table.insert(config.rank, 'a');
-//    config.barrier();
+    hash_table.insert(config.rank, 'a');
+    config.barrier();
 
 //    if config.rank == 0 {
 //        for i in 0..config.rankn {
