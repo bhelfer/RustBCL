@@ -19,6 +19,7 @@ extern {
                              PE_start: c_int, logPE_stride: c_int, PE_size: c_int, pSync: *mut c_long); // how to denote *long?
     // added by lfz
     pub fn shmem_int_cswap(target: *mut i32, cond: c_int, value: c_int, pe: c_int) -> i32;
+    pub fn shmem_int_finc(target: *mut i32, pe: c_int) -> i32;
 }
 
 pub static _SHMEM_SYNC_VALUE: c_long = -1;

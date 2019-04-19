@@ -49,9 +49,6 @@ pub struct HashTable<K, V> {
     local_size: usize,
     hash_table: Vec<GlobalPointer<HE<K, V>>>,
     used: Vec<GlobalPointer<i32>>,
-//    free_flag: i32,
-//    reserved_flag: i32,
-//    ready_flag: i32,
 }
 
 impl<K, V> HashTable<K, V>
@@ -62,10 +59,6 @@ impl<K, V> HashTable<K, V>
         let local_size = (size + config.rankn - 1) / config.rankn;
         let global_size = local_size * config.rankn;
 
-//        let free_flag: i32 = 0;
-//        let reserved_flag: i32 = 1;
-//        let ready_flag: i32 = 2;
-
         // used record GlobalPointer
         let mut used: Vec<GlobalPointer<i32>> = Vec::new();
         used.resize(config.rankn, GlobalPointer::null());
@@ -75,10 +68,10 @@ impl<K, V> HashTable<K, V>
                 (used[config.rank] + i).local().write(0);
             }
         }
-        config.barrier();
         for rank in 0..config.rankn {
             comm::broadcast(&mut used[rank], rank);
         }
+        config.barrier();
 
         // hash entry GlobalPointer
         let mut hash_table: Vec<GlobalPointer<HE<K, V>>> = Vec::new();
@@ -92,19 +85,16 @@ impl<K, V> HashTable<K, V>
                 ));
             }
         }
-        config.barrier();
         for rank in 0..config.rankn {
             comm::broadcast(&mut hash_table[rank], rank);
         }
+        config.barrier();
 
         Self {
             global_size,
             local_size,
             hash_table,
             used,
-//            free_flag,
-//            reserved_flag,
-//            ready_flag,
         }
     }
 
@@ -143,14 +133,20 @@ impl<K, V> HashTable<K, V>
         let node_slot = slot - node * self.local_size;
         let mut used_ptr: GlobalPointer<i32> = self.used[node] + node_slot;
 
-        println!("rank, node, node_slot, slot_status = {}, {}, {}, {}", shmemx::my_pe(), node,
-                 node_slot, self.slot_status(slot));
+//        println!("rank, node, node_slot, slot_status = {}, {}, {}, {}", shmemx::my_pe(), node,
+//                 node_slot, self.slot_status(slot));
+//
+//        println!("used_ptr: {:?}", used_ptr);
+//        println!("offset: 0x{:x}", used_ptr.offset * size_of::<i32>());
 
-        println!("used_ptr: {:?}", used_ptr);
-        println!("offset: 0x{:x}", used_ptr.offset * size_of::<i32>());
 
-        let origin = comm::int_compare_and_swap(&mut used_ptr, 0, 1);
+//        Why compare & swap lead to error ???
 
+//        let origin = comm::int_compare_and_swap(&mut used_ptr, 0, 1);
+
+
+        // use fetch & inc instead
+        let origin = comm::int_finc(&mut used_ptr);
         if origin > 0 { false } else { true }
     }
 
@@ -165,13 +161,18 @@ impl<K, V> HashTable<K, V>
             let slot: usize = ((hash + probe) % (self.global_size as u64)) as usize;
             probe += 1;
 
-            println!("Requesting slot {}, key = {:?}", slot, key);
+            println!("(cur, dst) = {}, {}, Requesting slot {}, key = {:?}", shmemx::my_pe(), slot / self.local_size, slot, key);
+
             success = self.request_slot(slot, key);
 
             if success {
                 let mut entry: HE<K, V> = self.get_entry(slot);
                 entry.set(key, value);
                 self.set_entry(slot, entry);
+
+                if self.slot_status(slot) == 0 {
+                    panic!("HashTable::insert: Bad slot({}) status", slot);
+                }
             }
 
             if success || probe >= self.global_size as u64 { break; }

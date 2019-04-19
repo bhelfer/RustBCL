@@ -36,8 +36,9 @@ fn main() {
     let mut hash_table = HashTable::<usize, char>::new(&mut config, 1024);
     config.barrier();
 
-    hash_table.insert(config.rank, 'a');
+    let success = hash_table.insert(config.rank * 11, 'a');
     config.barrier();
+    println!("insert success = {} on rank {}", success, shmemx::my_pe());
 
     config.finalize();
 }

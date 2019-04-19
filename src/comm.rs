@@ -56,3 +56,13 @@ pub fn int_compare_and_swap(ptr: &mut GlobalPointer<i32>, old_val: i32, new_val:
         )
     }
 }
+
+pub fn int_finc(ptr: &mut GlobalPointer<i32>) -> i32 {
+    let rank = ptr.rank;
+    unsafe {
+        shmemx::shmem_int_finc(
+            ptr.rptr() as *mut i32,
+            rank as c_int
+        )
+    }
+}
