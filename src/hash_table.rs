@@ -44,13 +44,13 @@ type HE<K, V> = HashEntry<K, V>;
 
 #[derive(Debug, Clone)]
 pub struct HashTable<K, V> {
-    pub size: usize,
-    pub local_size: usize,
+    size: usize,
+    local_size: usize,
     hash_table: Vec<GlobalPointer<HE<K, V>>>,
-    used: Vec<GlobalPointer<u32>>,
-    free_flag: u32,
-    reserved_flag: u32,
-    ready_flag: u32,
+    used: Vec<GlobalPointer<i32>>,
+    free_flag: i32,
+    reserved_flag: i32,
+    ready_flag: i32,
 }
 
 impl<K, V> HashTable<K, V>
@@ -60,47 +60,36 @@ impl<K, V> HashTable<K, V>
     pub fn new(config: &mut Config, size: usize) -> Self {
         let local_size = (size + shmemx::n_pes() - 1) / config.rankn;
 
-        let free_flag: u32 = 0;
-        let reserved_flag: u32 = 1;
-        let ready_flag: u32 = 2;
+        let free_flag: i32 = 0;
+        let reserved_flag: i32 = 1;
+        let ready_flag: i32 = 2;
 
         // used record GlobalPointer
-        let mut used: Vec<GlobalPointer<u32>> = Vec::new();
+        let mut used: Vec<GlobalPointer<i32>> = Vec::new();
         used.resize(shmemx::n_pes(), GlobalPointer::null());
-        used[config.rank] = config.alloc::<u32>(local_size);
-        config.barrier();
-
-        let local_used: *mut u32 = used[config.rank].local();
-
+        used[config.rank] = config.alloc::<i32>(local_size);
         for i in 0..local_size {
-            unsafe { local_used.add(i).write(free_flag); }
+            (used[config.rank] + i).rput(free_flag);
         }
         config.barrier();
+        for rank in 0..config.rankn {
+            comm::broadcast(&mut used[rank], rank);
+        }
 
         // hash entry GlobalPointer
         let mut hash_table: Vec<GlobalPointer<HE<K, V>>> = Vec::new();
         hash_table.resize(shmemx::n_pes(), GlobalPointer::null());
         hash_table[config.rank] = config.alloc::<HE<K, V>>(local_size);
-        config.barrier();
-
-        hash_table[config.rank] = config.alloc::<HE<K, V>>(local_size);
-        config.barrier();
-
-        let local_table: *mut HE<K, V> = hash_table[config.rank].local();
-
         for i in 0..local_size {
-            unsafe {
-                local_table.add(i).write(HashEntry::new(
-                    Default::default(), Default::default()
-                ));
-            }
+            (hash_table[config.rank] + i).rput(HashEntry::new(
+                Default::default(),
+                Default::default()
+            ));
         }
         config.barrier();
-
         for rank in 0..config.rankn {
             comm::broadcast(&mut hash_table[rank], rank);
         }
-        config.barrier();
 
         Self {
             size,
@@ -139,12 +128,14 @@ impl<K, V> HashTable<K, V>
     fn request_slot(&self, slot: usize, key: K) -> bool {
         let node = slot / self.local_size;
         let node_slot = slot - node * self.local_size;
-        let used_ptr = self.used[node] + node_slot;
+        let mut used_ptr: GlobalPointer<i32> = self.used[node] + node_slot;
         println!("rank, node, node_slot = {}, {}, {}", shmemx::my_pe(), node, node_slot);
 
         let mut flag_used = self.free_flag;
         loop {
-            flag_used = comm::int_compare_and_swap(used_ptr, self.ready_flag, self.reserved_flag);
+            println!("used_ptr: {:?}", used_ptr);
+            flag_used = comm::int_compare_and_swap(&mut used_ptr, self.ready_flag,
+                                                   self.reserved_flag);
             if flag_used != self.reserved_flag { break; }
         }
 
@@ -155,7 +146,8 @@ impl<K, V> HashTable<K, V>
         if flag_used == self.ready_flag {
             if self.get_entry(slot).get_key() == key {
                 loop {
-                    flag_used = comm::int_compare_and_swap(used_ptr, self.ready_flag, self.reserved_flag);
+                    flag_used = comm::int_compare_and_swap(&mut used_ptr, self.ready_flag,
+                                                           self.reserved_flag);
                     if flag_used == self.ready_flag { break; }
                 }
                 return true;

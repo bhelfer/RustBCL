@@ -8,17 +8,17 @@ use std::slice;
 extern {
     fn shmem_init();
     fn shmem_finalize();
-    fn shmem_n_pes() -> libc::c_int;
-    fn shmem_my_pe() -> libc::c_int;
+    fn shmem_n_pes() -> c_int;
+    fn shmem_my_pe() -> c_int;
     fn shmem_barrier_all();
-    pub fn shmem_malloc(size: libc::size_t) -> *mut u8;
+    pub fn shmem_malloc(size: size_t) -> *mut u8;
     pub fn shmem_free(ptr: *mut u8);
     pub fn shmem_putmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
     pub fn shmem_getmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
     pub fn shmem_broadcast64(target: *mut u64, source: *const u64, nelems: size_t, PE_root: c_int,
                              PE_start: c_int, logPE_stride: c_int, PE_size: c_int, pSync: *mut c_long); // how to denote *long?
     // added by lfz
-    pub fn shmem_int_cswap(target: *mut u32, cond: u32, value: u32, pe: usize) -> u32;
+    pub fn shmem_int_cswap(target: *mut i32, cond: c_int, value: c_int, pe: c_int) -> i32;
 }
 
 pub static _SHMEM_SYNC_VALUE: c_long = -1;

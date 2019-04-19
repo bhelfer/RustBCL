@@ -1,6 +1,6 @@
 use shmemx;
 use std::mem::size_of;
-use shmemx::libc::{c_long, c_void};
+use shmemx::libc::{c_long, c_void, c_int};
 use global_pointer::GlobalPointer;
 
 pub fn broadcast<T>(val: &mut T, root: usize) {
@@ -40,9 +40,18 @@ pub fn broadcast<T>(val: &mut T, root: usize) {
 }
 
 // added by lfz
-pub fn int_compare_and_swap(mut ptr: GlobalPointer<u32>, mut old_val: u32, new_val: u32) -> u32 {
+pub fn int_compare_and_swap(ptr: &mut GlobalPointer<i32>, old_val: i32, new_val: i32) -> i32 {
+
+    println!("\nrank: {}, mype: {}", ptr.rank, shmemx::my_pe());
+    println!("ptr: {:?}", ptr);
+    println!("rptr: {:?}", ptr.rptr());
+
     unsafe {
-        old_val = shmemx::shmem_int_cswap(ptr.rptr(), old_val, new_val, ptr.rank);
-        old_val
+        shmemx::shmem_int_cswap(
+            ptr.rptr() as *mut i32,
+            old_val as c_int,
+            new_val as c_int,
+            ptr.rank as c_int
+        )
     }
 }
