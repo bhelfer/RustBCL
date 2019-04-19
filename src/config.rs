@@ -99,7 +99,7 @@ impl Config {
     }
 }
 
-// not sure about Drop trait
+// deconstructor
 impl Drop for Config {
     fn drop(&mut self) {
         self.finalize()

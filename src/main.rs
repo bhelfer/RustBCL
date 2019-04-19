@@ -19,9 +19,9 @@ fn main() {
 	    let rankn = config.rankn;
         ptr1 = config.alloc::<i32>(rankn);
     }
-    println!("my_rank: {}, ptr before broadcast: {:?}", config.rank, ptr1);
+//    println!("my_rank: {}, ptr before broadcast: {:?}", config.rank, ptr1);
     comm::broadcast(&mut ptr1, 0);
-    println!("my_rank: {}, ptr after broadcast: {:?}", config.rank, ptr1);
+//    println!("my_rank: {}, ptr after broadcast: {:?}", config.rank, ptr1);
 
     // write value
     (ptr1 + config.rank).rput(config.rank as i32);
