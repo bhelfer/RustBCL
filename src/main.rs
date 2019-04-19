@@ -53,6 +53,6 @@ fn main() {
             println!("find nothing by rank {}", shmemx::my_pe());
         }
     }
-
+    
     config.finalize();
 }
