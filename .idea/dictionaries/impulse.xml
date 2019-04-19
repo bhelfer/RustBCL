@@ -5,6 +5,7 @@
       <w>fflush</w>
       <w>finc</w>
       <w>flist</w>
+      <w>hasher</w>
       <w>nelems</w>
       <w>rankn</w>
       <w>rget</w>

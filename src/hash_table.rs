@@ -116,8 +116,8 @@ impl<K, V> HashTable<K, V>
         let node = slot / self.local_size;
         let node_slot = slot - node * self.local_size;
 
-        if node >= shmemx::n_pes() { panic!("HashTable::get_entry: node {} out of bound!", node); }
-        if node_slot >= self.local_size { panic!("HashTable::get_entry: node_slot {} out of bound!", node_slot); }
+        if node >= shmemx::n_pes() { panic!("HashTable::set_entry: node {} out of bound!", node); }
+        if node_slot >= self.local_size { panic!("HashTable::set_entry: node_slot {} out of bound!", node_slot); }
 
         (self.hash_table[node] + node_slot).rput(entry);
     }
@@ -125,6 +125,9 @@ impl<K, V> HashTable<K, V>
     fn slot_status(&self, slot: usize) -> i32 {
         let node = slot / self.local_size;
         let node_slot = slot - node * self.local_size;
+
+        if node >= shmemx::n_pes() { panic!("HashTable::slot_status: node {} out of bound!", node); }
+        if node_slot >= self.local_size { panic!("HashTable::slot_status: node_slot {} out of bound!", node_slot); }
 
         (self.used[node] + node_slot).rget()
     }
@@ -136,6 +139,9 @@ impl<K, V> HashTable<K, V>
         let node = slot / self.local_size;
         let node_slot = slot - node * self.local_size;
         let mut used_ptr: GlobalPointer<i32> = self.used[node] + node_slot;
+
+        if node >= shmemx::n_pes() { panic!("HashTable::request_slot: node {} out of bound!", node); }
+        if node_slot >= self.local_size { panic!("HashTable::request_slot: node_slot {} out of bound!", node_slot); }
 
 //        println!("rank, node, node_slot, slot_status = {}, {}, {}, {}", shmemx::my_pe(), node,
 //                 node_slot, self.slot_status(slot));
