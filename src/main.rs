@@ -7,10 +7,12 @@ mod config;
 mod comm;
 mod array;
 mod hash_table;
+mod queue;
 use config::Config;
 use global_pointer::GlobalPointer;
 use array::Array;
 use hash_table::HashTable;
+use queue::Queue;
 
 fn main() {
     let mut config = Config::init(1);
