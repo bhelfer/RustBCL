@@ -36,20 +36,22 @@ fn main() {
     let mut hash_table = HashTable::<usize, char>::new(&mut config, 1024);
     config.barrier();
 
-    let key: usize = config.rank * 11;
+    let key: usize = config.rank;
     let value: char = char::from('a' as u8 + config.rank as u8);
-//        if config.rank == 0 {'a'} else {'b'};
 
     let mut success = hash_table.insert(&key, &value);
+    println!("insert success = {} by rank {}", success, shmemx::my_pe());
     config.barrier();
-    println!("insert success = {} on rank {}", success, shmemx::my_pe());
 
     let mut res: char = '\0';
-    success = hash_table.find(&key, &mut res);
-    if success {
-        println!("insert value {:?}, find value {:?} on rank {}", value, res, shmemx::my_pe());
-    } else {
-        println!("insert value {:?}, find nothing on rank {}", value, shmemx::my_pe());
+
+    for key in 0..config.rankn {
+        success = hash_table.find(&key, &mut res);
+        if success {
+            println!("find value {:?} by rank {}", res, shmemx::my_pe());
+        } else {
+            println!("find nothing by rank {}", shmemx::my_pe());
+        }
     }
 
     config.finalize();
