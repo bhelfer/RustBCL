@@ -1,7 +1,6 @@
 # RustBCL
 BCL in Rust
 
-<<<<<<< HEAD
 ## Meeting
 #### Apr. 12:
 TODO:
@@ -42,6 +41,3 @@ TODO:
 
 4. config.barrier does not work? or just println! is slow?
 - Issue posted.
-=======
-Understanding jy's code.
->>>>>>> 37f0e29578c025ed0ed8a049bdb6ec333821f073
