@@ -22,14 +22,14 @@ fn main() {
     }
 
     // array part
-//    let mut arr = Array::<char>::init(&mut config, rankn);
-//    arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
-//    config.barrier();
-//    if config.rank == 0 {
-//        for i in 0..config.rankn {
-//            println!("{}: {}", i, arr.read(i));
-//        }
-//    }
+    let mut arr = Array::<char>::init(&mut config, rankn);
+    arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
+    config.barrier();
+    if config.rank == 0 {
+        for i in 0..config.rankn {
+            println!("{}: {}", i, arr.read(i));
+        }
+    }
 
 
     // hashtable part
