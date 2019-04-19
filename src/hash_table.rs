@@ -28,16 +28,23 @@ impl<K, V> HashEntry<K, V>
     pub fn new(key: K, value: V) -> Self {
         Self { key, value }
     }
+
+    pub fn null() -> Self {
+        Self { key: Default::default(), value: Default::default() }
+    }
+
     pub fn set(&mut self, key: &K, value: &V) {
         self.key = key.clone();
         self.value = value.clone();
     }
+
     pub fn get_key(&self) -> K {
         self.key
     }
     pub fn get_value(&self) -> V {
         self.value
     }
+
 }
 
 type HT<K, V> = HashTable<K, V>;
@@ -79,10 +86,7 @@ impl<K, V> HashTable<K, V>
         hash_table[config.rank] = config.alloc::<HE<K, V>>(local_size);
         for i in 0..local_size {
             unsafe {
-                (hash_table[config.rank] + i).local().write(HashEntry::new(
-                    Default::default(),
-                    Default::default()
-                ));
+                (hash_table[config.rank] + i).local().write(HashEntry::null());
             }
         }
         for rank in 0..config.rankn {
@@ -189,6 +193,30 @@ impl<K, V> HashTable<K, V>
     }
 
     pub fn find(&self, key: &K, value: &mut V) -> bool {
-        false
+        let hash = self.get_hash(&key);
+
+        let mut probe: u64 = 0;
+        let mut success = false;
+
+        let mut entry: HashEntry<K, V> = HashEntry::null();
+
+        loop {
+            let slot: usize = ((hash + probe) % (self.global_size as u64)) as usize;
+            probe += 1;
+
+            if self.slot_status(slot) > 0 {
+                entry = self.get_entry(slot);
+                success = (entry.get_key() == *key);
+            }
+
+            if success || probe >= self.global_size as u64 { break; }
+        }
+
+        if success {
+            *value = entry.get_value();
+            return true;
+        } else {
+            return false;
+        }
     }
 }
