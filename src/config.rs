@@ -18,7 +18,7 @@ use std::mem::size_of;
   Since global mutable variable is a dangerous idea, so I use a struct and pass its reference to
 to every where it's needed.
 */
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct Config {
     pub shared_segment_size: usize,
     pub smem_base_ptr: *mut u8,
@@ -63,11 +63,11 @@ impl Config {
 		}
 	}
 
-    pub fn barrier(self) {
+    pub fn barrier(&self) {
         shmemx::barrier();
     }
 
-    pub fn finalize(self) {
+    pub fn finalize(&self) {
         shmemx::barrier();
         unsafe{shmemx::shmem_free(self.smem_base_ptr as *mut u8)};
         shmemx::finalize();
@@ -100,8 +100,8 @@ impl Config {
 }
 
 // not sure about Drop trait
-//impl Drop for Config {
-//    fn drop(&mut self) {
-//        self.finalize()
-//    }
-//}
+impl Drop for Config {
+    fn drop(&mut self) {
+        self.finalize()
+    }
+}
