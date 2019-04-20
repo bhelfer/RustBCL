@@ -32,7 +32,7 @@ TODO:
 - Done:
   - use `Config::alloc()` for initializing
   - implement only for `key: K`, `value: V` where K and V impl specific traits 
-  - implement atomic `HashTable<K, V>::insert()` which will update `value: V` if `key: K` is inserted before
+  - implement atomic `HashTable<K, V>::insert()`. It will update `value: V` if `key: K` is inserted before
   - implement `HashTable<K, V>::find()`
 
 ## Global Pointer:
