@@ -21,7 +21,7 @@ fn main() {
         return;
     }
 
-    // ----------- jack's part ------------
+    // ----------- jack's part -------------
     if config.rank == 0 { println!("------------Jack's test------------\n"); }
 
     let mut ptr1 = GlobalPointer::null();
