@@ -4,6 +4,7 @@ use shmemx;
 use global_pointer::GlobalPointer;
 use std::marker::PhantomData;
 use std::mem::size_of;
+use std::io::{stdout, Write};
 
 // simple alloc doesn't need these things
 // const SMALLEST_MEM_UNIT: usize = 64; // 64bytes
@@ -18,7 +19,7 @@ use std::mem::size_of;
   Since global mutable variable is a dangerous idea, so I use a struct and pass its reference to
 to every where it's needed.
 */
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct Config {
     pub shared_segment_size: usize,
     pub smem_base_ptr: *mut u8,
@@ -29,7 +30,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn init(shared_segment_size_m: usize) -> Config {
+    pub fn init(shared_segment_size_m: usize) -> Self {
         shmemx::init();
 
         let my_pe = shmemx::my_pe();
@@ -43,7 +44,7 @@ impl Config {
         let smem_heap = smem_base_ptr;
 
         shmemx::barrier();
-        Config {
+        Self {
             shared_segment_size, // count by bytes
             smem_base_ptr,
             rank: my_pe,
@@ -63,11 +64,13 @@ impl Config {
 		}
 	}
 
-    pub fn barrier(self) {
+    // changed to global method by lfz
+    pub fn barrier() {
         shmemx::barrier();
     }
 
-    pub fn finalize(self) {
+    // remove "public" by lfz
+    fn finalize(&self) {
         shmemx::barrier();
         unsafe{shmemx::shmem_free(self.smem_base_ptr as *mut u8)};
         shmemx::finalize();
@@ -99,9 +102,9 @@ impl Config {
     }
 }
 
-// not sure about Drop trait
-//impl Drop for Config {
-//    fn drop(&mut self) {
-//        self.finalize()
-//    }
-//}
+// deconstructor
+impl Drop for Config {
+    fn drop(&mut self) {
+        self.finalize()
+    }
+}

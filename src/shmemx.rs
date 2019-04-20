@@ -18,8 +18,9 @@ extern {
     pub fn shmem_broadcast64(target: *mut u64, source: *const u64, nelems: size_t, PE_root: c_int,
                              PE_start: c_int, logPE_stride: c_int, PE_size: c_int, pSync: *mut c_long); // how to denote *long?
     // added by lfz
-    pub fn shmem_int_cswap(target: *mut i32, cond: c_int, value: c_int, pe: c_int) -> i32;
-    pub fn shmem_int_finc(target: *mut i32, pe: c_int) -> i32;
+    pub fn shmem_int_cswap(target: *mut c_int, cond: c_int, value: c_int, pe: c_int) -> c_int;
+    pub fn shmem_long_cswap(target: *mut c_long, cond: c_long, value: c_long, pe: c_int) -> c_long;
+    pub fn shmem_int_finc(target: *mut c_int, pe: c_int) -> c_int;
 }
 
 pub static _SHMEM_SYNC_VALUE: c_long = -1;
@@ -55,6 +56,7 @@ pub fn barrier() {
         shmem_barrier_all();
     }
 }
+
 
 fn test_shmem() {
     // The statements here will be executed when the compiled binary is called

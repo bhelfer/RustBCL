@@ -40,16 +40,12 @@ pub fn broadcast<T>(val: &mut T, root: usize) {
 }
 
 // added by lfz
-pub fn int_compare_and_swap(ptr: &mut GlobalPointer<i32>, old_val: i32, new_val: i32) -> i32 {
-
-    println!("\nrank: {}, mype: {}", ptr.rank, shmemx::my_pe());
-    println!("ptr: {:?}", ptr);
-    println!("rptr: {:?}", ptr.rptr());
+pub fn int_compare_and_swap(ptr: &mut GlobalPointer<c_int>, old_val: c_int, new_val: c_int) -> c_int {
 
     let rank = ptr.rank;
     unsafe {
         shmemx::shmem_int_cswap(
-            ptr.rptr() as *mut i32,
+            ptr.rptr() as *mut c_int,
             old_val as c_int,
             new_val as c_int,
             rank as c_int
@@ -57,6 +53,21 @@ pub fn int_compare_and_swap(ptr: &mut GlobalPointer<i32>, old_val: i32, new_val:
     }
 }
 
+// added by lfz
+pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, new_val: c_long) -> c_long {
+
+    let rank = ptr.rank;
+    unsafe {
+        shmemx::shmem_long_cswap(
+            ptr.rptr() as *mut c_long,
+            old_val as c_long,
+            new_val as c_long,
+            rank as c_int
+        )
+    }
+}
+
+// added by lfz
 pub fn int_finc(ptr: &mut GlobalPointer<i32>) -> i32 {
     let rank = ptr.rank;
     unsafe {

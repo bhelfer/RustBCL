@@ -146,13 +146,13 @@ impl<T> ops::SubAssign<usize> for GlobalPointer<T> {
 }
 
 // overload operator[](right)
-// impl<T> ops::Index<usize> for GlobalPointer<T> {
-//     type Output = T;
-
-//     fn index(&self, i: usize) -> T {
-//         (self + i).rget()
-//     }
-// }
+//impl<T> ops::Index<usize> for GlobalPointer<T> {
+//    type Output = T;
+//
+//    fn index(&self, i: usize) -> &T {
+//        unsafe{ &((*self + i).rget()) }
+//    }
+//}
 
 //impl<T: GlobalPointable> ops::IndexMut<usize> for GlobalPointer<T> {
 //    fn index_mut(&mut self, i: usize) -> &mut T {
@@ -162,7 +162,7 @@ impl<T> ops::SubAssign<usize> for GlobalPointer<T> {
 
 // impl<T> ops::Deref for GlobalPointer<T> {
 //     type Target = T;
-
+//
 //     fn deref(&self) -> T {
 //         self.rget()
 //     }
