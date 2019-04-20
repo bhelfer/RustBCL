@@ -137,22 +137,10 @@ impl<K, V> HashTable<K, V>
     }
 
     fn get_entry(&self, slot: usize) -> HE<K, V> {
-        let node = slot / self.local_size;
-        let node_slot = slot - node * self.local_size;
-
-        if node >= shmemx::n_pes() { panic!("HashTable::get_entry: node {} out of bound!", node); }
-        if node_slot >= self.local_size { panic!("HashTable::get_entry: node_slot {} out of bound!", node_slot); }
-
         self.slot_entry_ptr(slot).rget()
     }
 
     fn set_entry(&self, slot: usize, entry: &HE<K, V>) {
-        let node = slot / self.local_size;
-        let node_slot = slot - node * self.local_size;
-
-        if node >= shmemx::n_pes() { panic!("HashTable::set_entry: node {} out of bound!", node); }
-        if node_slot >= self.local_size { panic!("HashTable::set_entry: node_slot {} out of bound!", node_slot); }
-
         self.slot_entry_ptr(slot).rput(*entry);
     }
 
