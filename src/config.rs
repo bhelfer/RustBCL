@@ -4,6 +4,7 @@ use shmemx;
 use global_pointer::GlobalPointer;
 use std::marker::PhantomData;
 use std::mem::size_of;
+use std::io::{stdout, Write};
 
 // simple alloc doesn't need these things
 // const SMALLEST_MEM_UNIT: usize = 64; // 64bytes
@@ -63,11 +64,13 @@ impl Config {
 		}
 	}
 
-    pub fn barrier(&self) {
+    // changed to global method by lfz
+    pub fn barrier() {
         shmemx::barrier();
     }
 
-    pub fn finalize(&self) {
+    // remove "public" by lfz
+    fn finalize(&self) {
         shmemx::barrier();
         unsafe{shmemx::shmem_free(self.smem_base_ptr as *mut u8)};
         shmemx::finalize();

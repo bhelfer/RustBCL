@@ -7,15 +7,17 @@ mod config;
 mod comm;
 mod array;
 mod hash_table;
+mod utils;
 use config::Config;
 use global_pointer::GlobalPointer;
 use array::Array;
 use hash_table::HashTable;
+use utils::Buf;
 
 fn main() {
+
     let mut config = Config::init(1);
     let rankn = config.rankn;
-    config.barrier();
 
     if config.rankn < 2 {
         return;
@@ -35,7 +37,7 @@ fn main() {
 
     // write value
     (ptr1 + config.rank).rput(config.rank as i32);
-    config.barrier();
+    Config::barrier();
 
     let mut value;
     if config.rank == 0 {
@@ -47,10 +49,11 @@ fn main() {
             println!("{}: {}", i, value);
         }
     }
-    config.barrier();
+
+    Config::barrier();
     // barrier not work TaT, or just println! is slow?
     println!("barrier1, rank{}!", config.rank);
-    config.barrier();
+    Config::barrier();
 
     if config.rank == 1 {
         println!("Rank 1 Sees: ");
@@ -59,7 +62,8 @@ fn main() {
             println!("{}: {}", i, value);
         }
     }
-    config.barrier();
+
+    Config::barrier();
 
     if config.rank == 0 {
         config.free(ptr1);
@@ -70,7 +74,9 @@ fn main() {
 
     let mut arr = Array::<char>::init(&mut config, rankn);
     arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
-    config.barrier();
+
+    Config::barrier();
+
     if config.rank == 0 {
         for i in 0..config.rankn {
             println!("{}: {}", i, arr.read(i));
@@ -81,17 +87,19 @@ fn main() {
     if config.rank == 0 { println!("\n\n------------HashTable's test------------\n"); }
 
     let mut hash_table = HashTable::<usize, char>::new(&mut config, 1024);
-    config.barrier();
 
     let key: usize = config.rank;
+    let value  = [char::from('a' as u8 + config.rank as u8), char::from('A' as u8 + config.rank as u8)];
 
-    let value: char = char::from('a' as u8 + config.rank as u8);
-    let mut success = hash_table.insert(&key, &value);
-    println!("key is {}, val is {}, insert success = {} by rank {}", key, value, success, shmemx::my_pe());
-    success = hash_table.insert(&key, &value);
-    println!("key is {}, val is {}, insert success = {} by rank {}", key, value, success, shmemx::my_pe());
+    let mut success = false;
 
-    config.barrier();
+    // Testing for Updating like "hash_table[key] = value"
+    for i in 0..2 {
+        success = hash_table.insert(&key, &value[i]);
+        println!("key is {}, val is {}, insert success = {} by rank {}", key, value[i], success, shmemx::my_pe());
+    }
+
+    Config::barrier();
 
     let mut res: char = '\0';
     for key in 0..(config.rankn + 1) {

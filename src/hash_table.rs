@@ -14,6 +14,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::fmt::Debug;
 use std::ptr::null;
 use std::mem::size_of;
+use shmemx::libc::{c_long, c_void, c_int};
 
 #[derive(Debug, Copy, Clone)]
 struct HashEntry<K, V> {
@@ -49,13 +50,17 @@ impl<K, V> HashEntry<K, V>
 
 type HT<K, V> = HashTable<K, V>;
 type HE<K, V> = HashEntry<K, V>;
+type U = c_long;
 
 #[derive(Debug, Clone)]
 pub struct HashTable<K, V> {
     global_size: usize,
     local_size: usize,
     hash_table: Vec<GlobalPointer<HE<K, V>>>,
-    used: Vec<GlobalPointer<i32>>,
+    used: Vec<GlobalPointer<U>>,
+    free_flag: U, // empty slot
+    reserved_flag: U, // writing slot
+    ready_flag: U, // finish slot
 }
 
 impl<K, V> HashTable<K, V>
@@ -66,39 +71,48 @@ impl<K, V> HashTable<K, V>
         let local_size = (size + config.rankn - 1) / config.rankn;
         let global_size = local_size * config.rankn;
 
+        let free_flag: U = 0;
+        let reserved_flag: U = 1;
+        let ready_flag: U = 2;
+
         // used record GlobalPointer
-        let mut used: Vec<GlobalPointer<i32>> = Vec::new();
+        let mut used: Vec<GlobalPointer<U>> = Vec::new();
         used.resize(config.rankn, GlobalPointer::null());
-        used[config.rank] = config.alloc::<i32>(local_size);
+        used[config.rank] = config.alloc::<U>(local_size);
         for i in 0..local_size {
-            unsafe {
-                (used[config.rank] + i).local().write(0);
-            }
+            (used[config.rank] + i).rput(free_flag);
+//            unsafe {
+//                (used[config.rank] + i).local().write(free_flag);
+//            }
         }
         for rank in 0..config.rankn {
             comm::broadcast(&mut used[rank], rank);
         }
-        config.barrier();
+        Config::barrier();
 
         // hash entry GlobalPointer
         let mut hash_table: Vec<GlobalPointer<HE<K, V>>> = Vec::new();
         hash_table.resize(config.rankn, GlobalPointer::null());
         hash_table[config.rank] = config.alloc::<HE<K, V>>(local_size);
         for i in 0..local_size {
-            unsafe {
-                (hash_table[config.rank] + i).local().write(HashEntry::null());
-            }
+            (hash_table[config.rank] + i).rput(HashEntry::null());
+//            unsafe {
+//                (hash_table[config.rank] + i).local().write(HashEntry::null());
+//            }
         }
         for rank in 0..config.rankn {
             comm::broadcast(&mut hash_table[rank], rank);
         }
-        config.barrier();
+        Config::barrier();
 
         Self {
             global_size,
             local_size,
             hash_table,
             used,
+            free_flag,
+            reserved_flag,
+            ready_flag,
         }
     }
 
@@ -112,7 +126,7 @@ impl<K, V> HashTable<K, V>
         (self.hash_table[node] + node_slot)
     }
 
-    fn slot_used_ptr(&self, slot: usize) -> GlobalPointer<i32> {
+    fn slot_used_ptr(&self, slot: usize) -> GlobalPointer<U> {
         let node = slot / self.local_size;
         let node_slot = slot - node * self.local_size;
 
@@ -132,7 +146,6 @@ impl<K, V> HashTable<K, V>
         self.slot_entry_ptr(slot).rget()
     }
 
-
     fn set_entry(&self, slot: usize, entry: &HE<K, V>) {
         let node = slot / self.local_size;
         let node_slot = slot - node * self.local_size;
@@ -143,31 +156,70 @@ impl<K, V> HashTable<K, V>
         self.slot_entry_ptr(slot).rput(*entry);
     }
 
-
-    fn slot_status(&self, slot: usize) -> i32 {
+    fn slot_status(&self, slot: usize) -> U {
         self.slot_used_ptr(slot).rget()
+    }
+
+    fn make_ready_slot(&self, slot: usize) {
+        let mut used_ptr: GlobalPointer<U> = self.slot_used_ptr(slot);
+        let used_val = comm::long_compare_and_swap(
+            &mut used_ptr,
+            self.reserved_flag,
+            self.ready_flag
+        );
+        // TODO: if we fix updates to atomic, cannot be ready_flag
+        if !(used_val == self.reserved_flag || used_val == self.ready_flag) {
+            panic!("HashMap forqs: used flag was somehow corrupted (-> ready_flag). \
+                    got {} at node {}", used_val, slot / self.local_size);
+        }
     }
 
     /* Request slot for key. If slot's free, take it.
        If slot's taken (ready_flag), reserve it (reserve_flag),
        so that you can write to it. */
-    fn request_slot(&self, slot: usize) -> bool {
+    fn request_slot(&self, slot: usize, key: &K) -> bool {
 
-        let mut used_ptr: GlobalPointer<i32> = self.slot_used_ptr(slot);
+        let mut used_ptr: GlobalPointer<U> = self.slot_used_ptr(slot);
+        let mut used_val: c_long = self.free_flag;
+        /* If someone is currently inserting into this slot (reserved_flag), wait
+         until they're finished to proceed. */
+        loop {
+            // TODO: possibly optimize subsequent CASs to rget's
+            used_val = comm::long_compare_and_swap(
+                &mut used_ptr,
+                self.free_flag,
+                self.reserved_flag
+            );
+            if used_val != self.reserved_flag { break; }
+        }
+        /* used_val is ready_flag (*used_ptr is ready_flag) or
+         free_flag (*used_ptr is now reserved_flag) */
+        if !(used_val == self.free_flag || used_val == self.ready_flag) {
+            panic!("HashMap forqs: used flag was somehow corrupted (-> reserved_flag). \
+                    got {} at node {}", used_val, slot / self.local_size);
+        }
 
-//        println!("rank, node, node_slot, slot_status = {}, {}, {}, {}", shmemx::my_pe(), node,
-//                 node_slot, self.slot_status(slot));
-//        println!("used_ptr: {:?}", used_ptr);
-//        println!("offset: 0x{:x}", used_ptr.offset * size_of::<i32>());
-
-
-//        Why compare & swap lead to error ???
-//        let origin = comm::int_compare_and_swap(&mut used_ptr, 0, 1);
-
-
-        // use fetch & inc instead
-        let origin = comm::int_finc(&mut used_ptr);
-        if origin > 0 { false } else { true }
+        if used_val == self.ready_flag {
+            // slot inserted
+            if self.get_entry(slot).get_key() == *key {
+                // if to update inserted HashEntry<K, V>
+                loop {
+                    used_val = comm::long_compare_and_swap(
+                        &mut used_ptr,
+                        self.ready_flag,
+                        self.reserved_flag
+                    );
+                    if used_val == self.ready_flag { break; }
+                }
+                return true;
+            } else {
+                // not to update, request fail
+                return false;
+            }
+        } else {
+            // slot free
+            return true;
+        }
     }
 
     fn get_hash(&self, key: &K) -> u64 {
@@ -188,18 +240,15 @@ impl<K, V> HashTable<K, V>
             let slot: usize = ((hash + probe) % (self.global_size as u64)) as usize;
             probe += 1;
 
-            println!("(cur, dst) = {}, {}, Requesting slot {}, key = {:?}", shmemx::my_pe(), slot / self.local_size, slot, key);
+            println!("HashTable::insert: (cur, dst) = {}, {}, Requesting slot {}, key = {:?}", shmemx::my_pe(), slot / self.local_size, slot, key);
 
-            success = self.request_slot(slot);
+            success = self.request_slot(slot, &key);
 
             if success {
                 let mut entry: HE<K, V> = self.get_entry(slot);
                 entry.set(&key, &value);
                 self.set_entry(slot, &entry);
-
-                if self.slot_status(slot) == 0 {
-                    panic!("HashTable::insert: Bad slot({}) status", slot);
-                }
+                self.make_ready_slot(slot);
             }
 
             if success || probe >= self.global_size as u64 { break; }
@@ -215,17 +264,20 @@ impl<K, V> HashTable<K, V>
         let mut success = false;
 
         let mut entry: HashEntry<K, V> = HashEntry::null();
+        let mut status: U;
 
         loop {
             let slot: usize = ((hash + probe) % (self.global_size as u64)) as usize;
-            probe += 1;
 
-            if self.slot_status(slot) > 0 {
+            probe += 1;
+            status = self.slot_status(slot);
+
+            if status == self.ready_flag {
                 entry = self.get_entry(slot);
                 success = (entry.get_key() == *key);
             }
 
-            if success || probe >= self.global_size as u64 { break; }
+            if success || status == self.free_flag || probe >= self.global_size as u64 { break; }
         }
 
         if success {
@@ -236,3 +288,7 @@ impl<K, V> HashTable<K, V>
         }
     }
 }
+
+//        let origin: i32 = comm::long_compare_and_swap(&mut used_ptr, 0, 1);
+//        let origin = comm::int_finc(&mut used_ptr);
+//        let origin = comm::int_compare_and_swap(&mut used_ptr, 0, 1);
