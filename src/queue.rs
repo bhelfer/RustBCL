@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 #![allow(unused)]
+
 use global_pointer;
 use comm;
 use config;
@@ -12,72 +13,97 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 // Circular Queue
+#[derive(Debug, Clone)]
 pub struct Queue<T> {
-    pub len: usize,
-    array: Array<T>,
+    local_size: usize,
+    ptrs: Vec<GlobalPointer<T>>,
     capacity: usize,
     tail_ptr: GlobalPointer<i32>,
     head_ptr: GlobalPointer<i32>,
-//    add_mutex: AtomicBool,
-//    remove_mutex: AtomicBool,
 }
 
-impl<'a, T: Clone> Queue<T> {
-    pub fn new(mut config: &mut Config) -> Queue<T> {
-        let rankn = config.rankn;
-        let size: usize = 100;
-        let mut array = Array::<T>::init(&mut config, size);
+impl<'a, T: Clone + Copy + Default> Queue<T> {
+    pub fn new(config: &mut Config, n: usize) -> Queue<T> {
         let mut tail_ptr = config.alloc::<i32>(1);
         let mut head_ptr = config.alloc::<i32>(1);
-        unsafe {
-            tail_ptr.local().write(0);
-            head_ptr.local().write(0);
+        if config.rank == 0 {
+            unsafe {
+                tail_ptr.local().write(0);
+                head_ptr.local().write(0);
+            }
         }
-        for rank in 0..config.rank {
-            comm::broadcast(&mut tail_ptr, rank);
-            comm::broadcast(&mut head_ptr, rank);
+        comm::broadcast(&mut tail_ptr, 0);
+        comm::broadcast(&mut head_ptr, 0);
+
+        let mut ptrs: Vec<GlobalPointer<T>> = Vec::new();
+        ptrs.resize(config.rankn, GlobalPointer::null());
+        let mut local_size = (n + shmemx::n_pes() - 1) / config.rankn;
+        ptrs[config.rank] = config.alloc::<T>(local_size);
+        for rank in 0..config.rankn {
+            comm::broadcast(&mut ptrs[rank], rank);
         }
-        config.barrier();
-        Queue{len: 0, array: array, capacity: rankn, tail_ptr: tail_ptr, head_ptr: head_ptr}
+        Queue { ptrs: ptrs, capacity: n, tail_ptr: tail_ptr, head_ptr: head_ptr, local_size: local_size }
+
     }
 
-    // TODO flexible size
+    fn get_pointer(&self, global_idx: usize) -> GlobalPointer<T> {
+        let rank = global_idx / self.local_size;
+        let local_idx = global_idx - rank * self.local_size;
+        (self.ptrs[rank] + local_idx)
+    }
+
+
     pub fn add(&mut self, data: T) -> bool {
-//        let mut tail_ptr = self.tail_ptr;
-        let tail = comm::int_finc(&mut self.tail_ptr);
-        let head = self.head_ptr.rget();
-        if tail - head > self.capacity as i32 {
+        let mut tail = comm::int_finc(&mut self.tail_ptr) as usize;
+        let head = self.head_ptr.rget() as usize;
+        if tail - head > self.capacity {
             panic!("The buffer is full!");
             return false;
         }
-        self.array.write(data, ((tail - 1) as usize) % self.capacity);
-        self.len += 1;
+        tail = tail % self.capacity;
+        let rank = tail / self.local_size;
+        let local_idx = tail - rank * self.local_size;
+//        println!("Add elemetn: tail: {}, rank :{}, local_idx: {}", tail, rank, local_idx);
+        (self.ptrs[rank] + local_idx).rput(data);
         return true;
     }
 
-    pub fn peek(&self) -> Result<T, &str> {
-        if self.len > 0 {
-            Ok(self.array.read(self.head_ptr.rget() as usize))
-        } else {
+    pub fn remove(&mut self) -> Result<T, &str> {
+        let mut head = comm::int_finc(&mut self.head_ptr) as usize;
+        let tail = self.tail_ptr.rget() as usize;
+
+        if tail <= head { // TODO test
             Err("The buffer is empty!")
+        } else {
+            head = head % self.capacity;
+            let rank = head / self.local_size;
+            let local_idx = head - rank * self.local_size;
+//            println!("Remove elemetn: head: {}, rank :{}, local_idx: {}", head, rank, local_idx);
+            Ok((self.ptrs[rank] + local_idx).rget())
         }
     }
 
-    pub fn remove(&mut self) -> Result<T, &str> {
-//        let lock = Arc::new(AtomicBool::new(false));
-//        while lock.compare_and_swap(false, true, Ordering::Acquire) { }
-//        while self.remove_mutex.load(Ordering::Acquire) {}
-//        *self.remove_mutex.get_mut() = true;
-        if self.len > 0 {
-            let head = comm::int_finc(&mut self.head_ptr);
-            self.len -= 1;
-//            lock.store(false, Ordering::Release);
-//            *self.remove_mutex.get_mut() = false;
-            Ok(self.array.read((self.head_ptr.rget() - 1) as usize))
-        } else {
-//            lock.store(false, Ordering::Release);
-//            *self.remove_mutex.get_mut() = false;
+    pub fn peek(&self) -> Result<T, &str> {
+        let mut head = self.head_ptr.rget() as usize;
+        let tail = self.tail_ptr.rget() as usize;
+
+        if tail <= head { // TODO test
             Err("The buffer is empty!")
+        } else {
+            head = head % self.capacity;
+            let rank = head / self.local_size;
+            let local_idx = head - rank * self.local_size;
+            Ok((self.ptrs[rank] + local_idx).rget())
         }
+    }
+
+    pub fn len(&self) -> usize {
+        let head = self.head_ptr.rget();
+        let tail = self.tail_ptr.rget();
+        return (tail - head) as usize
+    }
+
+    pub fn capacity(&self) ->usize {
+        self.capacity
     }
 }
