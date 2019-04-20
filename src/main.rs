@@ -7,12 +7,10 @@ mod config;
 mod comm;
 mod array;
 mod hash_table;
-mod utils;
 use config::Config;
 use global_pointer::GlobalPointer;
 use array::Array;
 use hash_table::HashTable;
-use utils::Buf;
 
 fn main() {
 
@@ -96,7 +94,9 @@ fn main() {
     // Testing for Updating like "hash_table[key] = value"
     for i in 0..2 {
         success = hash_table.insert(&key, &value[i]);
+        Config::barrier();
         println!("key is {}, val is {}, insert success = {} by rank {}", key, value[i], success, shmemx::my_pe());
+        Config::barrier();
     }
 
     Config::barrier();
