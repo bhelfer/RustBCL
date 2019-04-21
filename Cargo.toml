@@ -4,4 +4,4 @@ version = "0.0.1"
 
 [dependencies]
 libc = "0.2.51"
-rand = "0.3.14"
+rand = "0.6"

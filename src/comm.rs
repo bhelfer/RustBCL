@@ -57,9 +57,10 @@ pub fn int_compare_and_swap(ptr: &mut GlobalPointer<c_int>, old_val: c_int, new_
 pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, new_val: c_long) -> c_long {
 
     let rank = ptr.rank;
+    let rptr = ptr.rptr();
     unsafe {
         shmemx::shmem_long_cswap(
-            ptr.rptr() as *mut c_long,
+            rptr as *mut c_long,
             old_val as c_long,
             new_val as c_long,
             rank as c_int
