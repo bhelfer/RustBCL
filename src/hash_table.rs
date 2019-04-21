@@ -257,7 +257,9 @@ impl<K, V> HashTable<K, V>
             success = self.request_slot(slot, &key, &value);
 
             if success {
+                println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Setting slot {} pos 1", shmemx::my_pe(), key, value, slot);
                 let mut entry: HE<K, V> = self.get_entry(slot);
+                println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Setting slot {} pos 2", shmemx::my_pe(), key, value, slot);
                 entry.set(&key, &value);
                 self.set_entry(slot, &entry);
                 self.make_ready_slot(slot, &key, &value);
@@ -326,7 +328,7 @@ pub mod tests {
         let rankn: i64 = config.rankn as i64;
         let rank: i64 = config.rank as i64;
 
-        let n: i64 = 50;
+        let n: i64 = 1000;
 
         let mut hash_table_ref: HashMap<i64, i64> = HashMap::new();
         let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(&mut config, 100000);
@@ -345,7 +347,6 @@ pub mod tests {
         let mut rng: StdRng = SeedableRng::from_seed([233; 32]);
 
         for i in 0 .. n {
-
             if rank == 0 {
                 k_ptr.rput(rng.gen_range(-n, n));
                 v_ptr.rput(rng.gen_range(-n, n));
