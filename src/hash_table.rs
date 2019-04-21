@@ -17,6 +17,7 @@ use std::ptr::null;
 use std::mem::size_of;
 use shmemx::libc::{c_long, c_void, c_int};
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::io::{stdout, Write};
 
 #[derive(Debug, Copy, Clone)]
 struct HashEntry<K, V> {
@@ -139,7 +140,12 @@ impl<K, V> HashTable<K, V>
     }
 
     fn get_entry(&self, slot: usize) -> HE<K, V> {
-        self.slot_entry_ptr(slot).rget()
+        println!("HashTable({})::get_entry slot {} enter", shmemx::my_pe(), slot);
+        let mut entry_ptr = self.slot_entry_ptr(slot);
+        println!("HashTable({})::get_entry slot {} middle", shmemx::my_pe(), slot);
+        let ret = entry_ptr.rget();
+        println!("HashTable({})::get_entry slot {} leave", shmemx::my_pe(), slot);
+        ret
     }
 
     fn set_entry(&self, slot: usize, entry: &HE<K, V>) {
@@ -148,6 +154,7 @@ impl<K, V> HashTable<K, V>
 
     fn slot_status(&self, slot: usize) -> U {
         self.slot_used_ptr(slot).rget()
+//        comm::long_atomic_fetch(&mut self.slot_used_ptr(slot))
     }
 
     fn check_slot(&self, slot: usize) {
@@ -187,17 +194,17 @@ impl<K, V> HashTable<K, V>
         /* If someone is currently inserting into this slot (reserved_flag), wait
          until they're finished to proceed. */
         loop {
-
             if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().subsec_nanos() % 500009 == 0 {
                 println!("HashTable({})::request_slot (k, v) = ({:?}, {:?}) in loop 1", shmemx::my_pe(), key, value);
             }
-
             // TODO: possibly optimize subsequent CASs to rget's
             used_val = comm::long_compare_and_swap(
                 &mut used_ptr,
                 self.free_flag,
                 self.reserved_flag
             );
+
+
             if used_val != self.reserved_flag { break; }
         }
         /* used_val is ready_flag (*used_ptr is ready_flag) or
@@ -218,6 +225,7 @@ impl<K, V> HashTable<K, V>
                         self.ready_flag,
                         self.reserved_flag
                     );
+
 
                     if used_val == self.ready_flag { break; }
                 }
@@ -258,11 +266,16 @@ impl<K, V> HashTable<K, V>
 
             if success {
                 println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Setting slot {} pos 1", shmemx::my_pe(), key, value, slot);
+
                 let mut entry: HE<K, V> = self.get_entry(slot);
+
                 println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Setting slot {} pos 2", shmemx::my_pe(), key, value, slot);
                 entry.set(&key, &value);
+
                 self.set_entry(slot, &entry);
+
                 self.make_ready_slot(slot, &key, &value);
+
                 self.check_slot(slot);
             }
 
@@ -279,7 +292,7 @@ impl<K, V> HashTable<K, V>
         let mut probe: u64 = 0;
         let mut success = false;
 
-        let mut entry: HashEntry<K, V> = HashEntry::null();
+        let mut entry: HE<K, V> = HashEntry::null();
         let mut status: U;
 
         loop {
@@ -328,7 +341,7 @@ pub mod tests {
         let rankn: i64 = config.rankn as i64;
         let rank: i64 = config.rank as i64;
 
-        let n: i64 = 1000;
+        let n: i64 = 5000;
 
         let mut hash_table_ref: HashMap<i64, i64> = HashMap::new();
         let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(&mut config, 100000);

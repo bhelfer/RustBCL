@@ -57,10 +57,9 @@ pub fn int_compare_and_swap(ptr: &mut GlobalPointer<c_int>, old_val: c_int, new_
 pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, new_val: c_long) -> c_long {
 
     let rank = ptr.rank;
-    let rptr = ptr.rptr();
     unsafe {
-        shmemx::shmem_long_cswap(
-            rptr as *mut c_long,
+        shmemx::shmem_long_atomic_compare_swap(
+            ptr.rptr() as *mut c_long,
             old_val as c_long,
             new_val as c_long,
             rank as c_int
@@ -72,9 +71,26 @@ pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, n
 pub fn int_finc(ptr: &mut GlobalPointer<i32>) -> i32 {
     let rank = ptr.rank;
     unsafe {
-        shmemx::shmem_int_finc(
+        shmemx::shmem_int_atomic_fetch_inc(
             ptr.rptr() as *mut i32,
             rank as c_int
         )
+    }
+}
+
+// added by lfz
+
+pub fn long_atomic_fetch(ptr: &mut GlobalPointer<c_long>) -> c_long {
+    unsafe {
+        shmemx::shmem_long_atomic_fetch(
+            ptr.rptr() as *const c_long,
+            ptr.rank as c_int
+        )
+    }
+}
+
+pub fn fence() {
+    unsafe {
+        shmemx::shmem_fence();
     }
 }

@@ -99,7 +99,6 @@ fn main() {
     let value  = [char::from('a' as u8), char::from('A' as u8)];
 //    let key: usize = config.rank;
 //    let value  = [char::from('a' as u8 + config.rank as u8), char::from('A' as u8 + config.rank as u8)];
-
     let mut success = false;
 
     // Testing for Updating like "hash_table[key] = value"
