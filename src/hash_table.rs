@@ -88,6 +88,7 @@ impl<K, V> HashTable<K, V>
 //                (used[config.rank] + i).local().write(free_flag);
 //            }
         }
+        Config::barrier();
         for rank in 0 .. config.rankn {
             comm::broadcast(&mut used[rank], rank);
         }
@@ -103,6 +104,7 @@ impl<K, V> HashTable<K, V>
 //                (hash_table[config.rank] + i).local().write(HashEntry::null());
 //            }
         }
+        Config::barrier();
         for rank in 0 .. config.rankn {
             comm::broadcast(&mut hash_table[rank], rank);
         }
@@ -153,23 +155,15 @@ impl<K, V> HashTable<K, V>
     }
 
     fn slot_status(&self, slot: usize) -> U {
-        self.slot_used_ptr(slot).rget()
-//        comm::long_atomic_fetch(&mut self.slot_used_ptr(slot))
-    }
-
-    fn check_slot(&self, slot: usize) {
-        let used_val = self.slot_status(slot);
-        if used_val != self.ready_flag {
-            panic!("HashTable forqs: used flag was somehow corrupted (-> ready_flag). \
-                    got {} at node {}", used_val, slot / self.local_size);
-        }
+//        self.slot_used_ptr(slot).rget()
+        comm::long_atomic_fetch(&mut self.slot_used_ptr(slot))
     }
 
     fn make_ready_slot(&self, slot: usize, key: &K, value: &V) {
         let mut used_ptr: GlobalPointer<U> = self.slot_used_ptr(slot);
         println!("HashTable({})::make_ready_slot (k, v) = ({:?}, {:?}) pos 2", shmemx::my_pe(), key, value);
 
-        let used_val: c_long = comm::long_compare_and_swap(
+        let used_val: U = comm::long_compare_and_swap(
             &mut used_ptr,
             self.reserved_flag,
             self.ready_flag
@@ -190,7 +184,7 @@ impl<K, V> HashTable<K, V>
     fn request_slot(&self, slot: usize, key: &K, value: &V) -> bool {
 
         let mut used_ptr: GlobalPointer<U> = self.slot_used_ptr(slot);
-        let mut used_val: c_long = self.free_flag;
+        let mut used_val: U = self.free_flag;
         /* If someone is currently inserting into this slot (reserved_flag), wait
          until they're finished to proceed. */
         loop {
@@ -203,8 +197,6 @@ impl<K, V> HashTable<K, V>
                 self.free_flag,
                 self.reserved_flag
             );
-
-
             if used_val != self.reserved_flag { break; }
         }
         /* used_val is ready_flag (*used_ptr is ready_flag) or
@@ -225,8 +217,6 @@ impl<K, V> HashTable<K, V>
                         self.ready_flag,
                         self.reserved_flag
                     );
-
-
                     if used_val == self.ready_flag { break; }
                 }
             } else {
@@ -235,7 +225,6 @@ impl<K, V> HashTable<K, V>
             }
         } else {
             // slot free
-
         }
 
         println!("HashTable({})::request_slot (k, v) = ({:?}, {:?}) leave with {}", shmemx::my_pe(), key, value, return_flag);
@@ -261,10 +250,12 @@ impl<K, V> HashTable<K, V>
             probe += 1;
 
             println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Requesting slot {}", shmemx::my_pe(), key, value, slot);
-
+            
             success = self.request_slot(slot, &key, &value);
+            assert_eq!(self.slot_status(slot), self.reserved_flag);
 
             if success {
+
                 println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Setting slot {} pos 1", shmemx::my_pe(), key, value, slot);
 
                 let mut entry: HE<K, V> = self.get_entry(slot);
@@ -275,8 +266,8 @@ impl<K, V> HashTable<K, V>
                 self.set_entry(slot, &entry);
 
                 self.make_ready_slot(slot, &key, &value);
+                assert_ne!(self.slot_status(slot), self.free_flag);
 
-                self.check_slot(slot);
             }
 
             if success || probe >= self.global_size as u64 { break; }
@@ -341,10 +332,11 @@ pub mod tests {
         let rankn: i64 = config.rankn as i64;
         let rank: i64 = config.rank as i64;
 
-        let n: i64 = 5000;
+        let n: i64 = 100000;
+        let m: i64 = 1000;
 
         let mut hash_table_ref: HashMap<i64, i64> = HashMap::new();
-        let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(&mut config, 100000);
+        let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(&mut config, (n*2) as usize);
 
         let mut k_ptr: GlobalPointer<i64> = GlobalPointer::null();
         let mut v_ptr: GlobalPointer<i64> = GlobalPointer::null();
@@ -361,8 +353,8 @@ pub mod tests {
 
         for i in 0 .. n {
             if rank == 0 {
-                k_ptr.rput(rng.gen_range(-n, n));
-                v_ptr.rput(rng.gen_range(-n, n));
+                k_ptr.rput(rng.gen_range(-m, m));
+                v_ptr.rput(rng.gen_range(-m, m));
             }
             Config::barrier();
 
@@ -378,9 +370,7 @@ pub mod tests {
             Config::barrier();
         }
 
-        Config::barrier();
-
-        for i in -n .. n {
+        for i in -m .. m {
             if (rank - i) % rankn == 0 {
                 let v_ref = hash_table_ref.get(&i);
                 let v_ref = match v_ref {
@@ -406,3 +396,12 @@ pub mod tests {
         }
     }
 }
+
+
+//    fn check_slot(&self, slot: usize) {
+//        let used_val = self.slot_status(slot);
+//        if used_val != self.ready_flag {
+//            panic!("HashTable forqs: used flag was somehow corrupted (-> ready_flag). \
+//                    got {} at node {}", used_val, slot / self.local_size);
+//        }
+//    }

@@ -94,3 +94,9 @@ pub fn fence() {
         shmemx::shmem_fence();
     }
 }
+
+pub fn quiet() {
+    unsafe {
+        shmemx::shmem_quiet();
+    }
+}

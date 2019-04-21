@@ -29,10 +29,12 @@ extern {
 
     // added by lfz
     pub fn shmem_fence();
+    pub fn shmem_quiet();
 }
 
 pub static _SHMEM_SYNC_VALUE: c_long = -1;
 pub static _SHMEM_BCAST_SYNC_SIZE: usize = 2;
+
 pub fn init() {
     unsafe {
         shmem_init();
