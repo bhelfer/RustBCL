@@ -79,13 +79,13 @@ impl<K, V> HashTable<K, V>
         let mut used: Vec<GlobalPointer<U>> = Vec::new();
         used.resize(config.rankn, GlobalPointer::null());
         used[config.rank] = config.alloc::<U>(local_size);
-        for i in 0..local_size {
+        for i in 0 .. local_size {
             (used[config.rank] + i).rput(free_flag);
 //            unsafe {
 //                (used[config.rank] + i).local().write(free_flag);
 //            }
         }
-        for rank in 0..config.rankn {
+        for rank in 0 .. config.rankn {
             comm::broadcast(&mut used[rank], rank);
         }
         Config::barrier();
@@ -94,13 +94,13 @@ impl<K, V> HashTable<K, V>
         let mut hash_table: Vec<GlobalPointer<HE<K, V>>> = Vec::new();
         hash_table.resize(config.rankn, GlobalPointer::null());
         hash_table[config.rank] = config.alloc::<HE<K, V>>(local_size);
-        for i in 0..local_size {
+        for i in 0 .. local_size {
             (hash_table[config.rank] + i).rput(HashEntry::null());
 //            unsafe {
 //                (hash_table[config.rank] + i).local().write(HashEntry::null());
 //            }
         }
-        for rank in 0..config.rankn {
+        for rank in 0 .. config.rankn {
             comm::broadcast(&mut hash_table[rank], rank);
         }
         Config::barrier();
@@ -280,3 +280,82 @@ impl<K, V> HashTable<K, V>
 //        let origin: i32 = comm::long_compare_and_swap(&mut used_ptr, 0, 1);
 //        let origin = comm::int_finc(&mut used_ptr);
 //        let origin = comm::int_compare_and_swap(&mut used_ptr, 0, 1);
+
+
+#[cfg(test)]
+mod tests {
+
+    extern crate rand;
+    use std::collections::HashMap;
+    use hash_table::HashTable;
+    use config::Config;
+    use self::rand::{thread_rng, Rng, random};
+    use global_pointer::GlobalPointer;
+    use comm;
+
+    #[test]
+    fn same_entry_test() {
+
+        let mut config = Config::init(32);
+        let rankn: i64 = config.rankn as i64;
+        let rank: i64 = config.rank as i64;
+
+        let n: i64 = 1000;
+
+        let mut hash_table_ref: HashMap<i64, i64> = HashMap::new();
+        let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(&mut config, 100000);
+
+        let mut k_ptr: GlobalPointer<i64> = GlobalPointer::null();
+        let mut v_ptr: GlobalPointer<i64> = GlobalPointer::null();
+        k_ptr = config.alloc::<i64>(1);
+        v_ptr = config.alloc::<i64>(1);
+
+        Config::barrier();
+
+        let mut rng = thread_rng();
+
+        for _ in 0 .. n {
+            if rank == 0 {
+                k_ptr.rput(rng.gen_range(-n, n));
+                v_ptr.rput(rng.gen_range(-n, n));
+            }
+
+            let key = k_ptr.rget();
+            let value = v_ptr.rget();
+
+            // all PE
+            hash_table_lfz.insert(&key, &value);
+
+            // PE 0
+            if rank == 0 {
+                hash_table_ref.insert(key.clone(), value.clone());
+            }
+
+            Config::barrier();
+        }
+
+        for i in -n .. n {
+            if (rank - i) % rankn == 0 {
+                let v_ref = hash_table_ref.get(&i);
+                let v_ref = match v_ref {
+                    Some(&v) => v,
+                    None => std::i64::MAX,
+                };
+
+                let mut v_lfz: i64 = 0;
+                let mut success: bool = false;
+                success = hash_table_lfz.find(&i, &mut v_lfz);
+
+                Config::barrier();
+
+                if !success {
+                    v_lfz = std::i64::MAX;
+                }
+
+                assert_eq!(v_ref, v_lfz);
+            }
+
+            Config::barrier();
+        }
+    }
+}
