@@ -30,8 +30,8 @@ TODO:
 ## HashTable
 
 #### TODO?
-  Test Not Passed Yet!!!
-  Do not know why PE will stuck in functions like `rget()`.
+  - Test Not Passed Yet!!!
+    - Do not know why PE will stuck in functions like `rget()` (large number of inputs, 2 PEs)
   
 #### Apr. 19:
 - Done:
