@@ -56,7 +56,7 @@ impl <'a, T: Clone> Array<T> {
         //self.ptrs[rank].rput(c);
         self.ptrs[rank].idx_rput(local_idx as isize, c);
     }
-    pub fn slice(&mut self, begin_idx: usize, end_idx: usize){
+    pub fn slice(&mut self, begin_idx: usize, end_idx: usize) -> Vec<T>{
         let begin_rank: usize = begin_idx/self.local_size;
         let end_rank: usize = end_idx/self.local_size;
         let mut local_slice = Vec::new();
@@ -83,6 +83,7 @@ impl <'a, T: Clone> Array<T> {
                 local_slice.push(self.ptrs[begin_rank].idx_rget(i as isize));
             }
         }
+        return local_slice
 
 
 
