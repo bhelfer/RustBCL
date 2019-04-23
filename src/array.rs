@@ -42,7 +42,8 @@ impl <'a, T: Clone> Array<T> {
             panic!("Array::read: index {} out of bound!", idx);
         }
         let local_idx: usize = idx % self.local_size; // mod % is enough
-        return self.ptrs[rank].rget();
+        //return self.ptrs[rank].rget();
+        return self.ptrs[rank].idx_rget(local_idx as isize)
     }
 
     pub fn write(&mut self, c: T, idx: usize) {
@@ -51,8 +52,40 @@ impl <'a, T: Clone> Array<T> {
         if rank >= shmemx::n_pes() {
             panic!("Array::read: index {} out of bound!", idx);
         }
-        let local_idx = idx % self.local_size; // mod % is enough
-        self.ptrs[rank].rput(c);
+        let local_idx: usize = idx % self.local_size; // mod % is enough
+        //self.ptrs[rank].rput(c);
+        self.ptrs[rank].idx_rput(local_idx as isize, c);
+    }
+    pub fn slice(&mut self, begin_idx: usize, end_idx: usize){
+        let begin_rank: usize = begin_idx/self.local_size;
+        let end_rank: usize = end_idx/self.local_size;
+        let mut local_slice = Vec::new();
+        if begin_rank >= shmemx::n_pes(){
+            panic!("Array::read: index {} out of bound!", begin_rank);
+        } 
+        if end_rank >= shmemx::n_pes(){
+            panic!("Array::read: index {} out of bound!", end_rank);
+        }
+        if begin_rank != end_rank {
+            for rank in begin_rank..end_rank {
+                for i in begin_idx..self.local_size{
+                    local_slice.push(self.ptrs[rank].idx_rget(i as isize));
+                }
+                begin_idx = 0
+            }
+            for i in 0..end_idx{
+                local_slice.push(self.ptrs[end_rank].idx_rget(i as isize))
+            }
+        }
+        else{
+            for i in begin_idx..end_idx{
+                //local_slice.push(self.read(i));
+                local_slice.push(self.ptrs[begin_rank].idx_rget(i as isize));
+            }
+        }
+
+
+
     }
 
 }
