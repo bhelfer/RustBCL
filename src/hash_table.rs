@@ -17,7 +17,9 @@ use std::ptr::null;
 use std::mem::size_of;
 use shmemx::libc::{c_long, c_void, c_int};
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::io::{stdout, Write};
+//use std::io::{stdout, Write};
+use std::thread::sleep;
+use std::thread::sleep_ms;
 
 #[derive(Debug, Copy, Clone)]
 struct HashEntry<K, V> {
@@ -88,11 +90,11 @@ impl<K, V> HashTable<K, V>
 //                (used[config.rank] + i).local().write(free_flag);
 //            }
         }
-        Config::barrier();
+        comm::barrier();
         for rank in 0 .. config.rankn {
             comm::broadcast(&mut used[rank], rank);
         }
-        Config::barrier();
+        comm::barrier();
 
         // hash entry GlobalPointer
         let mut hash_table: Vec<GlobalPointer<HE<K, V>>> = Vec::new();
@@ -104,11 +106,11 @@ impl<K, V> HashTable<K, V>
 //                (hash_table[config.rank] + i).local().write(HashEntry::null());
 //            }
         }
-        Config::barrier();
+        comm::barrier();
         for rank in 0 .. config.rankn {
             comm::broadcast(&mut hash_table[rank], rank);
         }
-        Config::barrier();
+        comm::barrier();
 
         Self {
             global_size,
@@ -155,8 +157,8 @@ impl<K, V> HashTable<K, V>
     }
 
     fn slot_status(&self, slot: usize) -> U {
-//        self.slot_used_ptr(slot).rget()
-        comm::long_atomic_fetch(&mut self.slot_used_ptr(slot))
+        self.slot_used_ptr(slot).rget()
+//        comm::long_atomic_fetch(&mut self.slot_used_ptr(slot))
     }
 
     fn make_ready_slot(&self, slot: usize, key: &K, value: &V) {
@@ -250,11 +252,12 @@ impl<K, V> HashTable<K, V>
             probe += 1;
 
             println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Requesting slot {}", shmemx::my_pe(), key, value, slot);
-            
+
             success = self.request_slot(slot, &key, &value);
-            assert_eq!(self.slot_status(slot), self.reserved_flag);
 
             if success {
+
+                assert_eq!(self.slot_status(slot), self.reserved_flag);
 
                 println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Setting slot {} pos 1", shmemx::my_pe(), key, value, slot);
 
@@ -332,11 +335,11 @@ pub mod tests {
         let rankn: i64 = config.rankn as i64;
         let rank: i64 = config.rank as i64;
 
-        let n: i64 = 100000;
+        let n: i64 = 10000;
         let m: i64 = 1000;
 
         let mut hash_table_ref: HashMap<i64, i64> = HashMap::new();
-        let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(&mut config, (n*2) as usize);
+        let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(&mut config, (n*5) as usize);
 
         let mut k_ptr: GlobalPointer<i64> = GlobalPointer::null();
         let mut v_ptr: GlobalPointer<i64> = GlobalPointer::null();
@@ -344,10 +347,11 @@ pub mod tests {
             k_ptr = config.alloc::<i64>(1);
             v_ptr = config.alloc::<i64>(1);
         }
-        Config::barrier();
+        comm::barrier();
+
         comm::broadcast(&mut k_ptr, 0);
         comm::broadcast(&mut v_ptr, 0);
-        Config::barrier();
+        comm::barrier();
 
         let mut rng: StdRng = SeedableRng::from_seed([233; 32]);
 
@@ -356,19 +360,20 @@ pub mod tests {
                 k_ptr.rput(rng.gen_range(-m, m));
                 v_ptr.rput(rng.gen_range(-m, m));
             }
-            Config::barrier();
+            comm::barrier();
 
             let key = k_ptr.rget();
             let value = v_ptr.rget();
-            Config::barrier();
+            comm::barrier();
 
             // all PE
             hash_table_lfz.insert(&key, &value);
-            Config::barrier();
-
             hash_table_ref.insert(key.clone(), value.clone());
-            Config::barrier();
+
+            comm::barrier();
         }
+
+        comm::barrier();
 
         for i in -m .. m {
             if (rank - i) % rankn == 0 {
@@ -382,7 +387,7 @@ pub mod tests {
                 let mut success: bool = false;
                 success = hash_table_lfz.find(&i, &mut v_lfz);
 
-                Config::barrier();
+                comm::barrier();
 
                 if !success {
                     v_lfz = std::i64::MAX;
@@ -392,7 +397,7 @@ pub mod tests {
                 assert_eq!(v_ref, v_lfz);
             }
 
-            Config::barrier();
+            comm::barrier();
         }
     }
 }
