@@ -254,10 +254,10 @@ impl<K, V> HashTable<K, V>
             println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Requesting slot {}", shmemx::my_pe(), key, value, slot);
 
             success = self.request_slot(slot, &key, &value);
-            // the assertion may panic
-            assert_eq!(self.slot_status(slot), self.reserved_flag);
 
             if success {
+
+                assert_eq!(self.slot_status(slot), self.reserved_flag);
 
                 println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Setting slot {} pos 1", shmemx::my_pe(), key, value, slot);
 
