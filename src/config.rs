@@ -7,7 +7,7 @@ use std::mem::size_of;
 use std::io::{stdout, Write};
 
 // simple alloc doesn't need these things
-// const SMALLEST_MEM_UNIT: usize = 64; // 64bytes
+const SMALLEST_MEM_UNIT: usize = 64; // 64bytes
 // #[derive(Debug, Copy, Clone)]
 // struct Chunk {
 //     size: usize,
@@ -78,7 +78,7 @@ impl Config {
     // malloc part
     pub fn alloc<T: Clone>(&mut self, mut size: usize) -> GlobalPointer<T> {
         size *= size_of::<T>(); // byte size
-        // size = ((size + SMALLEST_MEM_UNIT - 1) / SMALLEST_MEM_UNIT) * SMALLEST_MEM_UNIT; // align size
+        size = ((size + SMALLEST_MEM_UNIT - 1) / SMALLEST_MEM_UNIT) * SMALLEST_MEM_UNIT; // align size
         // if we have run out of heap...
         if unsafe{self.smem_heap.add(size)} > unsafe{self.smem_base_ptr.add(self.shared_segment_size)} {
             return GlobalPointer::<T>::null();

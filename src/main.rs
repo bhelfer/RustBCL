@@ -32,84 +32,11 @@ fn main() {
 
     test_global_pointer(&mut config);
 
-    // ----------- array's part ------------
-    if config.rank == 0 { println!("\n\n------------Array's test------------\n"); }
+	// test_array(&mut config);
 
-    let mut arr = Array::<char>::init(&mut config, rankn);
-    arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
+	// test_hash_table(&mut config);
 
-    comm::barrier();
-
-    if config.rank == 0 {
-        for i in 0..config.rankn {
-            println!("{}: {}", i, arr.read(i));
-        }
-    }
-
-    // ----------- HashTable's part ------------
-    if config.rank == 0 { println!("\n\n------------HashTable's test------------\n"); }
-
-    let mut hash_table = HashTable::<usize, char>::new(&mut config, 1024);
-
-    let key: usize = 0;
-    let value  = [char::from('a' as u8), char::from('A' as u8)];
-//    let key: usize = config.rank;
-//    let value  = [char::from('a' as u8 + config.rank as u8), char::from('A' as u8 + config.rank as u8)];
-    let mut success = false;
-
-    // Testing for Updating like "hash_table[key] = value"
-    for _ in 0..5 {
-        for i in 0..2 {
-            success = hash_table.insert(&key, &value[i]);
-            Config::barrier();
-            println!("key is {}, val is {}, insert success = {} by rank {}", key, value[i], success, shmemx::my_pe());
-            Config::barrier();
-        }
-    }
-
-    comm::barrier();
-
-    let mut res: char = '\0';
-    for key in 0..(config.rankn + 1) {
-        success = hash_table.find(&key, &mut res);
-        if success {
-            println!("key is {}, find value {:?} by rank {}", key, res, shmemx::my_pe());
-        } else {
-            println!("key is {}, find nothing by rank {}", key, shmemx::my_pe());
-        }
-    }
-
-    // ----------- Queue's part ------------
-    comm::barrier();
-    if config.rank == 0 { println!("\n\n------------Queue's test------------\n"); }
-    let mut queue = Queue::<char>::new(&mut config, 10);
-    queue.add(('a' as u8 + config.rank as u8) as char);
-    comm::barrier();
-    queue.add(('c' as u8 + config.rank as u8) as char);
-    comm::barrier();
-
-    if config.rank == 0 {
-        let len = queue.len();
-        println!("The length of the queue is {}.", len);
-        println!("Peeking");
-        {
-            let t = queue.peek();
-            match t {
-                Ok(data) => println!("head value: {}", data),
-                Err(err) => println!("{}", err),
-            }
-        }
-
-        println!("Removing");
-        for i in 0..len {
-            let f = queue.remove();
-            match f {
-                Ok(data) => println!("index: {} value: {}", i, data),
-                Err(err) => println!("{}", err),
-            }
-
-        }
-    }
+	// test_queue(&mut config);
 }
 
 fn test_global_pointer(config: &mut Config) {
@@ -177,6 +104,92 @@ fn test_global_pointer(config: &mut Config) {
     if config.rank == 1 {
         println!("test arget, arput");
         let values = ptr2.arget(6);
-        println!("rank{}: arget {:?}", config.rank ,values);
+        println!("Rank{}: arget {:?}", config.rank ,values);
+    }
+}
+
+fn test_array(config: &mut Config) {
+    // ----------- array's part ------------
+    if config.rank == 0 { println!("\n\n------------Array's test------------\n"); }
+    let rankn = config.rankn;
+
+    let mut arr = Array::<char>::init(config, rankn);
+    arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
+
+    comm::barrier();
+
+    if config.rank == 0 {
+        for i in 0..config.rankn {
+            println!("{}: {}", i, arr.read(i));
+        }
+    }
+}
+
+fn test_hash_table(config: &mut Config) {
+    // ----------- HashTable's part ------------
+    if config.rank == 0 { println!("\n\n------------HashTable's test------------\n"); }
+
+    let mut hash_table = HashTable::<usize, char>::new(config, 1024);
+
+    let key: usize = 0;
+    let value  = [char::from('a' as u8), char::from('A' as u8)];
+//    let key: usize = config.rank;
+//    let value  = [char::from('a' as u8 + config.rank as u8), char::from('A' as u8 + config.rank as u8)];
+    let mut success = false;
+
+    // Testing for Updating like "hash_table[key] = value"
+    for _ in 0..5 {
+        for i in 0..2 {
+            success = hash_table.insert(&key, &value[i]);
+            Config::barrier();
+            println!("key is {}, val is {}, insert success = {} by rank {}", key, value[i], success, shmemx::my_pe());
+            Config::barrier();
+        }
+    }
+
+    comm::barrier();
+
+    let mut res: char = '\0';
+    for key in 0..(config.rankn + 1) {
+        success = hash_table.find(&key, &mut res);
+        if success {
+            println!("key is {}, find value {:?} by rank {}", key, res, shmemx::my_pe());
+        } else {
+            println!("key is {}, find nothing by rank {}", key, shmemx::my_pe());
+        }
+    }
+}
+
+fn test_queue(config: &mut Config) {
+    // ----------- Queue's part ------------
+    comm::barrier();
+    if config.rank == 0 { println!("\n\n------------Queue's test------------\n"); }
+    let mut queue = Queue::<char>::new(config, 10);
+    queue.add(('a' as u8 + config.rank as u8) as char);
+    comm::barrier();
+    queue.add(('c' as u8 + config.rank as u8) as char);
+    comm::barrier();
+
+    if config.rank == 0 {
+        let len = queue.len();
+        println!("The length of the queue is {}.", len);
+        println!("Peeking");
+        {
+            let t = queue.peek();
+            match t {
+                Ok(data) => println!("head value: {}", data),
+                Err(err) => println!("{}", err),
+            }
+        }
+
+        println!("Removing");
+        for i in 0..len {
+            let f = queue.remove();
+            match f {
+                Ok(data) => println!("index: {} value: {}", i, data),
+                Err(err) => println!("{}", err),
+            }
+
+        }
     }
 }
