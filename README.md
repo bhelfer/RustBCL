@@ -32,7 +32,12 @@ TODO:
 #### TODO?
   - Test Not Passed Yet!!!
     - Do not know why PE will stuck in functions like `rget()` (large number of inputs, 2 PEs)
-  
+
+#### Apr. 20:
+- Done:
+  - Add test.sh, used to genereate test in `[test]` to binary and run it with `oshrun`.
+  - need **jq** to find the binary (you can `sudo apt-get install jq`)
+
 #### Apr. 19:
 - Done:
   - use `Config::alloc()` for initializing
