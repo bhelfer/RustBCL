@@ -40,7 +40,7 @@ pub struct GlobalPointer<T> {
 }
 
 // implement GlobalPointer
-impl<'a, T> GlobalPointer<T> {
+impl<'a, T: Clone> GlobalPointer<T> {
     pub fn null() -> GlobalPointer<T> {
         GlobalPointer {
             shared_segment_size: 0,
@@ -71,72 +71,84 @@ impl<'a, T> GlobalPointer<T> {
 		self
 	}
 
-	// have to get a default value, or error "use of possibly uninitialized variable"
 	pub fn rget(&self) -> T {
         let mut value: T = unsafe{std::mem::uninitialized::<T>()};
         let type_size = size_of::<T>();
         unsafe{ shmemx::shmem_getmem(&mut value as *mut T as *mut u8, self.smem_base_ptr.add(self.offset * type_size), type_size, self.rank as i32) };
         value
 	}
+
+    pub fn arput(&mut self, values: &[T]) -> &mut Self {
+        let type_size = size_of::<T>();
+        unsafe{ shmemx::shmem_putmem(self.smem_base_ptr.add(self.offset * type_size), values.as_ptr() as *const u8, type_size * values.len(), self.rank as i32) };
+
+		self
+	}
+
+	pub fn arget(&self, len: usize) -> Vec<T> {
+        let mut values: Vec<T> = vec![unsafe{std::mem::uninitialized::<T>()}; len];
+        let type_size = size_of::<T>();
+        unsafe{ shmemx::shmem_getmem(values.as_mut_ptr() as *mut u8, self.smem_base_ptr.add(self.offset * type_size), type_size * len, self.rank as i32) };
+        values
+	}
+
+    pub fn idx_rput(&mut self, idx: isize, value: T) -> &mut Self {
+        // (*self + idx).rput(value);
+		let type_size = size_of::<T>();
+        unsafe{ shmemx::shmem_putmem(self.smem_base_ptr.add((self.offset as isize + idx) as usize * type_size), &value as *const T as *const u8, type_size, self.rank as i32) };
+		self
+	}
+
+	pub fn idx_rget(&self, idx: isize) -> T {
+        // (*self + idx).rget()
+		let mut value: T = unsafe{std::mem::uninitialized::<T>()};
+        let type_size = size_of::<T>();
+        unsafe{ shmemx::shmem_getmem(&mut value as *mut T as *mut u8, self.smem_base_ptr.add((self.offset as isize + idx) as usize * type_size), type_size, self.rank as i32) };
+        value
+	}
 }
 
 // overload operator+
-impl<T> ops::Add<usize> for GlobalPointer<T> {
+impl<T> ops::Add<isize> for GlobalPointer<T> {
     type Output = GlobalPointer<T>;
 
-    fn add(self, n: usize) -> GlobalPointer<T> {
-        if self.offset+n >= self.shared_segment_size {
-            eprintln!("GlobalPointer ops add is out of bound!");
-            return self;
-        }
+    fn add(self, n: isize) -> GlobalPointer<T> {
         GlobalPointer {
             shared_segment_size: self.shared_segment_size,
             smem_base_ptr: self.smem_base_ptr,
         	rank: self.rank,
-        	offset: self.offset + n,
+        	offset: (self.offset as isize + n) as usize,
         	refer_type: PhantomData
         }
     }
 }
 
 // overload operator+=
-impl<T> ops::AddAssign<usize> for GlobalPointer<T> {
-    fn add_assign(&mut self, n: usize) {
-        if self.offset+n >= self.shared_segment_size {
-            eprintln!("GlobalPointer ops add assign is out of bound!");
-            return
-        }
-        self.offset += n;
+impl<T> ops::AddAssign<isize> for GlobalPointer<T> {
+    fn add_assign(&mut self, n: isize) {
+        self.offset = (self.offset as isize + n) as usize;
     }
 }
 
 // overload operator+
-impl<T> ops::Sub<usize> for GlobalPointer<T> {
+impl<T> ops::Sub<isize> for GlobalPointer<T> {
     type Output = GlobalPointer<T>;
 
-    fn sub(self, n: usize) -> GlobalPointer<T> {
-        if self.offset < n {
-            eprintln!("GlobalPointer ops sub is out of bound!");
-            return self;
-        }
+    fn sub(self, n: isize) -> GlobalPointer<T> {
         GlobalPointer {
             shared_segment_size: self.shared_segment_size,
             smem_base_ptr: self.smem_base_ptr,
         	rank: self.rank,
-        	offset: self.offset - n,
+        	offset: (self.offset as isize - n) as usize,
         	refer_type: PhantomData
         }
     }
 }
 
 // overload operator+=
-impl<T> ops::SubAssign<usize> for GlobalPointer<T> {
-    fn sub_assign(&mut self, n: usize) {
-        if self.offset < n {
-            eprintln!("GlobalPointer ops sub assign is out of bound!");
-            return;
-        }
-        self.offset -= n;
+impl<T> ops::SubAssign<isize> for GlobalPointer<T> {
+    fn sub_assign(&mut self, n: isize) {
+        self.offset = (self.offset as isize - n) as usize;
     }
 }
 

@@ -67,14 +67,14 @@ impl Config {
         shmemx::barrier();
     }
 
-    pub fn finalize(&self) {
+    fn finalize(&self) {
         shmemx::barrier();
         unsafe{shmemx::shmem_free(self.smem_base_ptr as *mut u8)};
         shmemx::finalize();
     }
 
     // malloc part
-    pub fn alloc<T>(&mut self, mut size: usize) -> GlobalPointer<T> {
+    pub fn alloc<T: Clone>(&mut self, mut size: usize) -> GlobalPointer<T> {
         size *= size_of::<T>(); // byte size
         // size = ((size + SMALLEST_MEM_UNIT - 1) / SMALLEST_MEM_UNIT) * SMALLEST_MEM_UNIT; // align size
         // if we have run out of heap...
