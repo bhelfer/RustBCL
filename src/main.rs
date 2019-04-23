@@ -32,11 +32,11 @@ fn main() {
 
     test_global_pointer(&mut config);
 
-	// test_array(&mut config);
+	test_array(&mut config);
 
-	// test_hash_table(&mut config);
+	test_hash_table(&mut config);
 
-	// test_queue(&mut config);
+	test_queue(&mut config);
 }
 
 fn test_global_pointer(config: &mut Config) {
