@@ -10,3 +10,5 @@ Cargo.lock
 **/*.rs.bk
 /src/bcl-master
 /src/bcl-master.zip
+
+.idea

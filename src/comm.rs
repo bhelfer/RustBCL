@@ -1,10 +1,11 @@
 use shmemx;
 use std::mem::size_of;
-use shmemx::libc::{c_long, c_void};
+use shmemx::libc::{c_long, c_void, c_int};
+use global_pointer::GlobalPointer;
 
 pub fn broadcast<T>(val: &mut T, root: usize) {
     unsafe{
-        let p_sync_ptr: *mut c_long= shmemx::shmem_malloc(shmemx::_SHMEM_BCAST_SYNC_SIZE * size_of::<c_long>()) as *mut c_long;
+        let p_sync_ptr: *mut c_long = shmemx::shmem_malloc(shmemx::_SHMEM_BCAST_SYNC_SIZE * size_of::<c_long>()) as *mut c_long;
         if p_sync_ptr.is_null() {
             panic!("BCL: Could not allocate shared memory segment.")
         }
@@ -40,4 +41,61 @@ pub fn broadcast<T>(val: &mut T, root: usize) {
 
 pub fn barrier() {
     shmemx::barrier();
+}
+
+pub fn int_compare_and_swap(ptr: &mut GlobalPointer<c_int>, old_val: c_int, new_val: c_int) -> c_int {
+
+    let rank = ptr.rank;
+    unsafe {
+        shmemx::shmem_int_cswap(
+            ptr.rptr() as *mut c_int,
+            old_val as c_int,
+            new_val as c_int,
+            rank as c_int
+        )
+    }
+}
+
+pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, new_val: c_long) -> c_long {
+
+    let rank = ptr.rank;
+    unsafe {
+        shmemx::shmem_long_atomic_compare_swap(
+            ptr.rptr() as *mut c_long,
+            old_val as c_long,
+            new_val as c_long,
+            rank as c_int
+        )
+    }
+}
+
+pub fn int_finc(ptr: &mut GlobalPointer<i32>) -> i32 {
+    let rank = ptr.rank;
+    unsafe {
+        shmemx::shmem_int_atomic_fetch_inc(
+            ptr.rptr() as *mut i32,
+            rank as c_int
+        )
+    }
+}
+
+pub fn long_atomic_fetch(ptr: &mut GlobalPointer<c_long>) -> c_long {
+    unsafe {
+        shmemx::shmem_long_atomic_fetch(
+            ptr.rptr() as *const c_long,
+            ptr.rank as c_int
+        )
+    }
+}
+
+pub fn fence() {
+    unsafe {
+        shmemx::shmem_fence();
+    }
+}
+
+pub fn quiet() {
+    unsafe {
+        shmemx::shmem_quiet();
+    }
 }

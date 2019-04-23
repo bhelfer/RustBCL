@@ -1,1 +1,2 @@
-oshrun -n 4 ./target/debug/main
+cargo build
+oshrun -n 3 ./target/debug/main
