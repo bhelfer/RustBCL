@@ -39,7 +39,10 @@ pub fn broadcast<T>(val: &mut T, root: usize) {
     }
 }
 
-// added by lfz
+pub fn barrier() {
+    shmemx::barrier();
+}
+
 pub fn int_compare_and_swap(ptr: &mut GlobalPointer<c_int>, old_val: c_int, new_val: c_int) -> c_int {
 
     let rank = ptr.rank;
@@ -53,7 +56,6 @@ pub fn int_compare_and_swap(ptr: &mut GlobalPointer<c_int>, old_val: c_int, new_
     }
 }
 
-// added by lfz
 pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, new_val: c_long) -> c_long {
 
     let rank = ptr.rank;
@@ -67,7 +69,6 @@ pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, n
     }
 }
 
-// added by lfz
 pub fn int_finc(ptr: &mut GlobalPointer<i32>) -> i32 {
     let rank = ptr.rank;
     unsafe {
@@ -78,7 +79,6 @@ pub fn int_finc(ptr: &mut GlobalPointer<i32>) -> i32 {
     }
 }
 
-// added by lfz
 pub fn long_atomic_fetch(ptr: &mut GlobalPointer<c_long>) -> c_long {
     unsafe {
         shmemx::shmem_long_atomic_fetch(

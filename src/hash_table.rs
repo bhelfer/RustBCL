@@ -85,7 +85,7 @@ impl<K, V> HashTable<K, V>
         used.resize(config.rankn, GlobalPointer::null());
         used[config.rank] = config.alloc::<U>(local_size);
         for i in 0 .. local_size {
-            (used[config.rank] + i).rput(free_flag);
+            (used[config.rank] + i as isize).rput(free_flag);
 //            unsafe {
 //                (used[config.rank] + i).local().write(free_flag);
 //            }
@@ -101,7 +101,7 @@ impl<K, V> HashTable<K, V>
         hash_table.resize(config.rankn, GlobalPointer::null());
         hash_table[config.rank] = config.alloc::<HE<K, V>>(local_size);
         for i in 0 .. local_size {
-            (hash_table[config.rank] + i).rput(HashEntry::null());
+            (hash_table[config.rank] + i as isize).rput(HashEntry::null());
 //            unsafe {
 //                (hash_table[config.rank] + i).local().write(HashEntry::null());
 //            }
@@ -130,7 +130,7 @@ impl<K, V> HashTable<K, V>
         if node >= shmemx::n_pes() { panic!("HashTable::slot_entry_ptr: node {} out of bound!", node); }
         if node_slot >= self.local_size { panic!("HashTable::slot_entry_ptr: node_slot {} out of bound!", node_slot); }
 
-        (self.hash_table[node] + node_slot)
+        (self.hash_table[node] + node_slot as isize)
     }
 
     fn slot_used_ptr(&self, slot: usize) -> GlobalPointer<U> {
@@ -140,7 +140,7 @@ impl<K, V> HashTable<K, V>
         if node >= shmemx::n_pes() { panic!("HashTable::slot_used_ptr: node {} out of bound!", node); }
         if node_slot >= self.local_size { panic!("HashTable::slot_used_ptr: node_slot {} out of bound!", node_slot); }
 
-        (self.used[node] + node_slot)
+        (self.used[node] + node_slot as isize)
     }
 
     fn get_entry(&self, slot: usize) -> HE<K, V> {

@@ -49,7 +49,7 @@ impl<'a, T: Clone + Copy + Default> Queue<T> {
     fn get_pointer(&self, global_idx: usize) -> GlobalPointer<T> {
         let rank = global_idx / self.local_size;
         let local_idx = global_idx - rank * self.local_size;
-        (self.ptrs[rank] + local_idx)
+        (self.ptrs[rank] + local_idx as isize)
     }
 
 
@@ -64,7 +64,7 @@ impl<'a, T: Clone + Copy + Default> Queue<T> {
         let rank = tail / self.local_size;
         let local_idx = tail - rank * self.local_size;
 //        println!("Add elemetn: tail: {}, rank :{}, local_idx: {}", tail, rank, local_idx);
-        (self.ptrs[rank] + local_idx).rput(data);
+        (self.ptrs[rank] + local_idx as isize).rput(data);
         return true;
     }
 
@@ -79,7 +79,7 @@ impl<'a, T: Clone + Copy + Default> Queue<T> {
             let rank = head / self.local_size;
             let local_idx = head - rank * self.local_size;
 //            println!("Remove elemetn: head: {}, rank :{}, local_idx: {}", head, rank, local_idx);
-            Ok((self.ptrs[rank] + local_idx).rget())
+            Ok((self.ptrs[rank] + local_idx as isize).rget())
         }
     }
 
@@ -93,7 +93,7 @@ impl<'a, T: Clone + Copy + Default> Queue<T> {
             head = head % self.capacity;
             let rank = head / self.local_size;
             let local_idx = head - rank * self.local_size;
-            Ok((self.ptrs[rank] + local_idx).rget())
+            Ok((self.ptrs[rank] + local_idx as isize).rget())
         }
     }
 

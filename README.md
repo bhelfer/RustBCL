@@ -36,6 +36,14 @@ TODO:
   - implement `HashTable<K, V>::find()`
 
 ## Global Pointer:
+#### TODO?
+- null->option
+
+#### Apr. 22:
+- Done:
+  - arget, arput, idx_rget, idx_rput
+  - config::barrier -> comm::barrier
+
 #### Apr. 19:
 - Done:
   - fix bugs of `self` parameter
@@ -60,8 +68,3 @@ TODO:
 1. why `let smem_heap = smem_base_ptr.add(SMALLEST_MEM_UNIT);`
 - Where is it from? 
 2. what does the 't' in 'chunk_t' mean?
-3. Do we need SMALLEST_MEM_UNIT in simple alloc?
-- If we have no free and only use u8 type, it seems unnecessary.
-
-4. config.barrier does not work? or just println! is slow?
-- Issue posted.
