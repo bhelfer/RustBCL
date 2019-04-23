@@ -30,6 +30,10 @@ extern {
     // added by lfz
     pub fn shmem_fence();
     pub fn shmem_quiet();
+
+    pub fn shmem_clear_lock(lock: *mut c_long);
+    pub fn shmem_set_lock(lock: *mut c_long);
+    pub fn shmem_test_lock(lock: *mut c_long) -> c_int;
 }
 
 pub static _SHMEM_SYNC_VALUE: c_long = -1;
@@ -111,4 +115,3 @@ fn test_shmem() {
     shmemx::barrier();
     shmemx::finalize();
 }
-

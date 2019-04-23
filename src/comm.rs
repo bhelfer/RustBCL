@@ -79,7 +79,6 @@ pub fn int_finc(ptr: &mut GlobalPointer<i32>) -> i32 {
 }
 
 // added by lfz
-
 pub fn long_atomic_fetch(ptr: &mut GlobalPointer<c_long>) -> c_long {
     unsafe {
         shmemx::shmem_long_atomic_fetch(
@@ -89,14 +88,38 @@ pub fn long_atomic_fetch(ptr: &mut GlobalPointer<c_long>) -> c_long {
     }
 }
 
+// added by lfz
 pub fn fence() {
     unsafe {
         shmemx::shmem_fence();
     }
 }
 
+// added by lfz
 pub fn quiet() {
     unsafe {
         shmemx::shmem_quiet();
     }
 }
+
+// added by lfz
+pub fn set_lock(lock: *mut c_long) {
+    unsafe {
+        shmemx::shmem_set_lock(lock);
+    }
+}
+
+// added by lfz
+pub fn clear_lock(lock: *mut c_long) {
+    unsafe {
+        shmemx::shmem_clear_lock(lock);
+    }
+}
+
+// added by lfz
+pub fn test_lock(lock: *mut c_long) -> c_int {
+    unsafe {
+        shmemx::shmem_test_lock(lock)
+    }
+}
+

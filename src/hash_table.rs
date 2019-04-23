@@ -18,6 +18,8 @@ use std::mem::size_of;
 use shmemx::libc::{c_long, c_void, c_int};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::{stdout, Write};
+use std::thread::sleep;
+use std::thread::sleep_ms;
 
 #[derive(Debug, Copy, Clone)]
 struct HashEntry<K, V> {
@@ -155,8 +157,8 @@ impl<K, V> HashTable<K, V>
     }
 
     fn slot_status(&self, slot: usize) -> U {
-//        self.slot_used_ptr(slot).rget()
-        comm::long_atomic_fetch(&mut self.slot_used_ptr(slot))
+        self.slot_used_ptr(slot).rget()
+//        comm::long_atomic_fetch(&mut self.slot_used_ptr(slot))
     }
 
     fn make_ready_slot(&self, slot: usize, key: &K, value: &V) {
@@ -250,7 +252,7 @@ impl<K, V> HashTable<K, V>
             probe += 1;
 
             println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Requesting slot {}", shmemx::my_pe(), key, value, slot);
-            
+
             success = self.request_slot(slot, &key, &value);
             assert_eq!(self.slot_status(slot), self.reserved_flag);
 
@@ -324,6 +326,8 @@ pub mod tests {
     use self::rand::{Rng, SeedableRng, StdRng};
     use global_pointer::GlobalPointer;
     use comm;
+    use std::os::raw::c_long;
+    use std::ptr::null_mut;
 
     #[test]
     pub fn same_entry_test() {
@@ -345,6 +349,7 @@ pub mod tests {
             v_ptr = config.alloc::<i64>(1);
         }
         Config::barrier();
+
         comm::broadcast(&mut k_ptr, 0);
         comm::broadcast(&mut v_ptr, 0);
         Config::barrier();
@@ -364,11 +369,12 @@ pub mod tests {
 
             // all PE
             hash_table_lfz.insert(&key, &value);
-            Config::barrier();
-
             hash_table_ref.insert(key.clone(), value.clone());
+
             Config::barrier();
         }
+
+        Config::barrier();
 
         for i in -m .. m {
             if (rank - i) % rankn == 0 {
