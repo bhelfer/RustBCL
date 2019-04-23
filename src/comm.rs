@@ -37,3 +37,7 @@ pub fn broadcast<T>(val: &mut T, root: usize) {
         shmemx::shmem_free(startval as *mut u8);
     }
 }
+
+pub fn barrier() {
+    shmemx::barrier();
+}
