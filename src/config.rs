@@ -79,14 +79,17 @@ impl Config {
     pub fn alloc<T: Clone>(&mut self, mut size: usize) -> GlobalPointer<T> {
         size *= size_of::<T>(); // byte size
         size = ((size + SMALLEST_MEM_UNIT - 1) / SMALLEST_MEM_UNIT) * SMALLEST_MEM_UNIT; // align size
+
         // if we have run out of heap...
-        if unsafe{self.smem_heap.add(size)} > unsafe{self.smem_base_ptr.add(self.shared_segment_size)} {
-            return GlobalPointer::<T>::null();
+        unsafe {
+            if self.smem_heap.add(size) > self.smem_base_ptr.add(self.shared_segment_size) {
+                return GlobalPointer::<T>::null();
+            }
         }
 
         let allocd: *const u8 = self.smem_heap;
         unsafe{ self.smem_heap = self.smem_heap.add(size); }
-//        println!("alloc memory! smem_base_ptr: {:p}, smem_heap: {:p}, allocd: {:p}, size: {}bytes", self.smem_base_ptr, self.smem_heap, allocd, size);
+//        println!("Rank {} alloc memory! smem_base_ptr: {:p}, smem_heap: {:p}, allocd: {:p}, size: {}bytes", self.rank, self.smem_base_ptr, self.smem_heap, allocd, size);
         GlobalPointer {
             shared_segment_size: self.shared_segment_size,
             smem_base_ptr: self.smem_base_ptr,

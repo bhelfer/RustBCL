@@ -6,6 +6,7 @@ use std::ops;
 use std::mem::size_of;
 use Config;
 use std::ptr;
+use shmemx::libc::{c_int, size_t, c_long};
 
 //pub trait GlobalPointerTrait<T>: ops::Add<isize> + ops::AddAssign<isize> + ops::Sub<isize> + ops::SubAssign<isize> + ops::Index<usize> + ops::IndexMut<usize> + ops::Deref + ops::DerefMut {
 //	fn new(rank: usize, ptr: usize) -> Self;
@@ -43,7 +44,7 @@ pub struct GlobalPointer<T> {
 impl<'a, T: Clone> GlobalPointer<T> {
     pub fn null() -> GlobalPointer<T> {
         GlobalPointer {
-            shared_segment_size: 0,
+            shared_segment_size: 0, // count by bytes
             smem_base_ptr: ptr::null_mut(),
             rank: 0,
             offset: 0,
@@ -61,17 +62,24 @@ impl<'a, T: Clone> GlobalPointer<T> {
             eprintln!("error: calling local() on a remote GlobalPtr");
             return ptr::null_mut::<T>() as *mut T;
         }
-        unsafe{ self.smem_base_ptr.add(self.offset * size_of::<T>()) as *mut T}
+        unsafe{
+            let p = self.smem_base_ptr.add(self.offset * size_of::<T>()) as *mut T;
+            assert!(self.is_valid(p as *const u8, size_of::<T>()), "Global Pointer Out of bound!");
+            p
+        }
     }
 
-    // added by lfz
     pub fn rptr(&mut self) -> *mut T {
-        unsafe{ self.smem_base_ptr.add(self.offset * size_of::<T>()) as *mut T}
+        unsafe{
+            let p = self.smem_base_ptr.add(self.offset * size_of::<T>()) as *mut T;
+            assert!(self.is_valid(p as *const u8, size_of::<T>()), "Global Pointer Out of bound!");
+            p
+        }
     }
 
-	pub fn rput(&mut self, value: T) -> &mut Self {
+    pub fn rput(&mut self, value: T) -> &mut Self {
         let type_size = size_of::<T>();
-        unsafe{ shmemx::shmem_putmem(self.smem_base_ptr.add(self.offset * type_size), &value as *const T as *const u8, type_size, self.rank as i32) };
+        self.shmem_putmem(unsafe{self.smem_base_ptr.add(self.offset * type_size)}, &value as *const T as *const u8, type_size, self.rank);
 
 		self
 	}
@@ -79,13 +87,13 @@ impl<'a, T: Clone> GlobalPointer<T> {
 	pub fn rget(&self) -> T {
         let mut value: T = unsafe{std::mem::uninitialized::<T>()};
         let type_size = size_of::<T>();
-        unsafe{ shmemx::shmem_getmem(&mut value as *mut T as *mut u8, self.smem_base_ptr.add(self.offset * type_size), type_size, self.rank as i32) };
+        self.shmem_getmem(&mut value as *mut T as *mut u8, unsafe{self.smem_base_ptr.add(self.offset * type_size)}, type_size, self.rank);
         value
 	}
 
     pub fn arput(&mut self, values: &[T]) -> &mut Self {
         let type_size = size_of::<T>();
-        unsafe{ shmemx::shmem_putmem(self.smem_base_ptr.add(self.offset * type_size), values.as_ptr() as *const u8, type_size * values.len(), self.rank as i32) };
+        self.shmem_putmem(unsafe{self.smem_base_ptr.add(self.offset * type_size)}, values.as_ptr() as *const u8, type_size * values.len(), self.rank);
 
 		self
 	}
@@ -93,14 +101,14 @@ impl<'a, T: Clone> GlobalPointer<T> {
 	pub fn arget(&self, len: usize) -> Vec<T> {
         let mut values: Vec<T> = vec![unsafe{std::mem::uninitialized::<T>()}; len];
         let type_size = size_of::<T>();
-        unsafe{ shmemx::shmem_getmem(values.as_mut_ptr() as *mut u8, self.smem_base_ptr.add(self.offset * type_size), type_size * len, self.rank as i32) };
+        self.shmem_getmem(values.as_mut_ptr() as *mut u8, unsafe{self.smem_base_ptr.add(self.offset * type_size)}, type_size * len, self.rank);
         values
 	}
 
     pub fn idx_rput(&mut self, idx: isize, value: T) -> &mut Self {
         // (*self + idx).rput(value);
 		let type_size = size_of::<T>();
-        unsafe{ shmemx::shmem_putmem(self.smem_base_ptr.add((self.offset as isize + idx) as usize * type_size), &value as *const T as *const u8, type_size, self.rank as i32) };
+        self.shmem_putmem(unsafe{self.smem_base_ptr.add((self.offset as isize + idx) as usize * type_size)}, &value as *const T as *const u8, type_size, self.rank);
 		self
 	}
 
@@ -108,9 +116,23 @@ impl<'a, T: Clone> GlobalPointer<T> {
         // (*self + idx).rget()
 		let mut value: T = unsafe{std::mem::uninitialized::<T>()};
         let type_size = size_of::<T>();
-        unsafe{ shmemx::shmem_getmem(&mut value as *mut T as *mut u8, self.smem_base_ptr.add((self.offset as isize + idx) as usize * type_size), type_size, self.rank as i32) };
+        self.shmem_getmem(&mut value as *mut T as *mut u8, unsafe{self.smem_base_ptr.add((self.offset as isize + idx) as usize * type_size)}, type_size, self.rank);
         value
 	}
+
+    fn is_valid(&self, p: *const u8, len: usize) -> bool {
+        p >= self.smem_base_ptr && unsafe{p.add(len) <= self.smem_base_ptr.add(self.shared_segment_size)}
+    }
+
+    fn shmem_putmem(&self, target: *mut u8, source: *const u8, len: usize, pe: usize) {
+        assert!(self.is_valid(target, len), "GlobalPtr Out of bound!");
+        unsafe{ shmemx::shmem_putmem(target, source, len as size_t, self.rank as c_int) };
+    }
+
+    fn shmem_getmem(&self, target: *mut u8, source: *const u8, len: usize, pe: usize) {
+        assert!(self.is_valid(source, len), "GlobalPtr Out of bound!");
+        unsafe{ shmemx::shmem_getmem(target, source, len as size_t, self.rank as c_int) };
+    }
 }
 
 // overload operator+

@@ -42,7 +42,7 @@ impl <'a, T: Clone> Array<T> {
             panic!("Array::read: index {} out of bound!", idx);
         }
         let local_idx: usize = idx % self.local_size; // mod % is enough
-        return self.ptrs[rank].rget();
+        return self.ptrs[rank].idx_rget(local_idx as isize);
     }
 
     pub fn write(&mut self, c: T, idx: usize) {
@@ -52,7 +52,7 @@ impl <'a, T: Clone> Array<T> {
             panic!("Array::read: index {} out of bound!", idx);
         }
         let local_idx = idx % self.local_size; // mod % is enough
-        self.ptrs[rank].rput(c);
+        self.ptrs[rank].idx_rput(local_idx as isize, c);
     }
 
 }
