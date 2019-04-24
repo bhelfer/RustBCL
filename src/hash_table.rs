@@ -215,7 +215,7 @@ impl<K, V> HashTable<K, V>
             );
             println!("Got return value {}", used_val);
             if used_val == current_val { break; }
-            current_val = used_val;
+            current_val = self.ready_flag;
         }
         /* used_val must have been transferred  free_flag -> reserved_flag
                                             or ready_flag -> reserved_flag
