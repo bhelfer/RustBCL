@@ -106,6 +106,15 @@ pub fn long_atomic_fetch_and(ptr: &mut GlobalPointer<c_long>, value: c_long) -> 
     }
 }
 
+pub fn long_atomic_fetch_xor(ptr: &mut GlobalPointer<c_long>, value: c_long) -> c_long {
+    unsafe {
+        shmemx::shmem_long_atomic_fetch_xor(
+            ptr.rptr() as * mut c_long,
+            value, ptr.rank as c_long
+        )
+    }
+}
+
 // added by lfz
 pub fn fence() {
     unsafe {
