@@ -179,6 +179,14 @@ impl<T> ops::SubAssign<isize> for GlobalPointer<T> {
     }
 }
 
+use std::fmt;
+
+impl<T> fmt::Display for GlobalPointer<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({}, {})", self.rank, self.offset)
+    }
+}
+
 // overload operator[](right)
 //impl<T> ops::Index<usize> for GlobalPointer<T> {
 //    type Output = T;
