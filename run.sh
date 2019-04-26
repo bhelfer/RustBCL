@@ -1,2 +1,2 @@
 cargo build
-oshrun -n 4 ./target/debug/main
+oshrun -n 6 ./target/debug/main

@@ -20,6 +20,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 //use std::io::{stdout, Write};
 use std::thread::sleep;
 use std::thread::sleep_ms;
+use std::thread::yield_now;
+use std::thread;
 
 #[derive(Debug, Copy, Clone)]
 struct HashEntry<K, V> {
@@ -153,7 +155,7 @@ impl<K, V> HashTable<K, V>
         println!("HashTable({})::get_entry slot {} enter", shmemx::my_pe(), slot);
         let mut entry_ptr = self.slot_entry_ptr(slot);
         println!("HashTable({})::get_entry slot {} middle", shmemx::my_pe(), slot);
-        let ret = entry_ptr.idx_rget(0);
+        let ret = entry_ptr.rget();
         println!("HashTable({})::get_entry slot {} leave", shmemx::my_pe(), slot);
         ret
     }
@@ -205,13 +207,13 @@ impl<K, V> HashTable<K, V>
         loop {
             if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().subsec_nanos() % 500009 == 0 {
                 println!("HashTable({})::request_slot (k, v) = ({:?}, {:?}) in loop 1", shmemx::my_pe(), key, value);
-                println!("HashTable({}) Calling int_compare_and_swap({}, {}, {})", used_ptr, current_val, self.reserved_flag, shmemx::my_pe());
+                println!("HashTable({}) Calling int_compare_and_swap({}, {}, {})", shmemx::my_pe(), used_ptr, current_val, self.reserved_flag);
                 used_val = comm::long_compare_and_swap(
                     &mut used_ptr,
                     current_val,
                     self.reserved_flag
                 );
-                println!("HashTable({}) Got return value {}", used_val, shmemx::my_pe());
+                println!("HashTable({}) Got return value {}", shmemx::my_pe(), used_val);
             } else {
                 used_val = comm::long_compare_and_swap(
                     &mut used_ptr,
@@ -306,7 +308,7 @@ impl<K, V> HashTable<K, V>
                 // assert_ne!(self.slot_status(slot), self.free_flag);
 
             } else {
-              assert_ne!(self.slot_status(slot), self.reserved_flag);
+//              assert_ne!(self.slot_status(slot), self.reserved_flag);
             }
 
             if success || probe >= self.global_size as u64 { break; }
@@ -372,8 +374,8 @@ pub mod tests {
         let rankn: i64 = config.rankn as i64;
         let rank: i64 = config.rank as i64;
 
-        let n: i64 = 200;
-        let m: i64 = 200;
+        let n: i64 = 2000;
+        let m: i64 = 2000;
 
         let mut hash_table_ref: HashMap<i64, i64> = HashMap::new();
         let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(&mut config, (n*5) as usize);
@@ -431,8 +433,6 @@ pub mod tests {
                 let mut v_lfz: i64 = 0;
                 let mut success: bool = false;
                 success = hash_table_lfz.find(&i, &mut v_lfz);
-
-                comm::barrier();
 
                 if !success {
                     v_lfz = std::i64::MAX;

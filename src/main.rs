@@ -30,13 +30,61 @@ fn main() {
         return;
     }
 
-    test_global_pointer(&mut config);
+    test_ptr(&mut config);
 
-	test_array(&mut config);
+//    test_global_pointer(&mut config);
 
-	test_hash_table(&mut config);
+//	test_array(&mut config);
 
-	test_queue(&mut config);
+//	test_hash_table(&mut config);
+
+//	test_queue(&mut config);
+}
+
+
+fn test_ptr(config: &mut Config) {
+    // ----------- Global Pointer's part -------------
+    #[derive(Debug, Clone)]
+    struct HE {
+        key: i64,
+        value: i64,
+        other: i64,
+    }
+
+    if config.rank == 0 { println!("------------Global Pointer's test------------\n"); }
+
+    let mut ptr: Vec<GlobalPointer<HE>> = Vec::new();
+    ptr.resize(config.rankn, GlobalPointer::null());
+    comm::barrier();
+    ptr[config.rank] = config.alloc::<HE>(1);
+    comm::barrier();
+    for i in 0..config.rankn {
+        comm::broadcast(&mut ptr[i], i);
+    }
+    comm::barrier();
+
+    for i in 0 .. 1000 {
+        for j in 0 .. config.rankn {
+            let entry = HE {
+                key: config.rank as i64,
+                value: 11 * config.rank as i64,
+                other: 12132
+            };
+            ptr[j].rput(entry);
+            comm::barrier();
+        }
+    }
+    comm::barrier();
+
+    for i in 0 .. 1000 {
+        for j in 0 .. config.rankn {
+            let entry = ptr[j].rget();
+            println!("{}: ({}, {})", i, entry.key, entry.value);
+            comm::barrier();
+        }
+    }
+    comm::barrier();
+
 }
 
 fn test_global_pointer(config: &mut Config) {
