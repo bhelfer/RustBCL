@@ -12,3 +12,4 @@ Cargo.lock
 /src/bcl-master.zip
 
 .idea
+Out/
