@@ -153,7 +153,7 @@ impl<K, V> HashTable<K, V>
         println!("HashTable({})::get_entry slot {} enter", shmemx::my_pe(), slot);
         let mut entry_ptr = self.slot_entry_ptr(slot);
         println!("HashTable({})::get_entry slot {} middle", shmemx::my_pe(), slot);
-        let ret = entry_ptr.rget();
+        let ret = entry_ptr.idx_rget(0);
         println!("HashTable({})::get_entry slot {} leave", shmemx::my_pe(), slot);
         ret
     }
@@ -163,8 +163,8 @@ impl<K, V> HashTable<K, V>
     }
 
     fn slot_status(&self, slot: usize) -> U {
-        self.slot_used_ptr(slot).rget()
-//        comm::long_atomic_fetch(&mut self.slot_used_ptr(slot))
+//        self.slot_used_ptr(slot).rget()
+        comm::long_atomic_fetch(&mut self.slot_used_ptr(slot))
     }
 
     fn make_ready_slot(&self, slot: usize, key: &K, value: &V) {
@@ -179,7 +179,7 @@ impl<K, V> HashTable<K, V>
 
         println!("HashTable({})::make_ready_slot (k, v) = ({:?}, {:?}) pos 3", shmemx::my_pe(), key, value);
 
-        assert!(used_val == self.reserved_flag);
+        assert_eq!(used_val, self.reserved_flag);
 
         // TODO: if we fix updates to atomic, cannot be ready_flag
         if !(used_val == self.reserved_flag || used_val == self.ready_flag) {
@@ -201,18 +201,24 @@ impl<K, V> HashTable<K, V>
         /* If someone is currently inserting into this slot (reserved_flag), wait
          until they're finished to proceed. */
         let mut current_val: U = self.free_flag;
-        println!("Set current val...");
+        println!("HashTable({}) Set current val...", shmemx::my_pe());
         loop {
             if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().subsec_nanos() % 500009 == 0 {
                 println!("HashTable({})::request_slot (k, v) = ({:?}, {:?}) in loop 1", shmemx::my_pe(), key, value);
+                println!("HashTable({}) Calling int_compare_and_swap({}, {}, {})", used_ptr, current_val, self.reserved_flag, shmemx::my_pe());
+                used_val = comm::long_compare_and_swap(
+                    &mut used_ptr,
+                    current_val,
+                    self.reserved_flag
+                );
+                println!("HashTable({}) Got return value {}", used_val, shmemx::my_pe());
+            } else {
+                used_val = comm::long_compare_and_swap(
+                    &mut used_ptr,
+                    current_val,
+                    self.reserved_flag
+                );
             }
-            println!("Calling int_compare_and_swap({}, {}, {})", used_ptr, current_val, self.reserved_flag);
-            used_val = comm::long_compare_and_swap(
-                &mut used_ptr,
-                current_val,
-                self.reserved_flag
-            );
-            println!("Got return value {}", used_val);
             if used_val == current_val { break; }
             current_val = self.ready_flag;
         }
@@ -237,7 +243,7 @@ impl<K, V> HashTable<K, V>
                     self.reserved_flag,
                     self.ready_flag
                 );
-                assert!(rv == self.reserved_flag);
+                assert_eq!(rv, self.reserved_flag);
                 /*
                 let xor_value: U = 0x3;
                 comm::long_atomic_fetch_xor(
@@ -279,7 +285,7 @@ impl<K, V> HashTable<K, V>
 
             success = self.request_slot(slot, &key, &value);
 
-            println!("After...");
+            println!("HashTable({}) After...", shmemx::my_pe());
 
             if success {
 
@@ -300,7 +306,7 @@ impl<K, V> HashTable<K, V>
                 // assert_ne!(self.slot_status(slot), self.free_flag);
 
             } else {
-              assert!(self.slot_status(slot) != self.reserved_flag);
+              assert_ne!(self.slot_status(slot), self.reserved_flag);
             }
 
             if success || probe >= self.global_size as u64 { break; }
@@ -357,6 +363,7 @@ pub mod tests {
     use self::rand::{Rng, SeedableRng, StdRng};
     use global_pointer::GlobalPointer;
     use comm;
+    use shmemx;
 
     #[test]
     pub fn same_entry_test() {
@@ -365,8 +372,8 @@ pub mod tests {
         let rankn: i64 = config.rankn as i64;
         let rank: i64 = config.rank as i64;
 
-        let n: i64 = 10000;
-        let m: i64 = 1000;
+        let n: i64 = 200;
+        let m: i64 = 200;
 
         let mut hash_table_ref: HashMap<i64, i64> = HashMap::new();
         let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(&mut config, (n*5) as usize);
@@ -401,14 +408,14 @@ pub mod tests {
             hash_table_ref.insert(key.clone(), value.clone());
 
             if success == false {
-                panic!("Agh! insertion failed");
+                panic!("HashTable({}) Agh! insertion failed", shmemx::my_pe());
             }
 
             comm::barrier();
         }
 
         comm::barrier();
-        println!("Done with insert!");
+        println!("HashTable({}) Done with insert!", shmemx::my_pe());
         comm::barrier();
 
         comm::barrier();

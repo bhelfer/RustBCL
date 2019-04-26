@@ -1,0 +1,69 @@
+HashTable(2)::insert (k, v) = (-1, 1) Requesting slot 9 / 12
+HashTable(2) Calling int_compare_and_swap((4, 1), 0, 1)
+HashTable(2) Got return value 2
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 1
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 2
+HashTable(2)::get_entry slot 9 enter
+HashTable(2)::get_entry slot 9 middle
+HashTable(2)::get_entry slot 9 leave
+HashTable(2)::request_slot (k, v) = (-1, 1) leave with true
+HashTable(2) After requesting true...
+HashTable(2)::insert (k, v) = (-1, 1) Setting slot 9 pos 1
+HashTable(2)::get_entry slot 9 enter
+HashTable(2)::get_entry slot 9 middle
+HashTable(2)::get_entry slot 9 leave
+HashTable(2)::insert (k, v) = (-1, 1) Setting slot 9 pos 2
+HashTable(2)::make_ready_slot (k, v) = (-1, 1) pos 2
+HashTable(2)::make_ready_slot (k, v) = (-1, 1) pos 3
+HashTable(2)::insert (k, v) = (-1, 1) leave with true
+HashTable(2)::insert (k, v) = (-1, -1) Requesting slot 9 / 12
+HashTable(2) Calling int_compare_and_swap((4, 1), 0, 1)
+HashTable(2) Got return value 2
+HashTable(2) Calling int_compare_and_swap((4, 1), 2, 1)
+HashTable(2) Got return value 2
+HashTable(2)::get_entry slot 9 enter
+HashTable(2)::get_entry slot 9 middle
+HashTable(2)::get_entry slot 9 leave
+HashTable(2)::request_slot (k, v) = (-1, -1) leave with true
+HashTable(2) After requesting true...
+HashTable(2)::insert (k, v) = (-1, -1) Setting slot 9 pos 1
+HashTable(2)::get_entry slot 9 enter
+HashTable(2)::get_entry slot 9 middle
+HashTable(2)::get_entry slot 9 leave
+HashTable(2)::insert (k, v) = (-1, -1) Setting slot 9 pos 2
+HashTable(2)::make_ready_slot (k, v) = (-1, -1) pos 2
+HashTable(2)::make_ready_slot (k, v) = (-1, -1) pos 3
+HashTable(2)::insert (k, v) = (-1, -1) leave with true
+HashTable(2) Done with insert!
