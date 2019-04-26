@@ -21,11 +21,6 @@ extern {
     pub fn shmem_broadcast64(target: *mut u64, source: *const u64, nelems: size_t, PE_root: c_int,
                              PE_start: c_int, logPE_stride: c_int, PE_size: c_int, pSync: *mut c_long); // how to denote *long?
     // added by lfz
-    pub fn shmem_int_cswap(target: *mut c_int, cond: c_int, value: c_int, pe: c_int) -> c_int;
-    pub fn shmem_long_cswap(target: *mut c_long, cond: c_long, value: c_long, pe: c_int) -> c_long;
-    pub fn shmem_int_finc(target: *mut c_int, pe: c_int) -> c_int;
-
-    // added by lfz
     pub fn shmem_int_atomic_fetch_inc(target: *mut c_int, pe: c_int) -> c_int;
     pub fn shmem_long_atomic_compare_swap(dest: *mut c_long, cond: c_long, value: c_long, pe: c_int) -> c_long;
     pub fn shmem_long_atomic_fetch(source: *const c_long, pe: c_int) -> c_long;

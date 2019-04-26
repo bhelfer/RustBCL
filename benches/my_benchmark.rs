@@ -18,7 +18,7 @@ use hash_table::HashTable;
 use self::rand::{Rng, SeedableRng, StdRng};
 use global_pointer::GlobalPointer;
 
-fn same_entry_test() -> i32 {
+fn same_entry_test() {
 
     let mut config = Config::init(32);
     let rankn: i64 = config.rankn as i64;
@@ -95,7 +95,7 @@ fn same_entry_test() -> i32 {
         comm::barrier();
     }
 
-    return 0;
+    comm::barrier();
 }
 
 fn criterion_benchmark(c: &mut Criterion) {

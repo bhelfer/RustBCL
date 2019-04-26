@@ -47,19 +47,6 @@ pub fn barrier() {
     shmemx::barrier();
 }
 
-pub fn int_compare_and_swap(ptr: &mut GlobalPointer<c_int>, old_val: c_int, new_val: c_int) -> c_int {
-
-    let rank = ptr.rank;
-    unsafe {
-        shmemx::shmem_int_cswap(
-            ptr.rptr() as *mut c_int,
-            old_val as c_int,
-            new_val as c_int,
-            rank as c_int
-        )
-    }
-}
-
 pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, new_val: c_long) -> c_long {
 
     let rank = ptr.rank;
