@@ -171,6 +171,13 @@ fn test_array(config: &mut Config) {
             println!("{}: {}", i, arr.read(i));
         }
     }
+    let random_size = 3;
+    let mut arr = Array::<i32>::init(config, rankn*random_size);
+    for i in 0..arr.global_size(config) {
+        println!("{}: {}", i, arr.read(i));
+    }
+
+
 }
 
 fn test_hash_table(config: &mut Config) {
