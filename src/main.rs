@@ -160,7 +160,7 @@ fn test_array(config: &mut Config) {
     // ----------- array's part ------------
     if config.rank == 0 { println!("\n\n------------Array's test------------\n"); }
     let rankn = config.rankn;
-
+/*
     let mut arr = Array::<char>::init(config, rankn);
     arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
 
@@ -170,13 +170,38 @@ fn test_array(config: &mut Config) {
         for i in 0..config.rankn {
             println!("{}: {}", i, arr.read(i));
         }
-    }
+    }*/
+    println!("number of ranks is {}", rankn);
     let random_size = 3;
-    let mut arr = Array::<i32>::init(config, rankn*random_size);
+    /*let mut arr = Array::<char>::init(config, rankn*random_size);
+    println!("size of the array is {}", arr.global_size(config));
+    arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
+    comm::barrier();
     for i in 0..arr.global_size(config) {
-        println!("{}: {}", i, arr.read(i));
+        println!("here {}: {}", i, arr.read(i));
+    }*/
+    
+    let mut arr = Array::<i32>::init(config, rankn*random_size);
+    let size = arr.global_size(config);
+    println!("size is {}", size);
+    println!("size/rankn {}", size/rankn);
+    println!("local size of each rank is {}", arr.local_size);
+   /* for i in 0..(size/ rankn) {
+        arr.write((i as usize + config.rank) as i32, (config.rank + i as usize) as usize);
+        comm::barrier();
+    }*/
+    /*
+    for i in 0.. size {
+        arr.write((i as usize + config.rank) as i32, i as usize);
+        comm::barrier();
+    }*/
+    arr.write(8, config.rank);
+    comm::barrier();
+    if config.rank == 0 {
+        for i in 0..size {
+            println!("{}: {}", i, arr.read(i));
+        }
     }
-
 
 }
 
