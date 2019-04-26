@@ -30,15 +30,15 @@ fn main() {
         return;
     }
 
-    test_ptr(&mut config);
+    //test_ptr(&mut config);
 
-    test_global_pointer(&mut config);
+    //test_global_pointer(&mut config);
 
 	test_array(&mut config);
 
-	test_hash_table(&mut config);
+	//test_hash_table(&mut config);
 
-	test_queue(&mut config);
+	//test_queue(&mut config);
 }
 
 
