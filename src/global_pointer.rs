@@ -7,6 +7,7 @@ use std::mem::size_of;
 use Config;
 use std::ptr;
 use shmemx::libc::{c_int, size_t, c_long};
+use config::SMALLEST_MEM_UNIT;
 
 //pub trait GlobalPointerTrait<T>: ops::Add<isize> + ops::AddAssign<isize> + ops::Sub<isize> + ops::SubAssign<isize> + ops::Index<usize> + ops::IndexMut<usize> + ops::Deref + ops::DerefMut {
 //	fn new(rank: usize, ptr: usize) -> Self;
@@ -41,7 +42,19 @@ pub struct GlobalPointer<T> {
 }
 
 // implement GlobalPointer
-impl<'a, T: Clone> GlobalPointer<T> {
+impl<T: Clone> GlobalPointer<T> {
+    pub fn init(config: &mut Config, mut size: usize) -> GlobalPointer<T> {
+        let offset = config.alloc(size * size_of::<T>());
+        
+        GlobalPointer {
+            shared_segment_size: config.shared_segment_size,
+            smem_base_ptr: config.smem_base_ptr,
+            rank: config.rank,
+            offset,
+            refer_type: PhantomData
+        }
+    }
+
     pub fn null() -> GlobalPointer<T> {
         GlobalPointer {
             shared_segment_size: 0, // count by bytes

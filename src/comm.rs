@@ -43,83 +43,53 @@ pub fn barrier() {
     shmemx::barrier();
 }
 
-pub fn int_compare_and_swap(ptr: &mut GlobalPointer<c_int>, old_val: c_int, new_val: c_int) -> c_int {
+// lock
+pub type LockT = i64;
+pub const LOCK_SIZE: usize = 8;
+pub const UNLOCKED: LockT = 0;
+pub const LOCKED: LockT = 1;
+unsafe fn atomic_compare_swap(dest: *mut LockT, cond: LockT, value: LockT, pe: i32) -> LockT {
+	shmemx::shmem_long_atomic_compare_swap(dest, cond, value, pe)
+}
 
-    let rank = ptr.rank;
-    unsafe {
-        shmemx::shmem_int_cswap(
-            ptr.rptr() as *mut c_int,
-            old_val as c_int,
-            new_val as c_int,
-            rank as c_int
-        )
+pub fn set_lock(lock: *mut LockT, rank: usize) {
+    loop {
+        unsafe {
+            let current = shmemx::shmem_long_atomic_fetch(lock, rank as c_int);
+            if current != LOCKED && current != UNLOCKED {
+                panic!("not a lock!");
+            }
+            if current == UNLOCKED {
+                let expected = UNLOCKED;
+                let status = atomic_compare_swap(lock, UNLOCKED, LOCKED, rank as i32);
+                if status == expected {
+                    break;
+                }
+            }
+            // emit a pause
+        }
     }
 }
 
-pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, new_val: c_long) -> c_long {
-
-    let rank = ptr.rank;
+pub fn clear_lock(lock: *mut LockT, rank: usize) {
     unsafe {
-        shmemx::shmem_long_atomic_compare_swap(
-            ptr.rptr() as *mut c_long,
-            old_val as c_long,
-            new_val as c_long,
-            rank as c_int
-        )
+        shmemx::shmem_long_atomic_set(lock, UNLOCKED, rank as i32);
     }
 }
 
-pub fn int_finc(ptr: &mut GlobalPointer<i32>) -> i32 {
-    let rank = ptr.rank;
+pub fn test_lock(lock: *mut LockT, rank: usize) -> bool {
     unsafe {
-        shmemx::shmem_int_atomic_fetch_inc(
-            ptr.rptr() as *mut i32,
-            rank as c_int
-        )
+        let current = shmemx::shmem_long_atomic_fetch(lock, rank as c_int);
+        if current != LOCKED && current != UNLOCKED {
+            panic!("not a lock!");
+        }
+        if current == UNLOCKED {
+            let expected = UNLOCKED;
+            let status = shmemx::shmem_long_atomic_compare_swap(lock, UNLOCKED, LOCKED, rank as i32);
+            if status == expected {
+                return true;
+            }
+        }
+        return false;
     }
 }
-
-pub fn long_atomic_fetch(ptr: &mut GlobalPointer<c_long>) -> c_long {
-    unsafe {
-        shmemx::shmem_long_atomic_fetch(
-            ptr.rptr() as *const c_long,
-            ptr.rank as c_int
-        )
-    }
-}
-
-// added by lfz
-pub fn fence() {
-    unsafe {
-        shmemx::shmem_fence();
-    }
-}
-
-// added by lfz
-pub fn quiet() {
-    unsafe {
-        shmemx::shmem_quiet();
-    }
-}
-
-// added by lfz
-pub fn set_lock(lock: *mut c_long) {
-    unsafe {
-        shmemx::shmem_set_lock(lock);
-    }
-}
-
-// added by lfz
-pub fn clear_lock(lock: *mut c_long) {
-    unsafe {
-        shmemx::shmem_clear_lock(lock);
-    }
-}
-
-// added by lfz
-pub fn test_lock(lock: *mut c_long) -> c_int {
-    unsafe {
-        shmemx::shmem_test_lock(lock)
-    }
-}
-

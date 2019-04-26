@@ -24,9 +24,9 @@ extern {
 
     // added by lfz
     pub fn shmem_int_atomic_fetch_inc(target: *mut c_int, pe: c_int) -> c_int;
-    pub fn shmem_long_atomic_compare_swap(dest: *mut c_long, cond: c_long, value: c_long, pe: c_int) -> c_long;
-    pub fn shmem_long_atomic_fetch(source: *const c_long, pe: c_int) -> c_long;
-
+    pub fn shmem_long_atomic_fetch(source: *const i64, pe: c_int) -> i64;
+    pub fn shmem_long_atomic_compare_swap(dest: *mut i64, cond: i64, value: i64, pe: i32) -> i64;
+    pub fn shmem_long_atomic_set(dest: *mut i64, value: i64, pe: i32);
     // added by lfz
     pub fn shmem_fence();
     pub fn shmem_quiet();

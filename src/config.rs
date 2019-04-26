@@ -7,7 +7,7 @@ use std::mem::size_of;
 use std::io::{stdout, Write};
 
 // simple alloc doesn't need these things
-const SMALLEST_MEM_UNIT: usize = 64; // 64bytes
+pub const SMALLEST_MEM_UNIT: usize = 64; // 64bytes
 // #[derive(Debug, Copy, Clone)]
 // struct Chunk {
 //     size: usize,
@@ -40,8 +40,7 @@ impl Config {
         if smem_base_ptr.is_null() {
             panic!("BCL: Could not allocate shared memory segment.")
         }
-        // let smem_heap = unsafe{ smem_base_ptr.add(SMALLEST_MEM_UNIT) };// I still don't know why add UNIT
-        let smem_heap = smem_base_ptr;
+        let smem_heap = unsafe{ smem_base_ptr.add(SMALLEST_MEM_UNIT) };
 
         shmemx::barrier();
         Self {
@@ -76,31 +75,25 @@ impl Config {
     }
 
     // malloc part
-    pub fn alloc<T: Clone>(&mut self, mut size: usize) -> GlobalPointer<T> {
-        size *= size_of::<T>(); // byte size
-        size = ((size + SMALLEST_MEM_UNIT - 1) / SMALLEST_MEM_UNIT) * SMALLEST_MEM_UNIT; // align size
+    // size: byte size
+    pub fn alloc(&mut self, mut raw_size: usize) -> usize {
+        let size = ((raw_size + SMALLEST_MEM_UNIT - 1) / SMALLEST_MEM_UNIT) * SMALLEST_MEM_UNIT; // align size
 
         // if we have run out of heap...
         unsafe {
             if self.smem_heap.add(size) > self.smem_base_ptr.add(self.shared_segment_size) {
-                return GlobalPointer::<T>::null();
+                return 0;
             }
         }
 
         let allocd: *const u8 = self.smem_heap;
         unsafe{ self.smem_heap = self.smem_heap.add(size); }
-//        println!("Rank {} alloc memory! smem_base_ptr: {:p}, smem_heap: {:p}, allocd: {:p}, size: {}bytes", self.rank, self.smem_base_ptr, self.smem_heap, allocd, size);
-        GlobalPointer {
-            shared_segment_size: self.shared_segment_size,
-            smem_base_ptr: self.smem_base_ptr,
-            rank: self.rank,
-            offset: allocd as usize - self.smem_base_ptr as usize,
-            refer_type: PhantomData
-        }
+       	// println!("Rank {} alloc memory! smem_base_ptr: {:p}, smem_heap: {:p}, allocd: {:p}, raw_size: {}bytes, size: {}bytes", self.rank, self.smem_base_ptr, self.smem_heap, allocd, raw_size, size);
+        allocd as usize - self.smem_base_ptr as usize
     }
 
     pub fn free<T>(&mut self, p: GlobalPointer<T>) {
-        // stupid free does nothing
+        // dull free does nothing
     }
 }
 
