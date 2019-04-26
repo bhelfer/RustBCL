@@ -59,7 +59,7 @@ impl <'a, T: Clone> Array<T> {
     pub fn global_size(&mut self, config: &mut Config) -> usize {
         return self.local_size * config.rankn;
     }
-    pub fn slice(&mut self, begin_idx: usize, end_idx: usize) -> Vec<T>{
+    pub fn slice(&mut self, mut begin_idx: usize, mut end_idx: usize) -> Vec<T>{
         let begin_rank: usize = begin_idx/self.local_size;
         let end_rank: usize = end_idx/self.local_size;
         let mut local_slice = Vec::new();
