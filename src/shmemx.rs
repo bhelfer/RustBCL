@@ -1,4 +1,7 @@
 #![allow(dead_code)]
+#![allow(unused)]
+#![allow(deprecated)]
+
 use shmemx;
 pub extern crate libc;
 use self::libc::{c_int, size_t, c_long};

@@ -2,6 +2,17 @@
 name = "main"
 version = "0.0.1"
 
+[lib]
+name = "lib_bcl"
+path = "src/lib.rs"
+
 [dependencies]
 libc = "0.2.51"
 rand = "0.6"
+
+[dev-dependencies]
+criterion = "0.2"
+
+[[bench]]
+name = "my_benchmark"
+harness = false

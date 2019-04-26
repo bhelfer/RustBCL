@@ -4,14 +4,14 @@
 
 extern crate rand;
 
-mod shmemx;
-mod global_pointer;
-mod config;
-mod comm;
-mod array;
-mod hash_table;
+pub mod shmemx;
+pub mod global_pointer;
+pub mod config;
+pub mod comm;
+pub mod array;
+pub mod hash_table;
+pub mod queue;
 
-mod queue;
 use config::Config;
 use global_pointer::GlobalPointer;
 use array::Array;
@@ -32,13 +32,13 @@ fn main() {
 
     test_ptr(&mut config);
 
-//    test_global_pointer(&mut config);
+    test_global_pointer(&mut config);
 
-//	test_array(&mut config);
+	test_array(&mut config);
 
-//	test_hash_table(&mut config);
+	test_hash_table(&mut config);
 
-//	test_queue(&mut config);
+	test_queue(&mut config);
 }
 
 
@@ -63,7 +63,7 @@ fn test_ptr(config: &mut Config) {
     }
     comm::barrier();
 
-    for i in 0 .. 1000 {
+    for i in 0 .. 100 {
         for j in 0 .. config.rankn {
             let entry = HE {
                 key: config.rank as i64,
@@ -76,7 +76,7 @@ fn test_ptr(config: &mut Config) {
     }
     comm::barrier();
 
-    for i in 0 .. 1000 {
+    for i in 0 .. 100 {
         for j in 0 .. config.rankn {
             let entry = ptr[j].rget();
             println!("{}: ({}, {})", i, entry.key, entry.value);

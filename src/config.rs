@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused)]
+#![allow(deprecated)]
+
 use shmemx;
 use global_pointer::GlobalPointer;
 use std::marker::PhantomData;

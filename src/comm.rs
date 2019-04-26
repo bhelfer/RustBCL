@@ -1,3 +1,7 @@
+#![allow(dead_code)]
+#![allow(unused)]
+#![allow(deprecated)]
+
 use shmemx;
 use std::mem::size_of;
 use shmemx::libc::{c_long, c_void, c_int};
@@ -9,7 +13,7 @@ pub fn broadcast<T>(val: &mut T, root: usize) {
         if p_sync_ptr.is_null() {
             panic!("BCL: Could not allocate shared memory segment.")
         }
-        let mut p_sync_slice = std::slice::from_raw_parts_mut(p_sync_ptr, shmemx::_SHMEM_BCAST_SYNC_SIZE);
+        let p_sync_slice = std::slice::from_raw_parts_mut(p_sync_ptr, shmemx::_SHMEM_BCAST_SYNC_SIZE);
         for i in 0..shmemx::_SHMEM_BCAST_SYNC_SIZE {
             p_sync_slice[i] = shmemx::_SHMEM_SYNC_VALUE;
         }

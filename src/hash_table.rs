@@ -18,10 +18,6 @@ use std::mem::size_of;
 use shmemx::libc::{c_long, c_void, c_int};
 use std::time::{SystemTime, UNIX_EPOCH};
 //use std::io::{stdout, Write};
-use std::thread::sleep;
-use std::thread::sleep_ms;
-use std::thread::yield_now;
-use std::thread;
 
 #[derive(Debug, Copy, Clone)]
 struct HashEntry<K, V> {

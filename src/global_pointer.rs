@@ -1,10 +1,13 @@
 #![allow(dead_code)]
 #![allow(unused)]
+#![allow(deprecated)]
+
 use shmemx;
 use std::marker::PhantomData;
 use std::ops;
 use std::mem::size_of;
-use Config;
+use config;
+use config::Config;
 use std::ptr;
 use shmemx::libc::{c_int, size_t, c_long};
 
