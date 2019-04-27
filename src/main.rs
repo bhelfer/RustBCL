@@ -52,7 +52,7 @@ fn test_global_guard(config: &mut Config) {
     if config.rank == 0 {
     	let value = guard1.lock();
     	let t = value.rget();
-    	assert_eq!(t, 2000);
+    	assert_eq!(t, 1000 * config.rankn);
     	println!("Global Guard's test: pass!");
     }
 }
