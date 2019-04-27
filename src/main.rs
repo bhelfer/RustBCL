@@ -161,11 +161,13 @@ fn test_array(config: &mut Config) {
     if config.rank == 0 { println!("\n\n------------Array's test------------\n"); }
     let rankn = config.rankn;
 
-    let mut arr = Array::<char>::init(config, rankn);
-    arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
+    let mut arr = Array::<i64>::init(config, rankn);
+    //arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
 
     comm::barrier();
-
+    let mut ptr = arr.get_ptr(1);
+    comm::long_atomic_fetch(&mut ptr);
+    comm::long_atomic_fetch_add(&mut ptr, 2 as i64);
     if config.rank == 0 {
         for i in 0..config.rankn {
             println!("{}: {}", i, arr.read(i));
