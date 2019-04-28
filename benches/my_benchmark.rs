@@ -21,6 +21,18 @@ use hash_table::HashTable;
 use self::rand::{Rng, SeedableRng, StdRng};
 use global_pointer::GlobalPointer;
 
+fn fibonacci(n: u64) -> u64 {
+    match n {
+        0 => 1,
+        1 => 1,
+        n => fibonacci(n-1) + fibonacci(n-2),
+    }
+}
+
+fn bench_global_pointer() {
+
+}
+
 fn distributed_queue() {
     let mut config = Config::init(16);
     let rankn = config.rankn;
@@ -60,6 +72,8 @@ fn original_queue() {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
+    c.bench_function("hello_benchmark", |b| b.iter(|| fibonacci(black_box(20))));
+//    c.bench_function("same_entry test", |b| b.iter(|| same_entry_test()));
 //    c.bench_function("Distributed queue test", |b| b.iter(|| distributed_queue()));
 //    c.bench_function("Original queue test", |b|b.iter(||original_queue()));
 }

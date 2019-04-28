@@ -81,7 +81,7 @@ impl<K, V> HashTable<K, V>
         // used record GlobalPointer
         let mut used: Vec<GlobalPointer<U>> = Vec::new();
         used.resize(config.rankn, GlobalPointer::null());
-        used[config.rank] = config.alloc::<U>(local_size);
+        used[config.rank] = GlobalPointer::init(config, local_size);
         for i in 0 .. local_size {
             (used[config.rank] + i as isize).rput(free_flag);
 //            unsafe {
@@ -97,7 +97,7 @@ impl<K, V> HashTable<K, V>
         // hash entry GlobalPointer
         let mut hash_table: Vec<GlobalPointer<HE<K, V>>> = Vec::new();
         hash_table.resize(config.rankn, GlobalPointer::null());
-        hash_table[config.rank] = config.alloc::<HE<K, V>>(local_size);
+        hash_table[config.rank] = GlobalPointer::init(config, local_size);
         for i in 0 .. local_size {
             (hash_table[config.rank] + i as isize).rput(HashEntry::null());
 //            unsafe {
@@ -379,8 +379,8 @@ pub mod tests {
         let mut k_ptr: GlobalPointer<i64> = GlobalPointer::null();
         let mut v_ptr: GlobalPointer<i64> = GlobalPointer::null();
         if rank == 0 {
-            k_ptr = config.alloc::<i64>(1);
-            v_ptr = config.alloc::<i64>(1);
+            k_ptr = GlobalPointer::init(&mut config, 1);
+            v_ptr = GlobalPointer::init(&mut config, 1);
         }
         comm::barrier();
 

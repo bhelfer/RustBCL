@@ -20,17 +20,15 @@ extern {
     pub fn shmem_getmem(target: *mut u8, source: *const u8, len: size_t, pe: c_int);
     pub fn shmem_broadcast64(target: *mut u64, source: *const u64, nelems: size_t, PE_root: c_int,
                              PE_start: c_int, logPE_stride: c_int, PE_size: c_int, pSync: *mut c_long); // how to denote *long?
-    // added by lfz
-    pub fn shmem_int_atomic_fetch_inc(target: *mut c_int, pe: c_int) -> c_int;
-    pub fn shmem_long_atomic_compare_swap(dest: *mut c_long, cond: c_long, value: c_long, pe: c_int) -> c_long;
-    pub fn shmem_long_atomic_fetch(source: *const c_long, pe: c_int) -> c_long;
 
+    pub fn shmem_int_atomic_fetch_inc(target: *mut c_int, pe: c_int) -> c_int;
+    pub fn shmem_long_atomic_fetch(source: *const i64, pe: c_int) -> i64;
+    pub fn shmem_long_atomic_compare_swap(dest: *mut i64, cond: i64, value: i64, pe: i32) -> i64;
+    pub fn shmem_long_atomic_set(dest: *mut i64, value: i64, pe: i32);
     pub fn shmem_int_atomic_fetch_and(dest: *mut c_int, value: c_int, pe: c_int) -> c_int;
     pub fn shmem_long_atomic_fetch_and(dest: *mut c_long, value: c_long, pe: c_long) -> c_long;
-
     pub fn shmem_long_atomic_fetch_xor(dest: *mut c_long, value: c_long, pe: c_long) -> c_long;
 
-    // added by lfz
     pub fn shmem_fence();
     pub fn shmem_quiet();
 
@@ -39,8 +37,8 @@ extern {
     pub fn shmem_test_lock(lock: *mut c_long) -> c_int;
 }
 
-pub static _SHMEM_SYNC_VALUE: c_long = -1;
-pub static _SHMEM_BCAST_SYNC_SIZE: usize = 2;
+pub static _SHMEM_SYNC_VALUE: c_long = -1; // -3
+pub static _SHMEM_BCAST_SYNC_SIZE: usize = 2; // 74
 
 pub fn init() {
     unsafe {
