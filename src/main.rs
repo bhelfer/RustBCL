@@ -22,7 +22,6 @@ use self::rand::{Rng, SeedableRng, StdRng};
 use std::collections::HashMap;
 
 fn main() {
-
     let mut config = Config::init(1);
     let rankn = config.rankn;
 
@@ -31,14 +30,14 @@ fn main() {
     }
 
 //    test_ptr(&mut config);
+//
+//    test_global_pointer(&mut config);
+//
+//    test_array(&mut config);
+//
+//    test_hash_table(&mut config);
 
-    test_global_pointer(&mut config);
-
-//	test_array(&mut config);
-
-//	test_hash_table(&mut config);
-
-//	test_queue(&mut config);
+    test_queue(&mut config);
 }
 
 
@@ -63,12 +62,12 @@ fn test_ptr(config: &mut Config) {
     }
     comm::barrier();
 
-    for i in 0 .. 100 {
-        for j in 0 .. config.rankn {
+    for i in 0..100 {
+        for j in 0..config.rankn {
             let entry = HE {
                 key: config.rank as i64,
                 value: 11 * config.rank as i64,
-                other: 12132
+                other: 12132,
             };
             ptr[j].rput(entry);
             comm::barrier();
@@ -76,19 +75,18 @@ fn test_ptr(config: &mut Config) {
     }
     comm::barrier();
 
-    for i in 0 .. 100 {
-        for j in 0 .. config.rankn {
+    for i in 0..100 {
+        for j in 0..config.rankn {
             let entry = ptr[j].rget();
             println!("{}: ({}, {})", i, entry.key, entry.value);
             comm::barrier();
         }
     }
     comm::barrier();
-
 }
 
 fn test_global_pointer(config: &mut Config) {
-	// ----------- Global Pointer's part -------------
+    // ----------- Global Pointer's part -------------
     if config.rank == 0 { println!("------------Global Pointer's test------------\n"); }
 
     let mut ptr1 = GlobalPointer::null();
@@ -105,7 +103,7 @@ fn test_global_pointer(config: &mut Config) {
     let mut value;
     if config.rank == 0 {
         let p1 = ptr1.local();
-        let p_slice = unsafe{ std::slice::from_raw_parts(p1, config.rankn) };
+        let p_slice = unsafe { std::slice::from_raw_parts(p1, config.rankn) };
         println!("Rank 0 Sees: ");
         for i in 0..config.rankn {
             value = p_slice[i];
@@ -127,12 +125,12 @@ fn test_global_pointer(config: &mut Config) {
     comm::barrier();
 
     // test idx_rget, idx_rput
-    ptr1.idx_rput(config.rank as isize, 2*config.rank as i32);
+    ptr1.idx_rput(config.rank as isize, 2 * config.rank as i32);
     comm::barrier();
 
     let mut value;
     if config.rank == 1 {
-    	println!("test idx_rget, idx_rput");
+        println!("test idx_rget, idx_rput");
         println!("Rank 1 Sees: ");
         for i in 0..config.rankn {
             value = ptr1.idx_rget(i as isize);
@@ -152,7 +150,7 @@ fn test_global_pointer(config: &mut Config) {
     if config.rank == 1 {
         println!("test arget, arput");
         let values = ptr2.arget(6);
-        println!("Rank{}: arget {:?}", config.rank ,values);
+        println!("Rank{}: arget {:?}", config.rank, values);
     }
 }
 
@@ -180,7 +178,7 @@ fn test_hash_table(config: &mut Config) {
     let mut hash_table = HashTable::<usize, char>::new(config, 1024);
 
     let key: usize = 0;
-    let value  = [char::from('a' as u8), char::from('A' as u8)];
+    let value = [char::from('a' as u8), char::from('A' as u8)];
 //    let key: usize = config.rank;
 //    let value  = [char::from('a' as u8 + config.rank as u8), char::from('A' as u8 + config.rank as u8)];
     let mut success = false;
@@ -230,7 +228,6 @@ fn test_queue(config: &mut Config) {
                 Ok(data) => println!("index: {} value: {}", i, data),
                 Err(err) => println!("{}", err),
             }
-
         }
     }
 //    let mut queue = Queue::<char>::new(config, 10);
