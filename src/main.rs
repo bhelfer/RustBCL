@@ -11,12 +11,14 @@ pub mod comm;
 pub mod array;
 pub mod hash_table;
 pub mod queue;
+pub mod global_guard;
 
 use config::Config;
 use global_pointer::GlobalPointer;
 use array::Array;
 use hash_table::HashTable;
 use queue::Queue;
+use global_guard::GlobalGuard;
 
 use self::rand::{Rng, SeedableRng, StdRng};
 use std::collections::HashMap;
@@ -38,7 +40,17 @@ fn main() {
 //
 //    test_hash_table(&mut config);
 
-    test_queue(&mut config);
+   // test_global_pointer(&mut config);
+
+//    test_shmem_atomic(&mut config);
+
+    test_global_guard(&mut config);
+
+//	test_array(&mut config);
+
+//	test_hash_table(&mut config);
+
+//	test_queue(&mut config);
 }
 
 
@@ -56,7 +68,7 @@ fn test_ptr(config: &mut Config) {
     let mut ptr: Vec<GlobalPointer<HE>> = Vec::new();
     ptr.resize(config.rankn, GlobalPointer::null());
     comm::barrier();
-    ptr[config.rank] = config.alloc::<HE>(1);
+    ptr[config.rank] = GlobalPointer::init(config, 1);
     comm::barrier();
     for i in 0..config.rankn {
         comm::broadcast(&mut ptr[i], i);
@@ -93,7 +105,7 @@ fn test_global_pointer(config: &mut Config) {
     let mut ptr1 = GlobalPointer::null();
     if config.rank == 0 {
         let rankn = config.rankn;
-        ptr1 = config.alloc::<i32>(rankn);
+        ptr1 = GlobalPointer::init(config, rankn);
     }
     comm::broadcast(&mut ptr1, 0);
 
@@ -143,7 +155,7 @@ fn test_global_pointer(config: &mut Config) {
     // test arput, arget
     let mut ptr2 = GlobalPointer::null();
     if config.rank == 0 {
-        ptr2 = config.alloc::<i32>(6);
+        ptr2 = GlobalPointer::init(config, 6);
         let values = vec![0, 1, 2, 3, 4, 5];
         ptr2.arput(&values);
     }
@@ -237,4 +249,62 @@ fn test_queue(config: &mut Config) {
             println!("Data: {}, count: {}", ('a' as u8 + i as u8) as char, count_vector[i]);
         }
     }
+}
+
+fn test_global_guard(config: &mut Config) {
+	// ----------- Global Guard's part -------------
+    if config.rank == 0 { println!("------------Global Guard's test------------\n"); }
+
+    let mut guard1 = GlobalGuard::null();
+    if config.rank == 0 {
+        guard1 = GlobalGuard::init(config);
+    }
+    comm::broadcast(&mut guard1, 0);
+    // println!("rank:{}, guard1:{:?}", config.rank, guard1);
+    if config.rank == 0 {
+    	let value = guard1.lock();
+    	value.rput(0);
+    }
+    comm::barrier();
+
+    // text mutex
+    let step = 100000;
+    for i in 0..step {
+    	let value = guard1.lock();
+    	let t = value.rget();
+    	value.rput(t + 1);
+    }
+    comm::barrier();
+
+    if config.rank == 0 {
+    	let value = guard1.lock();
+    	let t = value.rget();
+    	assert_eq!(t, step * config.rankn);
+    	println!("Global Guard's test: pass! step: {}", step);
+    }
+}
+
+fn test_shmem_atomic(config: &mut Config) {
+    // ----------- Global Guard's part -------------
+    if config.rank == 0 { println!("------------Global Guard's test------------\n"); }
+
+    let mut guard1 = GlobalGuard::null();
+    if config.rank == 0 {
+        guard1 = GlobalGuard::init(config);
+    }
+    comm::broadcast(&mut guard1, 0);
+    // println!("rank:{}, guard1:{:?}", config.rank, guard1);
+    if config.rank == 0 {
+    	let value = guard1.lock();
+    	value.rput(0);
+    }
+
+    let value = guard1.lock();
+    println!("this message should only be printed once");
+
+    let result = guard1.test_lock();
+    match result {
+    	Ok(value) => println!("Get the lock again!"),
+    	Err(error) => println!("That's right! It should not be able to get the lock!"),
+    };
 }

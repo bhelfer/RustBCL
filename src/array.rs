@@ -29,7 +29,7 @@ impl <'a, T: Clone> Array<T> {
     pub fn init(config: &mut Config, n:usize) -> Array<T> {
         let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
         let mut ptrs = vec!(GlobalPointer::null(); config.rankn);
-        ptrs[config.rank] = config.alloc::<T>(local_size);
+        ptrs[config.rank] = GlobalPointer::init(config, local_size);
 
         for rank in 0..config.rankn {
             comm::broadcast(&mut ptrs[rank], rank);
