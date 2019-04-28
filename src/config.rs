@@ -22,7 +22,7 @@ pub const SMALLEST_MEM_UNIT: usize = 64; // 64bytes
   Since global mutable variable is a dangerous idea, so I use a struct and pass its reference to
 to every where it's needed.
 */
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Config {
     pub shared_segment_size: usize,
     pub smem_base_ptr: *mut u8,
