@@ -60,7 +60,6 @@ fn original_queue() {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("same_entry test", |b| b.iter(|| same_entry_test()));
 //    c.bench_function("Distributed queue test", |b| b.iter(|| distributed_queue()));
 //    c.bench_function("Original queue test", |b|b.iter(||original_queue()));
 }
