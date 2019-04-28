@@ -1,4 +1,6 @@
 #![allow(unused)]
+#![allow(deprecated)]
+
 #[macro_use]
 extern crate criterion;
 
@@ -20,6 +22,7 @@ use std::collections::VecDeque;
 use hash_table::HashTable;
 use self::rand::{Rng, SeedableRng, StdRng};
 use global_pointer::GlobalPointer;
+use criterion::Benchmark;
 
 fn distributed_queue() {
     let mut config = Config::init(16);
@@ -35,10 +38,10 @@ fn distributed_queue() {
         let len = queue.len();
         for i in 0..len {
             let f = queue.remove();
-            match f {
-                Ok(data) => println!("index: {} value: {}", i, data),
-                Err(err) => println!("{}", err),
-            }
+//            match f {
+//                Ok(data) => println!("index: {} value: {}", i, data),
+//                Err(err) => println!("{}", err),
+//            }
         }
     }
 }
@@ -60,7 +63,12 @@ fn original_queue() {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-//    c.bench_function("Distributed queue test", |b| b.iter(|| distributed_queue()));
+    c.bench(
+            "Default Group",
+            Benchmark::new("Distributed queue test", |b| b.iter(|| distributed_queue()))
+            .with_function("Original queue test", |b| b.iter(|| original_queue()))
+            .sample_size(3)
+    );
 //    c.bench_function("Original queue test", |b|b.iter(||original_queue()));
 }
 
