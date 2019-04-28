@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused)]
+#![allow(deprecated)]
+
 use global_pointer;
 use comm;
 use config;
