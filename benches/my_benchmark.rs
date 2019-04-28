@@ -25,13 +25,15 @@ use global_pointer::GlobalPointer;
 use criterion::Benchmark;
 use criterion::ParameterizedBenchmark;
 use std::rc::Rc;
+use std::time::Duration;
 
-fn distributed_queue(config: &mut Config) {
-//    let mut config = Config::init(16);
+fn distributed_queue(mut config: Config) {
+    let n = 1000000;
+
     let rankn = config.rankn;
     comm::barrier();
-    let mut queue = Queue::<char>::new(config, 2000);
-    for i in 0..100 {
+    let mut queue = Queue::<char>::new(&mut config, rankn * n);
+    for i in 0..n {
         queue.add((i as u8 + config.rank as u8) as char);
     }
     comm::barrier();
@@ -46,10 +48,11 @@ fn distributed_queue(config: &mut Config) {
 //            }
         }
     }
+    comm::barrier();
 }
 
 fn original_queue() {
-    let n = 100000000;
+    let n = 1000000;
     let mut queue:VecDeque<char> = VecDeque::with_capacity(n);
     for i in 0..n {
         queue.push_back(('a' as u8 + i as u8) as char);
@@ -65,12 +68,23 @@ fn original_queue() {
 
 }
 
+/// measurement_time(): Changes the default measurement time for benchmarks run with this runner.
+/// sample_size(): Changes the default size of the sample for benchmarks run with this runner.
+
+/// with_function(): add another tested function after Benchmark::new()
+
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench(
             "Default",
-            Benchmark::new("Distributed queue test", move |b| b.iter(|| distributed_queue(&mut Config::init(16))))
-            .with_function("Original queue test", |b| b.iter(|| original_queue()))
-            .sample_size(3)
+            Benchmark::new(
+                "Distributed queue test",
+                |b| b.iter_with_large_drop(|| distributed_queue(Config::init(32)))
+            )
+            .with_function(
+                "Original queue test",
+                |b| b.iter_with_large_drop(|| original_queue())
+            )
+            .sample_size(10).measurement_time(Duration::from_secs(10))
     );
 //    c.bench_function("Original queue test", |b|b.iter(||original_queue()));
 }
