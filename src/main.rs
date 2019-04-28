@@ -11,7 +11,7 @@ pub mod comm;
 pub mod array;
 pub mod hash_table;
 pub mod queue;
-use comm;
+use comm::long_atomic_fetch_add;
 use config::Config;
 use global_pointer::GlobalPointer;
 use array::Array;
