@@ -50,8 +50,8 @@ pub fn barrier() {
 // lock
 pub type LockT = i64;
 pub const LOCK_SIZE: usize = 8;
-pub const UNLOCKED: LockT = 0;
-pub const LOCKED: LockT = 1;
+pub const UNLOCKED: LockT = 1111;
+pub const LOCKED: LockT = 2222;
 unsafe fn atomic_compare_swap(dest: *mut LockT, cond: LockT, value: LockT, pe: i32) -> LockT {
 	shmemx::shmem_long_atomic_compare_swap(dest, cond, value, pe)
 }

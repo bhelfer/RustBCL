@@ -34,7 +34,9 @@ fn main() {
 
 //    test_ptr(&mut config);
 
-    test_global_pointer(&mut config);
+//    test_global_pointer(&mut config);
+
+//    test_shmem_atomic(&mut config);
 
     test_global_guard(&mut config);
 
@@ -253,9 +255,11 @@ fn test_global_guard(config: &mut Config) {
     	let value = guard1.lock();
     	value.rput(0);
     }
+    comm::barrier();
 
     // text mutex
-    for i in 0..1000 {
+    let step = 100000;
+    for i in 0..step {
     	let value = guard1.lock();
     	let t = value.rget();
     	value.rput(t + 1);
@@ -265,7 +269,32 @@ fn test_global_guard(config: &mut Config) {
     if config.rank == 0 {
     	let value = guard1.lock();
     	let t = value.rget();
-    	assert_eq!(t, 1000 * config.rankn);
-    	println!("Global Guard's test: pass!");
+    	assert_eq!(t, step * config.rankn);
+    	println!("Global Guard's test: pass! step: {}", step);
     }
+}
+
+fn test_shmem_atomic(config: &mut Config) {
+    // ----------- Global Guard's part -------------
+    if config.rank == 0 { println!("------------Global Guard's test------------\n"); }
+
+    let mut guard1 = GlobalGuard::null();
+    if config.rank == 0 {
+        guard1 = GlobalGuard::init(config);
+    }
+    comm::broadcast(&mut guard1, 0);
+    // println!("rank:{}, guard1:{:?}", config.rank, guard1);
+    if config.rank == 0 {
+    	let value = guard1.lock();
+    	value.rput(0);
+    }
+
+    let value = guard1.lock();
+    println!("this message should only be printed once");
+
+    let result = guard1.test_lock();
+    match result {
+    	Ok(value) => println!("Get the lock again!"),
+    	Err(error) => println!("That's right! It should not be able to get the lock!"),
+    };
 }

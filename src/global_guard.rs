@@ -54,6 +54,21 @@ impl<T> GlobalGuard<T> {
             refer_type: PhantomData
         }
     }
+
+    pub fn test_lock(&self) -> Result<GlobalValue<T>, &str> {
+        let lock = self.ptr as *mut LockT;
+        let success = comm::test_lock(lock, self.rank);
+        if success {
+        	Ok(GlobalValue {
+            rank: self.rank,
+            ptr: self.ptr,
+            refer_type: PhantomData
+        	})
+        } else {
+        	Err("Cannot get the lock")
+        }
+        
+    }
 }
 
 #[derive(Debug)]
