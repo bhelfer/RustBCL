@@ -3,7 +3,7 @@
 #![allow(deprecated)]
 
 extern crate rand;
-
+extern crate time;
 pub mod shmemx;
 pub mod global_pointer;
 pub mod config;
@@ -169,20 +169,34 @@ fn test_array(config: &mut Config) {
     if config.rank == 0 { println!("\n\n------------Array's test------------\n"); }
     let rankn = config.rankn;
 
-    let mut arr = Array::<i64>::init(config, rankn);
+    let mut arr = Array::<i64>::init(config, 128);
     //arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
     arr.write(0 as i64, config.rank);
-    comm::barrier();
-    let mut ptr = arr.get_ptr(0);
+    for i in 0..128 {
+        arr.write(0 as i64, i);
+    }
     // comm::long_atomic_fetch(&mut ptr);
     comm::barrier();
-    println!("here1");
-    for i in 0..1000 {
-        comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
+    //println!("here1");
+    let mut time1: time::Tm;
+    let mut time_res: time::Duration;
+    let mut time2: time::Tm;
+    if config.rank == 0 {
+        time1 = time::now();
+    }
+
+    for i in 0..10000000 {
+        for j in 0..128 {
+            let mut ptr = arr.get_ptr(j);
+            comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
+        }
     }
     comm::barrier();
-    println!("here2");
+    //println!("here2");
     if config.rank == 0 {
+        time2 = time::now();
+        time_res = time2 - time1;
+        println!("time is {:?}", time_res);
         for i in 0..config.rankn {
             println!("{}: {}", i, arr.read(i));
         }
