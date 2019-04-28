@@ -34,7 +34,7 @@ fn main() {
 
 //    test_ptr(&mut config);
 
-//    test_global_pointer(&mut config);
+   // test_global_pointer(&mut config);
 
    test_global_guard(&mut config);
 
