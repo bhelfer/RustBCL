@@ -10,23 +10,7 @@ use config::Config;
 use comm;
 use shmemx;
 use std::marker::PhantomData;
-use global_pointer::GlobalPointer;
-use shmemx::shmem_broadcast64;
 
-
-/*
-struct GlobalGuardVec<T> {
-    ptrs: Vec<GlobalGuard<T>>,
-    local_size: usize
-}
-
-impl<T> GlobalGuardVec<T> {
-    pub fn init(config: &mut Config, size: usize) -> GlobalGuardVec<T> {
-
-    }
-
-}
-*/
 
 struct GlobalGuardVec<T> {
     rank: usize,
