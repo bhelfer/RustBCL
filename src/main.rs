@@ -34,9 +34,11 @@ fn main() {
 
 //    test_ptr(&mut config);
 
-    test_global_pointer(&mut config);
+//    test_global_pointer(&mut config);
 
-    test_global_guard(&mut config);
+//    test_global_guard(&mut config);
+
+    test_shmem_atomic(&mut config);
 
 //	test_array(&mut config);
 
@@ -268,4 +270,25 @@ fn test_global_guard(config: &mut Config) {
     	assert_eq!(t, 1000 * config.rankn);
     	println!("Global Guard's test: pass!");
     }
+}
+
+fn test_shmem_atomic(config: &mut Config) {
+    // ----------- Global Guard's part -------------
+    if config.rank == 0 { println!("------------Global Guard's test------------\n"); }
+
+    let mut guard1 = GlobalGuard::null();
+    if config.rank == 0 {
+        guard1 = GlobalGuard::init(config);
+    }
+    comm::broadcast(&mut guard1, 0);
+    // println!("rank:{}, guard1:{:?}", config.rank, guard1);
+    if config.rank == 0 {
+    	let value = guard1.lock();
+    	value.rput(0);
+    }
+
+    guard1.lock();
+    println!("this message should only be printed once");
+    guard1.lock();
+    println!("dead lock! this message should never be printed");
 }
