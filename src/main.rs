@@ -20,9 +20,10 @@ use queue::Queue;
 
 use self::rand::{Rng, SeedableRng, StdRng};
 use std::collections::HashMap;
+use std::mem::size_of;
 
 fn main() {
-    let mut config = Config::init(1);
+    let mut config = Config::init(size_of::<char>() * 5000000 / (1024 * 1024));
     let rankn = config.rankn;
 
     if config.rankn < 2 {
@@ -214,9 +215,11 @@ fn test_queue(config: &mut Config) {
     // ----------- Queue's part ------------
     comm::barrier();
 //    if config.rank == 0 { println!("\n\n------------Queue's test------------\n"); }
-    let mut queue = Queue::<char>::new(config, config.rankn * 2000000);
-    for i in 0..1000000 {
-        queue.add(('a' as u8 + i % 52 as u8 + config.rank as u8) as char);
+    let mut queue = Queue::<char>::new(config, rankn * 2000000);
+    let mut i: u32 = 0;
+    for _ in 0..1000000 {
+        queue.add(('a' as u8 + (i % 52) as u8 + config.rank as u8) as char);
+	i += 1;
     }
     comm::barrier();
 
