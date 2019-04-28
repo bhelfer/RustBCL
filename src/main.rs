@@ -24,7 +24,6 @@ use self::rand::{Rng, SeedableRng, StdRng};
 use std::collections::HashMap;
 use std::mem::size_of;
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::intrinsics::powf64;
 
 fn main() {
     let mut config = Config::init(size_of::<char>() * 5000000 / (1024 * 1024));
@@ -225,7 +224,7 @@ fn test_queue(config: &mut Config) {
     if config.rank == 0 { println!("\n------------Queue's test------------\n"); }
     let rankn = config.rankn;
     comm::barrier();
-    let mut queue = Queue::<char>::new(config, 250000));
+    let mut queue = Queue::<char>::new(config, 250000);
     let mut i: u32 = 0;
     let local_length = (131072 + rankn - 1) / rankn;
     comm::barrier();
