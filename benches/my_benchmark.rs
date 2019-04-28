@@ -23,12 +23,14 @@ use hash_table::HashTable;
 use self::rand::{Rng, SeedableRng, StdRng};
 use global_pointer::GlobalPointer;
 use criterion::Benchmark;
+use criterion::ParameterizedBenchmark;
+use std::rc::Rc;
 
-fn distributed_queue() {
-    let mut config = Config::init(16);
+fn distributed_queue(config: &mut Config) {
+//    let mut config = Config::init(16);
     let rankn = config.rankn;
     comm::barrier();
-    let mut queue = Queue::<char>::new(&mut config, 2000);
+    let mut queue = Queue::<char>::new(config, 2000);
     for i in 0..100 {
         queue.add((i as u8 + config.rank as u8) as char);
     }
@@ -47,8 +49,9 @@ fn distributed_queue() {
 }
 
 fn original_queue() {
-    let mut queue:VecDeque<char> = VecDeque::with_capacity(200);
-    for i in 0..100 {
+    let n = 100000000;
+    let mut queue:VecDeque<char> = VecDeque::with_capacity(n);
+    for i in 0..n {
         queue.push_back(('a' as u8 + i as u8) as char);
     }
     let len = queue.len();
@@ -64,8 +67,8 @@ fn original_queue() {
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench(
-            "Default Group",
-            Benchmark::new("Distributed queue test", |b| b.iter(|| distributed_queue()))
+            "Default",
+            Benchmark::new("Distributed queue test", move |b| b.iter(|| distributed_queue(&mut Config::init(16))))
             .with_function("Original queue test", |b| b.iter(|| original_queue()))
             .sample_size(3)
     );
