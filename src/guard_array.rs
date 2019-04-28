@@ -61,12 +61,12 @@ impl<T> GlobalGuardVec<T> {
     }
 }
 
-pub struct SafeArray<T> {
+pub struct GuardArray<T> {
     pub ptrs: Vec<GlobalGuardVec<T>>,
 }
 
-impl<T> SafeArray<T> {
-    pub fn init(config: &mut Config, n:usize) -> SafeArray<T> {
+impl<T> GuardArray<T> {
+    pub fn init(config: &mut Config, n:usize) -> GuardArray<T> {
         let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
         let mut ptrs = vec!(GlobalGuardVec::null(); config.rankn);
         ptrs[config.rank] = ptrs[congif.rank].init(config, local_size);
@@ -74,9 +74,9 @@ impl<T> SafeArray<T> {
         for rank in 0..config.rankn {
             comm::broadcast(&mut ptrs[rank], rank);
         }
-        SafeArray {ptrs}
+        GuardArray {ptrs}
     }
-        pub fn read(&self, idx: usize) -> T {
+    pub fn read(&self, idx: usize) -> T {
         let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
         let rank: usize = idx / self.local_size;
         // changed to >= by lfz
@@ -98,5 +98,16 @@ impl<T> SafeArray<T> {
         let local_idx = idx % self.local_size; // mod % is enough
         self.ptrs[rank].lock(local_idx).rput(c);
 
+    }
+
+    pub fn lock(&mut self, idx: usize) -> GlobalValue<T> {
+        let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
+        let rank: usize = idx / self.local_size;
+        // changed to >= by lfz
+        if rank >= shmemx::n_pes() {
+            panic!("Array::read: index {} out of bound!", idx);
+        }
+        let local_idx = idx % self.local_size; // mod % is enough
+        self.ptrs[rank].lock(local_idx)
     }
 }
