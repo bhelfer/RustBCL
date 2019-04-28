@@ -23,7 +23,7 @@ use global_guard::GlobalGuard;
 use self::rand::{Rng, SeedableRng, StdRng};
 use std::collections::HashMap;
 use std::mem::size_of;
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 fn main() {
     let mut config = Config::init(size_of::<char>() * 5000000 / (1024 * 1024));
@@ -227,15 +227,16 @@ fn test_queue(config: &mut Config) {
     let mut queue = Queue::<char>::new(config, rankn * 100000);
     let mut i: u32 = 0;
 
+    comm::barrier();
     let start = SystemTime::now();
     for _ in 0..100000 {
         queue.add(('a' as u8 + config.rank as u8) as char);
         i += 1;
     }
     comm::barrier();
-    let since_the_epoch = start.duration_since(UNIX_EPOCH)
-        .expect("Time went backwards");
-    if config.rank == 0 {println!("{:?}", since_the_epoch);}
+    let since_the_epoch = SystemTime::now().duration_since(start)
+        .expect("SystemTime::duration_since failed");
+    if config.rank == 0 {println!("Insert time: {:?}", since_the_epoch);}
 
     comm::barrier();
     if config.rank == 0 {
