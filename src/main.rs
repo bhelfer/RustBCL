@@ -23,7 +23,7 @@ use std::collections::HashMap;
 use std::mem::size_of;
 
 fn main() {
-    let mut config = Config::init(size_of::<char>() * 5000000 / (1024 * 1024));
+    let mut config = Config::init(size_of::<char>() * 500000 / (1024 * 1024));
     let rankn = config.rankn;
 
     if config.rankn < 2 {
@@ -208,29 +208,31 @@ fn test_hash_table(config: &mut Config) {
 }
 
 fn test_queue(config: &mut Config) {
-    // ----------- Queue's part ------------
-    comm::barrier();
     if config.rank == 0 { println!("\n\n------------Queue's test------------\n"); }
     let rankn = config.rankn;
-    // ----------- Queue's part ------------
     comm::barrier();
-//    if config.rank == 0 { println!("\n\n------------Queue's test------------\n"); }
-    let mut queue = Queue::<char>::new(config, rankn * 2000000);
+    let mut queue = Queue::<char>::new(config, rankn * 200000);
     let mut i: u32 = 0;
-    for _ in 0..1000000 {
-        queue.add(('a' as u8 + (i % 52) as u8 + config.rank as u8) as char);
-	i += 1;
+    for _ in 0..100000 {
+        queue.add(('a' as u8 + config.rank as u8) as char);
+        i += 1;
     }
     comm::barrier();
-
+    let mut count_array = Array::<usize>::init(config, rankn);
     if config.rank == 0 {
         let len = queue.len();
         for i in 0..len {
             let f = queue.remove();
             match f {
-                Ok(data) => println!("index: {} value: {}", i, data),
+                Ok(data) => {
+                    let idx = (data - 'a') as usize;
+                    count_array.write(count_array.read(idx) + 1, idx);
+                },
                 Err(err) => println!("{}", err),
             }
+        }
+        for i in 0..rankn {
+            println!("Data: {}, count: {}", ('a' as u8 + i as u8) as char, count_array.read(i));
         }
     }
 //    let mut queue = Queue::<char>::new(config, 10);
