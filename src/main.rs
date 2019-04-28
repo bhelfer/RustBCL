@@ -208,7 +208,7 @@ fn test_hash_table(config: &mut Config) {
 }
 
 fn test_queue(config: &mut Config) {
-    if config.rank == 0 { println!("\n\n------------Queue's test------------\n"); }
+    if config.rank == 0 { println!("\n------------Queue's test------------\n"); }
     let rankn = config.rankn;
     comm::barrier();
     let mut queue = Queue::<char>::new(config, rankn * 100000);
@@ -218,9 +218,8 @@ fn test_queue(config: &mut Config) {
         i += 1;
     }
     comm::barrier();
-    if config.rank == 0 { println!("Finished inserting!"); }
-//    let mut count_array = Array::<usize>::init(config, rankn);
     if config.rank == 0 {
+        println!("Finished inserting!");
         let mut count_vector = vec![0; rankn];
         let len = queue.len();
         println!("The length of the queue is {}.", len);
@@ -230,8 +229,6 @@ fn test_queue(config: &mut Config) {
                 Ok(data) => {
                     let idx = (data as u32 - 'a' as u32) as usize;
                     count_vector[idx] += 1;
-//                    let new_count = count_array.read(idx) + 1;
-//                    count_array.write(new_count, idx);
                 }
                 Err(err) => println!("{}", err),
             }
@@ -240,32 +237,4 @@ fn test_queue(config: &mut Config) {
             println!("Data: {}, count: {}", ('a' as u8 + i as u8) as char, count_vector[i]);
         }
     }
-//    let mut queue = Queue::<char>::new(config, 10);
-//    queue.add(('a' as u8 + config.rank as u8) as char);
-//    comm::barrier();
-//    queue.add(('c' as u8 + config.rank as u8) as char);
-//    comm::barrier();
-//
-//    if config.rank == 0 {
-//        let len = queue.len();
-//        println!("The length of the queue is {}.", len);
-//        println!("Peeking");
-//        {
-//            let t = queue.peek();
-//            match t {
-//                Ok(data) => println!("head value: {}", data),
-//                Err(err) => println!("{}", err),
-//            }
-//        }
-//
-//        println!("Removing");
-//        for i in 0..len {
-//            let f = queue.remove();
-//            match f {
-//                Ok(data) => println!("index: {} value: {}", i, data),
-//                Err(err) => println!("{}", err),
-//            }
-//
-//        }
-//    }
 }
