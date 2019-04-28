@@ -218,24 +218,26 @@ fn test_queue(config: &mut Config) {
         i += 1;
     }
     comm::barrier();
-    if config.rank == 0 {println!("Finished inserting!");}
-    let mut count_array = Array::<usize>::init(config, rankn);
+    if config.rank == 0 { println!("Finished inserting!"); }
+//    let mut count_array = Array::<usize>::init(config, rankn);
     if config.rank == 0 {
+        let mut count_vector = vec![0; rankn];
         let len = queue.len();
-	println!("The length of the queue is {}.", len);
+        println!("The length of the queue is {}.", len);
         for i in 0..len {
             let f = queue.remove();
             match f {
                 Ok(data) => {
                     let idx = (data as u32 - 'a' as u32) as usize;
-		    let new_count = count_array.read(idx) + 1;
-                    count_array.write(new_count, idx);
-                },
+                    count_vector[idx] += 1;
+//                    let new_count = count_array.read(idx) + 1;
+//                    count_array.write(new_count, idx);
+                }
                 Err(err) => println!("{}", err),
             }
         }
         for i in 0..rankn {
-            println!("Data: {}, count: {}", ('a' as u8 + i as u8) as char, count_array.read(i));
+            println!("Data: {}, count: {}", ('a' as u8 + i as u8) as char, count_vector[i]);
         }
     }
 //    let mut queue = Queue::<char>::new(config, 10);
