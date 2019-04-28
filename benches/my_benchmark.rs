@@ -16,6 +16,7 @@ use lib_bcl::shmemx;
 use lib_bcl::queue::Queue;
 use std::collections::HashMap;
 use std::collections::VecDeque;
+use lib_bcl::array::Array;
 
 use hash_table::HashTable;
 use self::rand::{Rng, SeedableRng, StdRng};
@@ -138,11 +139,47 @@ fn same_entry_test() {
 
     comm::barrier();
 }
-
+fn distributed_array() {
+    let mut config = Config::init(1);
+    let rankn = config.rankn;
+    let mut arr = Array::<i64>::init(&mut config, rankn);
+    arr.write(0 as i64, config.rank);
+    comm::barrier();
+    let mut ptr = arr.get_ptr(0);
+    for i in 0..1000 {
+        comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
+    }
+    comm::barrier();
+    if config.rank == 0 {
+        for i in 0..rankn {
+            println!("{}: {}", i, arr.read(i));
+        }
+    }
+}
+fn original_array() {
+    let mut config = Config::init(1);
+    let rankn = config.rankn;
+    const SIZE: usize = 100;
+   // let mut array: [i64; size] = [0; size];
+   unsafe{
+    let mut arr: [i64; SIZE] = std::mem::uninitialized();
+    for item in &mut arr[..] {
+        std::ptr::write(item, 0);
+    }
+    for i in 0..1000 {
+        std::ptr::write(&mut arr[0], arr[0] + 1);
+    }
+    for i in 0..100 {
+        let x = std::ptr::read(& arr[i]);
+        println!("{}", x);
+    }
+    }
+}
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("same_entry test", |b| b.iter(|| same_entry_test()));
+//    c.bench_function("same_entry test", |b| b.iter(|| same_entry_test()));
 //    c.bench_function("Distributed queue test", |b| b.iter(|| distributed_queue()));
 //    c.bench_function("Original queue test", |b|b.iter(||original_queue()));
+    c.bench_function("Distributed array test", |b| b.iter(|| distributed_array()));
 }
 
 criterion_group!(benches, criterion_benchmark);
