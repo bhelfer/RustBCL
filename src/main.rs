@@ -11,7 +11,7 @@ pub mod comm;
 pub mod array;
 pub mod hash_table;
 pub mod queue;
-
+use comm;
 use config::Config;
 use global_pointer::GlobalPointer;
 use array::Array;
@@ -30,15 +30,28 @@ fn main() {
         return;
     }
 
+<<<<<<< HEAD
 //    test_ptr(&mut config);
+=======
+    //test_ptr(&mut config);
+>>>>>>> 784d81f381e84e4e3d75a78818d4142bb3c515fd
 
-    test_global_pointer(&mut config);
+    //test_global_pointer(&mut config);
 
+<<<<<<< HEAD
 //	test_array(&mut config);
 
 //	test_hash_table(&mut config);
 
 //	test_queue(&mut config);
+=======
+	test_array(&mut config);
+    distributed_array();
+
+	//test_hash_table(&mut config);
+
+	//test_queue(&mut config);
+>>>>>>> 784d81f381e84e4e3d75a78818d4142bb3c515fd
 }
 
 
@@ -173,6 +186,23 @@ fn test_array(config: &mut Config) {
     comm::barrier();
     if config.rank == 0 {
         for i in 0..config.rankn {
+            println!("{}: {}", i, arr.read(i));
+        }
+    }
+}
+fn distributed_array() {
+    let mut config = Config::init(1);
+    let rankn = config.rankn;
+    let mut arr = Array::<i64>::init(&mut config, rankn);
+    arr.write(0 as i64, config.rank);
+    comm::barrier();
+    let mut ptr = arr.get_ptr(0);
+    for i in 0..1000 {
+        comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
+    }
+    comm::barrier();
+    if config.rank == 0 {
+        for i in 0..rankn {
             println!("{}: {}", i, arr.read(i));
         }
     }
