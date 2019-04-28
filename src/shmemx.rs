@@ -8,7 +8,7 @@ use self::libc::{c_int, size_t, c_long};
 use std::slice;
 
 // #[link(name="sma", kind="dylib")] // cori
-#[link(name="oshmem", kind="dylib")] // docker
+#[link(name="sma", kind="dylib")] // docker
 extern {
     fn shmem_init();
     fn shmem_finalize();
