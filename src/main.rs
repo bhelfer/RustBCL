@@ -12,6 +12,7 @@ pub mod array;
 pub mod hash_table;
 pub mod queue;
 pub mod global_guard;
+pub mod guard_array;
 
 use config::Config;
 use global_pointer::GlobalPointer;
@@ -19,6 +20,7 @@ use array::Array;
 use hash_table::HashTable;
 use queue::Queue;
 use global_guard::GlobalGuard;
+use guard_array::GuardArray;
 
 use self::rand::{Rng, SeedableRng, StdRng};
 use std::collections::HashMap;
@@ -38,13 +40,14 @@ fn main() {
 
 //    test_shmem_atomic(&mut config);
 
-    test_global_guard(&mut config);
+//    test_global_guard(&mut config);
 
 //	test_array(&mut config);
 
 //	test_hash_table(&mut config);
 
 //	test_queue(&mut config);
+    test_guard_array(&mut config);
 }
 
 
@@ -297,4 +300,26 @@ fn test_shmem_atomic(config: &mut Config) {
     	Ok(value) => println!("Get the lock again!"),
     	Err(error) => println!("That's right! It should not be able to get the lock!"),
     };
+}
+
+fn test_guard_array(config: &mut Config) {
+    // ----------- Global Guard's part -------------
+    if config.rank == 0 { println!("------------Guard Array's test------------\n"); }
+
+    // Initialize a guard array
+    let mut garr = GuardArray::<int>::init(config, 128);
+
+    for _ in 0..100000 {
+        for idx in 0..128 {
+            let mut gval = garr.lock(idx);
+            gval.rput(gval.rget() + 1)
+        }
+    }
+
+    if config.rank == 0 {
+        for idx in 0..128 {
+            assert_eq!(garr.read(idx), 100000 * config.rankn)
+        }
+        println!("Guard array test passed!");
+    }
 }
