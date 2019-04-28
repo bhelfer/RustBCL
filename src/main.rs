@@ -36,9 +36,9 @@ fn main() {
 
 //    test_global_pointer(&mut config);
 
-//    test_global_guard(&mut config);
+   test_global_guard(&mut config);
 
-    test_shmem_atomic(&mut config);
+    // test_shmem_atomic(&mut config);
 
 //	test_array(&mut config);
 
@@ -287,8 +287,12 @@ fn test_shmem_atomic(config: &mut Config) {
     	value.rput(0);
     }
 
-    guard1.lock();
+    let value = guard1.lock();
     println!("this message should only be printed once");
-    guard1.lock();
-    println!("dead lock! this message should never be printed");
+
+    let result = guard1.test_lock();
+    match result {
+    	Ok(value) => println!("Get the lock again!"),
+    	Err(error) => println!("That's right! It should not be able to get the lock!"),
+    };
 }
