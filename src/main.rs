@@ -216,9 +216,9 @@ fn test_queue(config: &mut Config) {
     // ----------- Queue's part ------------
     comm::barrier();
 //    if config.rank == 0 { println!("\n\n------------Queue's test------------\n"); }
-    let mut queue = Queue::<char>::new(config, 2000);
-    for i in 0..10 {
-        queue.add(('a' as u8 + i as u8 + config.rank as u8) as char);
+    let mut queue = Queue::<char>::new(config, config.rankn * 2000000);
+    for i in 0..1000000 {
+        queue.add(('a' as u8 + i % 52 as u8 + config.rank as u8) as char);
     }
     comm::barrier();
 
