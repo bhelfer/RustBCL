@@ -7,8 +7,13 @@ pub extern crate libc;
 use self::libc::{c_int, size_t, c_long};
 use std::slice;
 
-#[link(name="sma", kind="dylib")] // cori
-// #[link(name="oshmem", kind="dylib")] // docker
+<<<<<<< HEAD
+#[link(name="sma", kind="dylib")]
+//#[link(name="oshmem", kind="dylib")]
+=======
+// #[link(name="sma", kind="dylib")] // cori
+#[link(name="oshmem", kind="dylib")] // docker
+>>>>>>> c0945a6dc212a843394cb5b5c2f43c17df42f950
 extern {
     fn shmem_init();
     fn shmem_finalize();

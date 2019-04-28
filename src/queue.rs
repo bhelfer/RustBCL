@@ -25,8 +25,8 @@ pub struct Queue<T> {
 
 impl<'a, T: Clone + Copy + Default> Queue<T> {
     pub fn new(config: &mut Config, n: usize) -> Queue<T> {
-        let mut tail_ptr = config.alloc::<i32>(1);
-        let mut head_ptr = config.alloc::<i32>(1);
+        let mut tail_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
+        let mut head_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
         if config.rank == 0 {
             unsafe {
                 tail_ptr.local().write(0);
@@ -39,7 +39,7 @@ impl<'a, T: Clone + Copy + Default> Queue<T> {
         let mut ptrs: Vec<GlobalPointer<T>> = Vec::new();
         ptrs.resize(config.rankn, GlobalPointer::null());
         let mut local_size = (n + shmemx::n_pes() - 1) / config.rankn;
-        ptrs[config.rank] = config.alloc::<T>(local_size);
+        ptrs[config.rank] = GlobalPointer::init(config, local_size);
         for rank in 0..config.rankn {
             comm::broadcast(&mut ptrs[rank], rank);
         }

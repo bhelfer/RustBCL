@@ -47,6 +47,58 @@ pub fn barrier() {
     shmemx::barrier();
 }
 
+// lock
+pub type LockT = i64;
+pub const LOCK_SIZE: usize = 8;
+pub const UNLOCKED: LockT = 1111;
+pub const LOCKED: LockT = 2222;
+unsafe fn atomic_compare_swap(dest: *mut LockT, cond: LockT, value: LockT, pe: i32) -> LockT {
+	shmemx::shmem_long_atomic_compare_swap(dest, cond, value, pe)
+}
+
+pub fn set_lock(lock: *mut LockT, rank: usize) {
+    loop {
+        unsafe {
+            let current = shmemx::shmem_long_atomic_fetch(lock, rank as c_int);
+            if current != LOCKED && current != UNLOCKED {
+                panic!("not a lock!");
+            }
+            if current == UNLOCKED {
+                let expected = UNLOCKED;
+                let status = atomic_compare_swap(lock, UNLOCKED, LOCKED, rank as i32);
+                if status == expected {
+                    break;
+                }
+            }
+            // emit a pause
+        }
+    }
+}
+
+pub fn clear_lock(lock: *mut LockT, rank: usize) {
+    unsafe {
+        shmemx::shmem_long_atomic_set(lock, UNLOCKED, rank as i32);
+    }
+}
+
+pub fn test_lock(lock: *mut LockT, rank: usize) -> bool {
+    unsafe {
+        let current = shmemx::shmem_long_atomic_fetch(lock, rank as c_int);
+        if current != LOCKED && current != UNLOCKED {
+            panic!("not a lock!");
+        }
+        if current == UNLOCKED {
+            let expected = UNLOCKED;
+            let status = shmemx::shmem_long_atomic_compare_swap(lock, UNLOCKED, LOCKED, rank as i32);
+            if status == expected {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+// some functions
 pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, new_val: c_long) -> c_long {
 
     let rank = ptr.rank;
@@ -110,33 +162,5 @@ pub fn long_atomic_fetch_xor(ptr: &mut GlobalPointer<c_long>, value: c_long) -> 
 pub fn fence() {
     unsafe {
         shmemx::shmem_fence();
-    }
-}
-
-// added by lfz
-pub fn quiet() {
-    unsafe {
-        shmemx::shmem_quiet();
-    }
-}
-
-// added by lfz
-pub fn set_lock(lock: *mut c_long) {
-    unsafe {
-        shmemx::shmem_set_lock(lock);
-    }
-}
-
-// added by lfz
-pub fn clear_lock(lock: *mut c_long) {
-    unsafe {
-        shmemx::shmem_clear_lock(lock);
-    }
-}
-
-// added by lfz
-pub fn test_lock(lock: *mut c_long) -> c_int {
-    unsafe {
-        shmemx::shmem_test_lock(lock)
     }
 }
