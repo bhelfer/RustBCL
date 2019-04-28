@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused)]
+#![allow(deprecated)]
+
 use shmemx;
 use std::ptr;
 use global_pointer::GlobalPointer;

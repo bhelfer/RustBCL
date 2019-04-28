@@ -1,3 +1,7 @@
+#![allow(dead_code)]
+#![allow(unused)]
+#![allow(deprecated)]
+
 use std::ops::AddAssign;
 
 pub struct Buf {

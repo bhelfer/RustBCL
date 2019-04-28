@@ -1,3 +1,7 @@
+#![allow(dead_code)]
+#![allow(unused)]
+#![allow(deprecated)]
+
 use shmemx;
 use std::mem::size_of;
 use shmemx::libc::{c_long, c_void, c_int};
@@ -91,5 +95,72 @@ pub fn test_lock(lock: *mut LockT, rank: usize) -> bool {
             }
         }
         return false;
+    }
+}
+
+// some functions
+pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, new_val: c_long) -> c_long {
+
+    let rank = ptr.rank;
+    unsafe {
+        shmemx::shmem_long_atomic_compare_swap(
+            ptr.rptr() as *mut c_long,
+            old_val as c_long,
+            new_val as c_long,
+            rank as c_int
+        )
+    }
+}
+
+pub fn int_finc(ptr: &mut GlobalPointer<i32>) -> i32 {
+    let rank = ptr.rank;
+    unsafe {
+        shmemx::shmem_int_atomic_fetch_inc(
+            ptr.rptr() as *mut i32,
+            rank as c_int
+        )
+    }
+}
+
+pub fn long_atomic_fetch(ptr: &mut GlobalPointer<c_long>) -> c_long {
+    unsafe {
+        shmemx::shmem_long_atomic_fetch(
+            ptr.rptr() as *const c_long,
+            ptr.rank as c_int
+        )
+    }
+}
+
+pub fn int_atomic_fetch_and(ptr: &mut GlobalPointer<c_int>, value: c_int) -> c_int {
+    unsafe {
+        shmemx::shmem_int_atomic_fetch_and(
+            ptr.rptr() as * mut c_int,
+            value, ptr.rank as c_int
+        )
+    }
+}
+
+pub fn long_atomic_fetch_and(ptr: &mut GlobalPointer<c_long>, value: c_long) -> c_long {
+    unsafe {
+        shmemx::shmem_long_atomic_fetch_and(
+            ptr.rptr() as * mut c_long,
+            value, ptr.rank as c_long
+        )
+    }
+}
+
+pub fn long_atomic_fetch_xor(ptr: &mut GlobalPointer<c_long>, value: c_long) -> c_long {
+    unsafe {
+        shmemx::shmem_long_atomic_fetch_xor(
+            ptr.rptr() as * mut c_long,
+            value, ptr.rank as c_long
+        )
+    }
+}
+
+// added by lfz
+pub fn fence() {
+    unsafe {
+        shmemx::shmem_fence();
     }
 }

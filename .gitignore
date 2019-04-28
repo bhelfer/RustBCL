@@ -12,3 +12,6 @@ Cargo.lock
 /src/bcl-master.zip
 
 .idea
+Out/
+LibBCL/
+.DS_Store

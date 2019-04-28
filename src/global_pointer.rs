@@ -1,10 +1,13 @@
 #![allow(dead_code)]
 #![allow(unused)]
+#![allow(deprecated)]
+
 use shmemx;
 use std::marker::PhantomData;
 use std::ops;
 use std::mem::size_of;
-use Config;
+use config;
+use config::Config;
 use std::ptr;
 use shmemx::libc::{c_int, size_t, c_long};
 use config::SMALLEST_MEM_UNIT;
@@ -189,6 +192,14 @@ impl<T> ops::Sub<isize> for GlobalPointer<T> {
 impl<T> ops::SubAssign<isize> for GlobalPointer<T> {
     fn sub_assign(&mut self, n: isize) {
         self.offset = (self.offset as isize - n) as usize;
+    }
+}
+
+use std::fmt;
+
+impl<T> fmt::Display for GlobalPointer<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({}, {})", self.rank, self.offset)
     }
 }
 
