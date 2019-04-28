@@ -37,8 +37,8 @@ extern {
     pub fn shmem_test_lock(lock: *mut c_long) -> c_int;
 }
 
-pub static _SHMEM_SYNC_VALUE: c_long = -1; // -3
-pub static _SHMEM_BCAST_SYNC_SIZE: usize = 2; // 74
+pub static _SHMEM_SYNC_VALUE: c_long = -3; // -3/-1
+pub static _SHMEM_BCAST_SYNC_SIZE: usize = 74; // 74/2
 
 pub fn init() {
     unsafe {

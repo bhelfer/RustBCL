@@ -36,9 +36,9 @@ fn main() {
 
 //    test_global_pointer(&mut config);
 
-   test_global_guard(&mut config);
+//    test_shmem_atomic(&mut config);
 
-    // test_shmem_atomic(&mut config);
+    test_global_guard(&mut config);
 
 //	test_array(&mut config);
 
@@ -255,9 +255,11 @@ fn test_global_guard(config: &mut Config) {
     	let value = guard1.lock();
     	value.rput(0);
     }
+    comm::barrier();
 
     // text mutex
-    for i in 0..1000 {
+    let step = 100000;
+    for i in 0..step {
     	let value = guard1.lock();
     	let t = value.rget();
     	value.rput(t + 1);
@@ -267,8 +269,8 @@ fn test_global_guard(config: &mut Config) {
     if config.rank == 0 {
     	let value = guard1.lock();
     	let t = value.rget();
-    	assert_eq!(t, 1000 * config.rankn);
-    	println!("Global Guard's test: pass!");
+    	assert_eq!(t, step * config.rankn);
+    	println!("Global Guard's test: pass! step: {}", step);
     }
 }
 
