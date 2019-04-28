@@ -4,7 +4,7 @@ pub extern crate libc;
 use self::libc::{c_int, size_t, c_long};
 use std::slice;
 
-#[link(name="oshmem", kind="dylib")]
+#[link(name="sma", kind="dylib")]
 extern {
     fn shmem_init();
     fn shmem_finalize();
