@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused)]
 use shmemx;
+use std::ptr;
 use global_pointer::GlobalPointer;
 use std::marker::PhantomData;
 use std::mem::size_of;
@@ -52,7 +53,7 @@ impl Config {
         }
     }
 
-    pub fn new_ptr<T>(&self, rank: usize, offset: usize) -> GlobalPointer<T> {
+    pub unsafe fn new_ptr<T>(&self, rank: usize, offset: usize) -> GlobalPointer<T> {
 		GlobalPointer{ 
 			shared_segment_size: self.shared_segment_size, 
 			smem_base_ptr: self.smem_base_ptr,
@@ -76,20 +77,21 @@ impl Config {
 
     // malloc part
     // size: byte size
-    pub fn alloc(&mut self, mut raw_size: usize) -> usize {
+    pub fn alloc(&mut self, mut raw_size: usize) -> (*const u8, usize) {
         let size = ((raw_size + SMALLEST_MEM_UNIT - 1) / SMALLEST_MEM_UNIT) * SMALLEST_MEM_UNIT; // align size
 
         // if we have run out of heap...
         unsafe {
             if self.smem_heap.add(size) > self.smem_base_ptr.add(self.shared_segment_size) {
-                return 0;
+            	panic!("run out of symmetrical memory");
+                // return (ptr::null(), 0);
             }
         }
 
         let allocd: *const u8 = self.smem_heap;
         unsafe{ self.smem_heap = self.smem_heap.add(size); }
        	// println!("Rank {} alloc memory! smem_base_ptr: {:p}, smem_heap: {:p}, allocd: {:p}, raw_size: {}bytes, size: {}bytes", self.rank, self.smem_base_ptr, self.smem_heap, allocd, raw_size, size);
-        allocd as usize - self.smem_base_ptr as usize
+        (allocd, allocd as usize - self.smem_base_ptr as usize)
     }
 
     pub fn free<T>(&mut self, p: GlobalPointer<T>) {

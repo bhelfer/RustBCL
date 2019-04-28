@@ -44,7 +44,7 @@ pub struct GlobalPointer<T> {
 // implement GlobalPointer
 impl<T: Clone> GlobalPointer<T> {
     pub fn init(config: &mut Config, mut size: usize) -> GlobalPointer<T> {
-        let offset = config.alloc(size * size_of::<T>());
+        let (_, offset) = config.alloc(size * size_of::<T>());
         
         GlobalPointer {
             shared_segment_size: config.shared_segment_size,

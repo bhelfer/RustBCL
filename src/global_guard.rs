@@ -20,15 +20,14 @@ pub struct GlobalGuard<T> {
 // implement GlobalGuard
 impl<T> GlobalGuard<T> {
     pub fn init(config: &mut Config) -> GlobalGuard<T> {
-        let offset = config.alloc(size_of::<T>() + comm::LOCK_SIZE);
-        let ptr = unsafe{config.smem_base_ptr.add(offset)};
+        let (ptr, _) = config.alloc(size_of::<T>() + comm::LOCK_SIZE);
 
         let lock = ptr as *mut LockT;
         comm::clear_lock(lock, config.rank);
 
         GlobalGuard {
             rank: config.rank,
-            ptr,
+            ptr: ptr as *mut u8,
             refer_type: PhantomData
         }
     }
