@@ -38,7 +38,7 @@ struct GlobalGuardVec<T> {
 // Implement global guard array
 impl<T> GlobalGuardVec<T> {
     pub fn init(config: &mut Config, size: usize) -> GlobalGuardVec<T> {
-        let (ptr, _) = config.alloc(size * (size_of::<T>() + comm::LOCK_SIZE));
+        let (ptr, _) = config.alloc(size * (size_of::<T>() + comm::LOCK_SIZE * size));
 
         GlobalGuardVec {
             rank: config.rank,
@@ -85,39 +85,26 @@ pub struct SafeArray<T> {
     pub ptrs: Vec<GlobalGuardVec<T>>,
 }
 
-impl<'a, T: Clone + Copy + Default> SafeArray<T> {
-    pub fn init(config: &mut Config, arr_size:usize) -> SafeArray<T> {
-        let local_size = (arr_size + shmemx::n_pes() - 1) / config.rankn;
+impl<T> SafeArray<T> {
+    pub fn init(config: &mut Config, n:usize) -> SafeArray<T> {
+        let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
         let mut ptrs = vec!(GlobalGuardVec::null(); config.rankn);
-        // ptrs[config.rank] = config.alloc::<T>(local_size);
-        ptrs[config.rank] = ptrs[config.rank].init(config, local_size);
+        ptrs[config.rank] = ptrs[congif.rank].init(config, local_size);
 
         for rank in 0..config.rankn {
             comm::broadcast(&mut ptrs[rank], rank);
         }
         SafeArray {ptrs}
     }
-
-    pub fn read(&self, idx: usize) -> T {
-        let local_size = (arr_size + shmemx::n_pes() - 1) / config.rankn;
+        pub fn read(&self, idx: usize) -> T {
+        let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
         let rank: usize = idx / self.local_size;
         // changed to >= by lfz
         if rank >= shmemx::n_pes() {
             panic!("Array::read: index {} out of bound!", idx);
         }
         let local_idx: usize = idx % self.local_size; // mod % is enough
-        return self.ptrs[rank].idx_rget(local_idx as isize);
-    }
-
-    pub fn write(&mut self, c: T, idx: usize) {
-        let local_size = (arr_size + shmemx::n_pes() - 1) / config.rankn;
-        let rank: usize = idx / self.local_size;
-        // changed to >= by lfz
-        if rank >= shmemx::n_pes() {
-            panic!("Array::read: index {} out of bound!", idx);
-        }
-        let local_idx = idx % self.local_size; // mod % is enough
-        self.ptrs[rank].idx_rput(local_idx as isize, c);
-
+        let globalval = self.ptrs[rank].lock(local_idx);
+        return globalval.rget();
     }
 }
