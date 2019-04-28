@@ -307,7 +307,14 @@ fn test_guard_array(config: &mut Config) {
     if config.rank == 0 { println!("------------Guard Array's test------------\n"); }
 
     // Initialize a guard array
-    let mut garr = GuardArray::<int>::init(config, 128);
+    let mut garr = GuardArray::<i32>::init(config, 128);
+
+    // Initialize all values to 0
+    if config.rank == 0 {
+        for idx in 0..128 {
+            garr.write(0, idx);
+        }
+    }
 
     for _ in 0..100000 {
         for idx in 0..128 {
