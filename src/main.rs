@@ -30,28 +30,23 @@ fn main() {
         return;
     }
 
-<<<<<<< HEAD
 //    test_ptr(&mut config);
-=======
+
     //test_ptr(&mut config);
->>>>>>> 784d81f381e84e4e3d75a78818d4142bb3c515fd
 
     //test_global_pointer(&mut config);
 
-<<<<<<< HEAD
 //	test_array(&mut config);
 
 //	test_hash_table(&mut config);
 
-//	test_queue(&mut config);
-=======
+//	test_queue(&mut config);/
 	test_array(&mut config);
-    distributed_array();
+//    distributed_array();
 
 	//test_hash_table(&mut config);
 
 	//test_queue(&mut config);
->>>>>>> 784d81f381e84e4e3d75a78818d4142bb3c515fd
 }
 
 
@@ -180,10 +175,13 @@ fn test_array(config: &mut Config) {
     comm::barrier();
     let mut ptr = arr.get_ptr(0);
     // comm::long_atomic_fetch(&mut ptr);
+    comm::barrier();
+    println!("here1");
     for i in 0..1000 {
         comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
     }
     comm::barrier();
+    println!("here2");
     if config.rank == 0 {
         for i in 0..config.rankn {
             println!("{}: {}", i, arr.read(i));
