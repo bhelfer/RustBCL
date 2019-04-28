@@ -44,13 +44,13 @@ fn main() {
 
 //    test_shmem_atomic(&mut config);
 
-    test_global_guard(&mut config);
+//    test_global_guard(&mut config);
 
 //	test_array(&mut config);
 
 //	test_hash_table(&mut config);
 
-//	test_queue(&mut config);
+	test_queue(&mut config);
 }
 
 
