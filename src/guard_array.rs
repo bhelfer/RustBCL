@@ -105,6 +105,18 @@ impl<T> SafeArray<T> {
         }
         let local_idx: usize = idx % self.local_size; // mod % is enough
         let globalval = self.ptrs[rank].lock(local_idx);
-        return globalval.rget();
+        globalval.rget()
+    }
+
+    pub fn write(&mut self, c: T, idx: usize) {
+        let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
+        let rank: usize = idx / self.local_size;
+        // changed to >= by lfz
+        if rank >= shmemx::n_pes() {
+            panic!("Array::read: index {} out of bound!", idx);
+        }
+        let local_idx = idx % self.local_size; // mod % is enough
+        self.ptrs[rank].lock(local_idx).rput(c);
+
     }
 }
