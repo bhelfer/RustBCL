@@ -7,7 +7,8 @@ pub extern crate libc;
 use self::libc::{c_int, size_t, c_long};
 use std::slice;
 
-#[link(name="sma", kind="dylib")]
+// #[link(name="sma", kind="dylib")] // cori
+#[link(name="oshmem", kind="dylib")] // docker
 extern {
     fn shmem_init();
     fn shmem_finalize();
@@ -37,8 +38,10 @@ extern {
     pub fn shmem_test_lock(lock: *mut c_long) -> c_int;
 }
 
-pub static _SHMEM_SYNC_VALUE: c_long = -1; // -3
-pub static _SHMEM_BCAST_SYNC_SIZE: usize = 2; // 74
+pub static _SHMEM_SYNC_VALUE: c_long = -1; // docker
+pub static _SHMEM_BCAST_SYNC_SIZE: usize = 2; // docker
+// pub static _SHMEM_SYNC_VALUE: c_long = -3; // cori
+// pub static _SHMEM_BCAST_SYNC_SIZE: usize = 74; // cori
 
 pub fn init() {
     unsafe {
