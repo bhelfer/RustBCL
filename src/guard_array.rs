@@ -27,9 +27,7 @@ impl<T> GlobalGuardVec<T> {
         GlobalGuardVec {
             rank: config.rank,
             ptr,
-            //ptr: config.alloc(size_of::<T>() + comm::LOCK_SIZE),
             size: 0,
-            // offset: size_of::<T> + comm::LOCK_SIZE
         }
 
     }
@@ -39,7 +37,6 @@ impl<T> GlobalGuardVec<T> {
             rank: 0,
             ptr: ptr::null_mut() as *mut u8,
             size: 0,
-            // offset: 0
         }
     }
 
@@ -59,7 +56,6 @@ impl<T> GlobalGuardVec<T> {
         GlobalValue {
             rank: self.rank,
             ptr: unsafe{self.ptr.add(offset)},
-            // ptr: self.ptr + idx * size_of::<T>,
             refer_type: PhantomData
         }
     }
