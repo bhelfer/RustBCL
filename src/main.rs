@@ -3,6 +3,7 @@
 #![allow(deprecated)]
 
 extern crate rand;
+extern crate statistical;
 
 pub mod shmemx;
 pub mod global_pointer;
@@ -13,6 +14,8 @@ pub mod hash_table;
 pub mod queue;
 pub mod global_guard;
 pub mod guard_array;
+mod benchmark;
+use global_pointer::Bclable;
 use config::Config;
 use global_pointer::GlobalPointer;
 use array::Array;
@@ -24,10 +27,11 @@ use self::rand::{Rng, StdRng, SeedableRng};
 use std::collections::HashMap;
 use std::mem::size_of;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem};
 
 fn main() {
 
-    let mut config = Config::init(1024);
+    let mut config = Config::init(1);
     let rankn = config.rankn;
 
 //    strong_scaling_queue(&mut config);
@@ -50,18 +54,25 @@ fn main() {
 
 //    test_guard_array(&mut config);
 
-    benchmark_guard_array(&mut config);
+//    benchmark_guard_array(&mut config);
+
+    bench_global_guard::benchmark_global_guard(&mut config);
+    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
+    bench_global_pointer::benchmark_global_pointer_local(&mut config);
+    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
+    bench_shmem::benchmark_shmem(&mut config);
 }
 
 
 fn test_ptr(config: &mut Config) {
     // ----------- Global Pointer's part -------------
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     struct HE {
         key: i64,
         value: i64,
         other: i64,
     }
+    impl Bclable for HE {}
 
     if config.rank == 0 { println!("------------Global Pointer's test------------\n"); }
 

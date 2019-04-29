@@ -2,6 +2,7 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
+use global_pointer::Bclable;
 use global_pointer;
 use comm;
 use config;
@@ -20,12 +21,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 //use std::io::{stdout, Write};
 
 #[derive(Debug, Copy, Clone)]
-struct HashEntry<K, V> {
+struct HashEntry<K: Bclable, V: Bclable> {
     key: K,
     value: V,
 }
 
-impl<K, V> HashEntry<K, V>
+impl<K: Bclable, V: Bclable> HashEntry<K, V>
     where K: Clone + Hash + Copy + Default + Debug + PartialEq<K>,
           V: Clone + Copy + Default + Debug + PartialEq<V>,
 {
@@ -51,12 +52,14 @@ impl<K, V> HashEntry<K, V>
 
 }
 
+impl<K: Bclable, V: Bclable> Bclable for HashEntry<K, V> {}
+
 type HT<K, V> = HashTable<K, V>;
 type HE<K, V> = HashEntry<K, V>;
 type U = c_long;
 
 #[derive(Debug, Clone)]
-pub struct HashTable<K, V> {
+pub struct HashTable<K: Bclable, V: Bclable> {
     global_size: usize,
     local_size: usize,
     hash_table: Vec<GlobalPointer<HE<K, V>>>,
@@ -66,7 +69,7 @@ pub struct HashTable<K, V> {
     ready_flag: U, // finish slot
 }
 
-impl<K, V> HashTable<K, V>
+impl<K: Bclable, V: Bclable> HashTable<K, V>
     where K: Clone + Hash + Copy + Default + Debug + PartialEq<K>,
           V: Clone + Copy + Default + Debug + Eq + PartialEq<V>,
 {

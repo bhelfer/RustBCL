@@ -2,6 +2,7 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
+use global_pointer::Bclable;
 use shmemx;
 use std::ptr;
 use global_pointer::GlobalPointer;
@@ -55,7 +56,7 @@ impl Config {
         }
     }
 
-    pub unsafe fn new_ptr<T>(&self, rank: usize, offset: usize) -> GlobalPointer<T> {
+    pub unsafe fn new_ptr<T: Bclable>(&self, rank: usize, offset: usize) -> GlobalPointer<T> {
 		GlobalPointer{ 
 			shared_segment_size: self.shared_segment_size, 
 			smem_base_ptr: self.smem_base_ptr,
@@ -96,7 +97,7 @@ impl Config {
         (allocd, allocd as usize - self.smem_base_ptr as usize)
     }
 
-    pub fn free<T>(&mut self, p: GlobalPointer<T>) {
+    pub fn free<T: Bclable>(&mut self, p: GlobalPointer<T>) {
         // dull free does nothing
     }
 }

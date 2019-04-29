@@ -2,6 +2,7 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
+use global_pointer::Bclable;
 use global_pointer;
 use comm;
 use config;
@@ -11,12 +12,12 @@ use std::marker::PhantomData;
 use global_pointer::GlobalPointer;
 use shmemx::shmem_broadcast64;
 
-pub struct Array<T>{
+pub struct Array<T: Bclable>{
     pub local_size: usize,
     pub ptrs: Vec<GlobalPointer<T>>,
     // pub refer_type: PhantomData<T>, // JY: since you already use the type T in field ptrs, you do not need this PhantomData.
 }
-impl <'a, T: Clone> Array<T> {
+impl <'a, T: Bclable> Array<T> {
     /*
     JY:
     My intention with Config is to let it hold all the global variables.
