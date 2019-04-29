@@ -56,5 +56,16 @@ impl <'a, T: Clone> Array<T> {
         let local_idx = idx % self.local_size; // mod % is enough
         self.ptrs[rank].idx_rput(local_idx as isize, c);
     }
+    pub fn get_ptr(&self, idx: usize) -> GlobalPointer<T> {
+        let rank: usize = idx / self.local_size;
+        // changed to >= by lfz
+        if rank >= shmemx::n_pes() {
+            panic!("Array::read: index {} out of bound!", idx);
+        }
+        let local_idx: usize = idx % self.local_size; // mod % is enough
+        //let t = self.ptrs[1];
+        //return t + local_idx as isize;
+        return self.ptrs[rank] + local_idx as isize;
+    }
 
 }
