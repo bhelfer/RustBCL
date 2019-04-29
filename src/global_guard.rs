@@ -79,6 +79,14 @@ pub struct GlobalValue<T> {
 }
 
 impl<T> GlobalValue<T> {
+	pub unsafe fn init(rank: usize, ptr: *mut u8) -> GlobalValue<T> {
+		GlobalValue {
+			rank,
+			ptr,
+			refer_type: PhantomData
+		}
+	}
+
 	pub fn rget(&self) -> T {
         unsafe {
             let mut value: T = std::mem::uninitialized::<T>();
@@ -93,7 +101,7 @@ impl<T> GlobalValue<T> {
 	pub fn rput(&self, value: T) {
         unsafe{
             let target = self.ptr.add(comm::LOCK_SIZE);
-            let source = &value as *const T as *const u8;
+            let source = &value as *const T as *mut u8;
             let len = size_of::<T>() as size_t;
             shmemx::shmem_putmem(target, source, len, self.rank as i32);
         }

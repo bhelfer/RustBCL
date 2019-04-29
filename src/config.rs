@@ -10,7 +10,7 @@ use std::mem::size_of;
 use std::io::{stdout, Write};
 
 // simple alloc doesn't need these things
-pub const SMALLEST_MEM_UNIT: usize = 64; // 64bytes
+pub const SMALLEST_MEM_UNIT: usize = 8; // 8bytes
 // #[derive(Debug, Copy, Clone)]
 // struct Chunk {
 //     size: usize,
@@ -79,7 +79,7 @@ impl Config {
 
     // malloc part
     // size: byte size
-    pub fn alloc(&mut self, mut raw_size: usize) -> (*const u8, usize) {
+    pub fn alloc(&mut self, mut raw_size: usize) -> (*mut u8, usize) {
         let size = ((raw_size + SMALLEST_MEM_UNIT - 1) / SMALLEST_MEM_UNIT) * SMALLEST_MEM_UNIT; // align size
 
         // if we have run out of heap...
@@ -90,7 +90,7 @@ impl Config {
             }
         }
 
-        let allocd: *const u8 = self.smem_heap;
+        let allocd: *mut u8 = self.smem_heap as *mut u8;
         unsafe{ self.smem_heap = self.smem_heap.add(size); }
        	// println!("Rank {} alloc memory! smem_base_ptr: {:p}, smem_heap: {:p}, allocd: {:p}, raw_size: {}bytes, size: {}bytes", self.rank, self.smem_base_ptr, self.smem_heap, allocd, raw_size, size);
         (allocd, allocd as usize - self.smem_base_ptr as usize)
