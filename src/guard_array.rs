@@ -22,8 +22,15 @@ pub struct GlobalGuardVec<T: Clone> {
 
 // Implement global guard array
 impl<T: Clone> GlobalGuardVec<T> {
+    // shmem_atomic only works when memory is aligned!!!!!!
+    fn unit_size() -> usize {
+        let type_size = (size_of::<T>() + config::SMALLEST_MEM_UNIT - 1) / config::SMALLEST_MEM_UNIT * config::SMALLEST_MEM_UNIT;
+        let unit = type_size + comm::LOCK_SIZE;
+        unit
+    }
+
     pub fn init(config: &mut Config, size: usize) -> GlobalGuardVec<T> {
-        let unit = size_of::<T>() + comm::LOCK_SIZE;
+        let unit = GlobalGuardVec::<T>::unit_size();
         let (ptr, _) = config.alloc(size * unit);
 
         for i in 0..size {
@@ -62,12 +69,14 @@ impl<T: Clone> GlobalGuardVec<T> {
             panic!("GlobalGuardVec out of bound!");
         }
     	unsafe {
-    		let offset = idx * (size_of::<T>() + comm::LOCK_SIZE);
-	        let lock = unsafe{self.ptr.add(offset)} as *mut LockT;
-	        comm::set_lock(lock, self.rank);
-
-	        let rank = self.rank;
+            let unit = GlobalGuardVec::<T>::unit_size();
+    		let offset = idx * unit;
 	        let ptr = self.ptr.add(offset);
+	        let rank = self.rank;
+
+	        let lock = ptr as *mut LockT;
+	        comm::set_lock(lock, rank);
+
 	        GlobalValue::init(rank, ptr)
     	}
         
@@ -79,8 +88,8 @@ pub struct GuardArray<T: Clone> {
 }
 
 impl<T: Clone> GuardArray<T> {
-    pub fn init(config: &mut Config, n:usize) -> GuardArray<T> {
-        let local_size = (n + config.rankn - 1) / config.rankn;
+    pub fn init(config: &mut Config, size: usize) -> GuardArray<T> {
+        let local_size = (size + config.rankn - 1) / config.rankn;
         let mut ptrs = vec!(GlobalGuardVec::null(); config.rankn);
         ptrs[config.rank] = GlobalGuardVec::init(config, local_size);
 
@@ -90,41 +99,43 @@ impl<T: Clone> GuardArray<T> {
 
         GuardArray {ptrs}
     }
+
+    fn local_size(&self) -> usize {
+        self.ptrs[0].len()
+    }
+
     pub fn read(&self, idx: usize) -> T {
-        // let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
-        let local_size = self.ptrs[0].len();
+        let local_size = self.local_size();
         let rank: usize = idx / local_size;
-        // changed to >= by lfz
         if rank >= shmemx::n_pes() {
             panic!("Array::read: index {} out of bound!", idx);
         }
-        let local_idx: usize = idx % local_size; // mod % is enough
+
+        let local_idx: usize = idx % local_size;
         let globalval = self.ptrs[rank].lock(local_idx);
         globalval.rget()
     }
 
-    pub fn write(&mut self, c: T, idx: usize) {
-        // let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
-        let local_size = self.ptrs[0].len();
+    pub fn write(&mut self, value: T, idx: usize) {
+        let local_size = self.local_size();
         let rank: usize = idx / local_size;
-        // changed to >= by lfz
         if rank >= shmemx::n_pes() {
             panic!("Array::write: index {} out of bound!", idx);
         }
-        let local_idx = idx % local_size; // mod % is enough
-        self.ptrs[rank].lock(local_idx).rput(c);
+
+        let local_idx = idx % local_size;
+        self.ptrs[rank].lock(local_idx).rput(value);
 
     }
 
     pub fn lock(&mut self, idx: usize) -> GlobalValue<T> {
-        // let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
-        let local_size = self.ptrs[0].len();
+        let local_size = self.local_size();
         let rank: usize = idx / local_size;
-        // changed to >= by lfz
         if rank >= shmemx::n_pes() {
-            panic!("Array::lock: index {} out of bound! self.ptrs.len(): {}", idx, local_size);
+            panic!("Array::lock: index {} out of bound!", idx);
         }
-        let local_idx = idx % local_size; // mod % is enough
+
+        let local_idx = idx % local_size;
         self.ptrs[rank].lock(local_idx)
     }
 }

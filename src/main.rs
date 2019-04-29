@@ -20,7 +20,7 @@ use array::Array;
 use hash_table::HashTable;
 use queue::Queue;
 use global_guard::GlobalGuard;
-use guard_array::GuardArray;
+use guard_array::{GuardArray, GlobalGuardVec};
 
 use self::rand::{Rng, SeedableRng, StdRng};
 use std::collections::HashMap;
@@ -47,6 +47,7 @@ fn main() {
 //	test_hash_table(&mut config);
 
 //	test_queue(&mut config);
+//    test_global_guard_vec(&mut config);
     test_guard_array(&mut config);
 }
 
@@ -248,6 +249,7 @@ fn test_global_guard(config: &mut Config) {
 	// ----------- Global Guard's part -------------
     if config.rank == 0 { println!("------------Global Guard's test------------\n"); }
 
+    let step = 100000;
     let mut guard1 = GlobalGuard::null();
     if config.rank == 0 {
         guard1 = GlobalGuard::init(config);
@@ -261,7 +263,6 @@ fn test_global_guard(config: &mut Config) {
     comm::barrier();
 
     // text mutex
-    let step = 100000;
     for i in 0..step {
     	let value = guard1.lock();
     	let t = value.rget();
@@ -302,34 +303,71 @@ fn test_shmem_atomic(config: &mut Config) {
     };
 }
 
-fn test_guard_array(config: &mut Config) {
-    // ----------- Global Guard's part -------------
-    if config.rank == 0 { println!("------------Guard Array's test------------\n"); }
+fn test_global_guard_vec(config: &mut Config) {
+    // ----------- GlobalGuardVec's part -------------
+    if config.rank == 0 { println!("------------GlobalGuardVec's test------------\n"); }
 
     // Initialize a guard array
-    let mut garr = GuardArray::<i32>::init(config, 128);
+    let array_size = 8;
+    let step = 1000;
+    let mut guard_vec1 = GlobalGuardVec::<i16>::null();
 
     // Initialize all values to 0
     if config.rank == 0 {
-        for idx in 0..128 {
+        guard_vec1 = GlobalGuardVec::init(config, array_size);
+        for idx in 0..array_size {
+            let value = guard_vec1.lock(idx);
+            value.rput(0);
+        }
+    }
+    comm::broadcast(&mut guard_vec1, 0);
+
+    for _ in 0..step {
+        for idx in 0..array_size {
+            let gval = guard_vec1.lock(idx);
+            gval.rput(gval.rget() + 1);
+        }
+    }
+    comm::barrier();
+
+    if config.rank == 0 {
+        for idx in 0..array_size {
+            let value = guard_vec1.lock(idx);
+            assert_eq!(value.rget(), step * config.rankn as i16, "error at idx: {}", idx);
+        }
+        println!("GlobalGuardVec test passed!");
+    }
+}
+
+fn test_guard_array(config: &mut Config) {
+    // ----------- GuardArray's part -------------
+    if config.rank == 0 { println!("------------Guard Array's test------------\n"); }
+
+    // Initialize a guard array
+    let array_size = 128;
+    let step = 1000;
+    let mut garr = GuardArray::<i32>::init(config, array_size);
+
+    // Initialize all values to 0
+    if config.rank == 0 {
+        for idx in 0..array_size {
             garr.write(0, idx);
         }
     }
     comm::barrier();
 
-    let step = 1000;
     for _ in 0..step {
-        for idx in 0..128 {
-            let mut gval = garr.lock(idx);
-            gval.rput(gval.rget() + 1)
+        for idx in 0..array_size {
+            let gval = garr.lock(idx);
+            gval.rput(gval.rget() + 1);
         }
     }
     comm::barrier();
 
     if config.rank == 0 {
-        for idx in 0..128 {
-            assert_eq!(garr.read(idx), step * config.rankn as i32, "idx: {}", idx);
+        for idx in 0..array_size {
+            assert_eq!(garr.read(idx), step * config.rankn as i32, "error at idx: {}", idx);
         }
-        println!("Guard array test passed!");
+        println!("Guard Array test passed!");
     }
 }

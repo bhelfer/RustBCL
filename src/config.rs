@@ -10,7 +10,7 @@ use std::mem::size_of;
 use std::io::{stdout, Write};
 
 // simple alloc doesn't need these things
-pub const SMALLEST_MEM_UNIT: usize = 64; // 64bytes
+pub const SMALLEST_MEM_UNIT: usize = 8; // 8bytes
 // #[derive(Debug, Copy, Clone)]
 // struct Chunk {
 //     size: usize,
