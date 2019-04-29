@@ -2,12 +2,14 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
+use global_guard;
 use global_guard::GlobalValue;
 use std::mem::size_of;
 use comm::LockT;
 use config;
 use config::Config;
 use comm;
+use std::ptr;
 use shmemx;
 use std::marker::PhantomData;
 
@@ -70,7 +72,7 @@ impl<T> GuardArray<T> {
     pub fn init(config: &mut Config, n:usize) -> GuardArray<T> {
         let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
         let mut ptrs = vec!(GlobalGuardVec::null(); config.rankn);
-        ptrs[config.rank] = ptrs[congif.rank].init(config, local_size);
+        ptrs[config.rank] = ptrs[config.rank].init(config, local_size);
 
         for rank in 0..config.rankn {
             comm::broadcast(&mut ptrs[rank], rank);
