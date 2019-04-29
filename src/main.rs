@@ -3,7 +3,7 @@
 #![allow(deprecated)]
 
 extern crate rand;
-
+extern crate time;
 pub mod shmemx;
 pub mod global_pointer;
 pub mod config;
