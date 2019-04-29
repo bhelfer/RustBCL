@@ -111,27 +111,25 @@ fn test_global_pointer(config: &mut Config) {
 
     // test rput, rget
     (ptr1 + config.rank as isize).rput(config.rank as i32);
+
+    comm::barrier();
+    
+    let mut value;
+    if config.rank == 1 {
+        println!("Rank 1 Sees: ");
+        for i in 0..config.rankn {
+            value = (ptr1 + i as isize).rget();
+            println!("{}: {}", i, value);
+        }
+    }
     comm::barrier();
 
-    let mut value;
     if config.rank == 0 {
         let p1 = ptr1.local();
         let p_slice = unsafe { std::slice::from_raw_parts(p1, config.rankn) };
         println!("Rank 0 Sees: ");
         for i in 0..config.rankn {
             value = p_slice[i];
-            println!("{}: {}", i, value);
-        }
-    }
-
-    comm::barrier();
-    println!("barrier1, rank{}!", config.rank);
-    comm::barrier();
-
-    if config.rank == 1 {
-        println!("Rank 1 Sees: ");
-        for i in 0..config.rankn {
-            value = (ptr1 + i as isize).rget();
             println!("{}: {}", i, value);
         }
     }
@@ -300,7 +298,6 @@ fn test_global_guard(config: &mut Config) {
         guard1 = GlobalGuard::init(config);
     }
     comm::broadcast(&mut guard1, 0);
-    // println!("rank:{}, guard1:{:?}", config.rank, guard1);
 
     if config.rank == 0 {
         let value = guard1.lock();
