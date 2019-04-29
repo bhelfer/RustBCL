@@ -333,7 +333,7 @@ fn test_shmem_atomic(config: &mut Config) {
 
 
 /// hash_table benchmarks
-pub fn hash_table_test(scale: i64) {
+pub fn hash_table_benchmark(scale: i64) {
     
     let mut config = Config::init(512);
     let rankn: i64 = config.rankn as i64;
@@ -376,7 +376,7 @@ pub fn hash_table_test(scale: i64) {
     comm::barrier();
     let find_time = SystemTime::now().duration_since(find_start)
                     .expect("SystemTime::duration_since failed");
-    if (shmemx::my_pe() == 0) {
+    if shmemx::my_pe() == 0 {
         println!("(insert_time, find_time) = ({:?}, {:?})", insert_time, find_time);
     }
 }
