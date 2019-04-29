@@ -23,10 +23,10 @@ pub struct Queue<T> {
     head_ptr: GlobalPointer<i32>,
 }
 
-impl<'a, T: Clone + Copy + Default> Queue<T> {
+impl<T: Clone + Copy + Default> Queue<T> {
     pub fn new(config: &mut Config, n: usize) -> Queue<T> {
-        let mut tail_ptr = config.alloc::<i32>(1);
-        let mut head_ptr = config.alloc::<i32>(1);
+        let mut tail_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
+        let mut head_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
         if config.rank == 0 {
             unsafe {
                 tail_ptr.local().write(0);
@@ -39,7 +39,7 @@ impl<'a, T: Clone + Copy + Default> Queue<T> {
         let mut ptrs: Vec<GlobalPointer<T>> = Vec::new();
         ptrs.resize(config.rankn, GlobalPointer::null());
         let mut local_size = (n + shmemx::n_pes() - 1) / config.rankn;
-        ptrs[config.rank] = config.alloc::<T>(local_size);
+        ptrs[config.rank] = GlobalPointer::init(config, local_size);
         for rank in 0..config.rankn {
             comm::broadcast(&mut ptrs[rank], rank);
         }
@@ -56,7 +56,8 @@ impl<'a, T: Clone + Copy + Default> Queue<T> {
 
     pub fn add(&mut self, data: T) -> bool {
         let mut tail = comm::int_finc(&mut self.tail_ptr) as usize;
-        let head = self.head_ptr.rget() as usize;
+//        let head = self.head_ptr.rget() as usize;
+        let head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
         if tail - head > self.capacity {
             panic!("The buffer is full!");
             return false;
@@ -71,8 +72,8 @@ impl<'a, T: Clone + Copy + Default> Queue<T> {
 
     pub fn remove(&mut self) -> Result<T, &str> {
         let mut head = comm::int_finc(&mut self.head_ptr) as usize;
-        let tail = self.tail_ptr.rget() as usize;
-
+//        let tail = self.tail_ptr.rget() as usize;
+        let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
         if tail <= head { // TODO test
             Err("The buffer is empty!")
         } else {

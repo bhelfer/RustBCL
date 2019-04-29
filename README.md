@@ -49,6 +49,10 @@ TODO:
 #### TODO?
 - null->option
 
+#### Apr. 23:
+- Done:
+  - Alloc: Memory Align
+
 #### Apr. 22:
 - Done:
   - arget, arput, idx_rget, idx_rput
@@ -74,6 +78,14 @@ TODO:
 - TODO:
   - malloc part
   
+## SafeBCL 
+#### Apr. 26:
+- Done:
+  - GlobalGuard
+  - GlobalValue
+
+
+
 #### Question
 1. why `let smem_heap = smem_base_ptr.add(SMALLEST_MEM_UNIT);`
 - Where is it from? 
