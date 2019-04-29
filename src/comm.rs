@@ -131,6 +131,15 @@ pub fn long_atomic_fetch(ptr: &mut GlobalPointer<c_long>) -> c_long {
     }
 }
 
+pub fn int_atomic_fetch(ptr: &mut GlobalPointer<c_int>) -> c_int {
+    unsafe {
+        shmemx::shmem_long_atomic_fetch(
+            ptr.rptr() as *const c_int,
+            ptr.rank as c_int
+        )
+    }
+}
+
 pub fn int_atomic_fetch_and(ptr: &mut GlobalPointer<c_int>, value: c_int) -> c_int {
     unsafe {
         shmemx::shmem_int_atomic_fetch_and(
@@ -164,3 +173,4 @@ pub fn fence() {
         shmemx::shmem_fence();
     }
 }
+

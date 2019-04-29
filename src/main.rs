@@ -29,9 +29,9 @@ fn main() {
     let mut config = Config::init(1024);
     let rankn = config.rankn;
 
-    if config.rankn < 2 {
-        return;
-    }
+//    if config.rankn < 2 {
+//        return;
+//    }
 
 //    test_ptr(&mut config);
 //
@@ -270,13 +270,13 @@ fn strong_scaling_queue(config: &mut Config) {
     let rankn = config.rankn;
     comm::barrier();
     let mut queue = Queue::<char>::new(config, 300000);
-    let mut i: u32 = 0;
+//    let mut i: u32 = 0;
     let local_length = (131072 + rankn - 1) / rankn;
     comm::barrier();
     let start = SystemTime::now();
     for _ in 0..local_length {
         queue.add(('a' as u8 + config.rank as u8) as char);
-        i += 1;
+//        i += 1;
     }
     comm::barrier();
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
