@@ -19,32 +19,31 @@ use array::Array;
 use hash_table::HashTable;
 use queue::Queue;
 use global_guard::GlobalGuard;
+use std::time::{Duration, SystemTime};
+use std::env;
 
 use self::rand::{Rng, SeedableRng, StdRng};
 use std::collections::HashMap;
 
 fn main() {
-
-    let mut config = Config::init(1);
-    let rankn = config.rankn;
-
-    if config.rankn < 2 {
-        return;
-    }
-
+    // let mut config = Config::init(1);
+    // let rankn = config.rankn;
+    // if config.rankn < 2 {
+    //     return;
+    // }
 //    test_ptr(&mut config);
-
    // test_global_pointer(&mut config);
-
 //    test_shmem_atomic(&mut config);
-
-    test_global_guard(&mut config);
-
+    // test_global_guard(&mut config);
 //	test_array(&mut config);
-
 //	test_hash_table(&mut config);
+//	test_queue(&mut config);ss
 
-//	test_queue(&mut config);
+    let args: Vec<String> = env::args().collect();
+    if args.len() < 2 { panic!("not enough arguments");} 
+    let scale: i64 = args[1].parse().unwrap();
+
+    hash_table_test(scale);
 }
 
 
@@ -297,4 +296,54 @@ fn test_shmem_atomic(config: &mut Config) {
     	Ok(value) => println!("Get the lock again!"),
     	Err(error) => println!("That's right! It should not be able to get the lock!"),
     };
+}
+
+
+/// hash_table benchmarks
+pub fn hash_table_test(scale: i64) {
+    
+    let mut config = Config::init(512);
+    let rankn: i64 = config.rankn as i64;
+    let rank: i64 = config.rank as i64;
+
+    let n: i64 = scale;
+    let m: i64 = n / 2;
+
+    let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(&mut config, (n * 2) as usize);
+    comm::barrier();
+    
+    let mut rng: StdRng = SeedableRng::from_seed([233; 32]);
+
+    comm::barrier();
+    let insert_start = SystemTime::now();
+    for i in -m .. m {
+        // all PE
+        let key = rng.gen_range(-m, m);
+        let value = rng.gen_range(-m, m);
+        let success = hash_table_lfz.insert(&key, &value);
+        if success == false {
+            panic!("HashTable({}) Agh! insertion failed", shmemx::my_pe());
+        }
+        comm::barrier();
+    }
+    comm::barrier();
+    let insert_time = SystemTime::now().duration_since(insert_start)
+                    .expect("SystemTime::duration_since failed");
+
+    // println!("HashTable({}) Done with insert!", shmemx::my_pe());
+
+    comm::barrier();
+    let find_start = SystemTime::now();
+    for i in -m .. m {
+        let mut v_lfz: i64 = 0;
+        let mut success: bool = false;
+        success = hash_table_lfz.find(&i, &mut v_lfz);
+        comm::barrier();
+    }
+    comm::barrier();
+    let find_time = SystemTime::now().duration_since(find_start)
+                    .expect("SystemTime::duration_since failed");
+    if (shmemx::my_pe() == 0) {
+        println!("(insert_time, find_time) = ({:?}, {:?})", insert_time, find_time);
+    }
 }

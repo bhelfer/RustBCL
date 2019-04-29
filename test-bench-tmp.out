@@ -1,0 +1,16 @@
+strong scaling
+(insert_time, find_time) = (852.417299ms, 346.079774ms)
+(insert_time, find_time) = (575.68974ms, 210.166972ms)
+(insert_time, find_time) = (557.804595ms, 106.046956ms)
+(insert_time, find_time) = (537.730559ms, 72.282605ms)
+(insert_time, find_time) = (441.046083ms, 47.633259ms)
+(insert_time, find_time) = (444.877351ms, 36.563417ms)
+(insert_time, find_time) = (394.521855ms, 34.529665ms)
+strong scaling
+(insert_time, find_time) = (11.883093606s, 1.068243512s)
+(insert_time, find_time) = (19.319824131s, 1.284541536s)
+(insert_time, find_time) = (24.098577981s, 1.462549855s)
+(insert_time, find_time) = (26.360658123s, 1.388661216s)
+(insert_time, find_time) = (25.337599366s, 1.399981597s)
+(insert_time, find_time) = (26.580411497s, 1.472701416s)
+(insert_time, find_time) = (30.68636153s, 2.878428836s)
