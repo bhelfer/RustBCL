@@ -19,13 +19,11 @@ use array::Array;
 use hash_table::HashTable;
 use queue::Queue;
 use global_guard::GlobalGuard;
-use std::time::{Duration, SystemTime};
 use std::env;
-
 use self::rand::{Rng, SeedableRng, StdRng};
 use std::collections::HashMap;
 use std::mem::size_of;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 fn main() {
 
