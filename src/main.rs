@@ -20,7 +20,7 @@ use hash_table::HashTable;
 use queue::Queue;
 use global_guard::GlobalGuard;
 use guard_array::{GuardArray, GlobalGuardVec};
-use self::rand::{Rng, SeedableRng, StdRng};
+use self::rand::{Rng, StdRng, SeedableRng};
 use std::collections::HashMap;
 use std::mem::size_of;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -30,7 +30,7 @@ fn main() {
     let mut config = Config::init(1024);
     let rankn = config.rankn;
 
-    strong_scaling_queue(&mut config);
+//    strong_scaling_queue(&mut config);
 
 //    test_ptr(&mut config);
 
@@ -49,6 +49,8 @@ fn main() {
 //    test_global_guard_vec(&mut config);
 
 //    test_guard_array(&mut config);
+
+    benchmark_guard_array(&mut config);
 }
 
 
@@ -461,5 +463,37 @@ fn test_guard_array(config: &mut Config) {
             assert_eq!(garr.read(idx), step * config.rankn as i32, "error at idx: {}", idx);
         }
         println!("Guard Array test passed!");
+    }
+}
+
+fn benchmark_guard_array(config: &mut Config) {
+    let array_size = 1024;
+//    let total_workload = 131072; // strong scaling
+    let total_workload = 131072 * config.rankn; // weak scaling
+    let local_workload = (total_workload + config.rankn - 1) / config.rankn;
+
+    let mut rng = rand::thread_rng();
+    let mut garr = GuardArray::<i32>::init(config, array_size);
+
+    // Initialize all values to 0
+    if config.rank == 0 {
+        for idx in 0..array_size {
+            garr.write(0, idx);
+        }
+    }
+    comm::barrier();
+    let start = SystemTime::now();
+
+    for _ in 0..local_workload {
+        let idx = rng.gen_range(0, array_size);
+        let gval = garr.lock(idx);
+        gval.rput(gval.rget() + 1);
+    }
+    comm::barrier();
+    let since_the_epoch = SystemTime::now().duration_since(start)
+        .expect("SystemTime::duration_since failed");
+    if config.rank == 0 {
+        println!("rank num: {}; table size: {}; total workload: {}; time: {:?}",
+                 config.rankn, array_size, total_workload, since_the_epoch);
     }
 }
