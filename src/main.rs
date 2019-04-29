@@ -51,7 +51,7 @@ fn main() {
 
 //	test_hash_table(&mut config);
 
-    test_queue(&mut config);
+    strong_scaling_queue(&mut config);
 }
 
 
@@ -220,16 +220,15 @@ fn test_hash_table(config: &mut Config) {
     }
 }
 
-fn test_queue(config: &mut Config) {
-    if config.rank == 0 { println!("\n------------Queue's test------------\n"); }
+fn weak_scaling_queue(config: &mut Config) {
+    if config.rank == 0 { println!("\n------------Queue's weak scaling------------\n"); }
     let rankn = config.rankn;
     comm::barrier();
-    let mut queue = Queue::<char>::new(config, 250000);
+    let mut queue = Queue::<char>::new(config, 131080 * rankn);
     let mut i: u32 = 0;
-    let local_length = (131072 + rankn - 1) / rankn;
     comm::barrier();
     let start = SystemTime::now();
-    for _ in 0..local_length {
+    for _ in 0..131072 {
         queue.add(('a' as u8 + config.rank as u8) as char);
         i += 1;
     }
@@ -239,7 +238,7 @@ fn test_queue(config: &mut Config) {
 
     comm::barrier();
     let start = SystemTime::now();
-    for i in 0..local_length {
+    for i in 0..131072 {
         let f = queue.remove();
     }
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
@@ -264,6 +263,32 @@ fn test_queue(config: &mut Config) {
 //            println!("Data: {}, count: {}", ('a' as u8 + i as u8) as char, count_vector[i]);
 //        }
 //    }
+}
+
+fn strong_scaling_queue(config: &mut Config) {
+    if config.rank == 0 { println!("\n------------Queue's strong scaling------------\n"); }
+    let rankn = config.rankn;
+    comm::barrier();
+    let mut queue = Queue::<char>::new(config, 250000);
+    let mut i: u32 = 0;
+    let local_length = (131072 + rankn - 1) / rankn;
+    comm::barrier();
+    let start = SystemTime::now();
+    for _ in 0..local_length {
+        queue.add(('a' as u8 + config.rank as u8) as char);
+        i += 1;
+    }
+    comm::barrier();
+    let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
+    if config.rank == 0 { println!("Insert time: {:?}, starting removing.", since_the_epoch); }
+
+    comm::barrier();
+    let start = SystemTime::now();
+    for i in 0..local_length {
+        let f = queue.remove();
+    }
+    let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
+    if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }
 }
 
 fn test_global_guard(config: &mut Config) {
