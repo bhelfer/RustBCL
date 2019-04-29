@@ -315,17 +315,20 @@ fn test_guard_array(config: &mut Config) {
             garr.write(0, idx);
         }
     }
+    comm::barrier();
 
-    for _ in 0..100000 {
+    let step = 1000;
+    for _ in 0..step {
         for idx in 0..128 {
             let mut gval = garr.lock(idx);
             gval.rput(gval.rget() + 1)
         }
     }
+    comm::barrier();
 
     if config.rank == 0 {
         for idx in 0..128 {
-            assert_eq!(garr.read(idx), 100000 * config.rankn)
+            assert_eq!(garr.read(idx), step * config.rankn as i32, "idx: {}", idx);
         }
         println!("Guard array test passed!");
     }
