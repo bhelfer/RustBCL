@@ -26,9 +26,9 @@ fn main() {
     let mut config = Config::init(1);
     let rankn = config.rankn;
 
-    if config.rankn < 2 {
-        return;
-    }
+    //if config.rankn < 2 {
+      //  return;
+    //}
 
 //    test_ptr(&mut config);
 
@@ -168,25 +168,30 @@ fn test_array(config: &mut Config) {
     // ----------- array's part ------------
     if config.rank == 0 { println!("\n\n------------Array's test------------\n"); }
     let rankn = config.rankn;
-
-    let mut arr = Array::<i64>::init(config, 128);
+    let size_arr = 1024;
+    let mut arr = Array::<i64>::init(config, size_arr);
     //arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
-    arr.write(0 as i64, config.rank);
-    for i in 0..128 {
+    //arr.write(0 as i64, config.rank);
+    for i in 0..size_arr {
         arr.write(0 as i64, i);
     }
     // comm::long_atomic_fetch(&mut ptr);
     comm::barrier();
     //println!("here1");
-    let mut time1: time::Tm;
+    let mut time1: time::Tm = time::now();
     let mut time_res: time::Duration;
     let mut time2: time::Tm;
+    //let workload = 131072;
+    let workload = 131072*rankn;
+    //let size_arr = 1024;
+    //let iters = (workload/rankn)/size_arr;
+    let iters = workload/size_arr;
     if config.rank == 0 {
         time1 = time::now();
     }
 
-    for i in 0..10000000 {
-        for j in 0..128 {
+    for i in 0..iters {
+        for j in 0..size_arr {
             let mut ptr = arr.get_ptr(j);
             comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
         }
@@ -196,10 +201,11 @@ fn test_array(config: &mut Config) {
     if config.rank == 0 {
         time2 = time::now();
         time_res = time2 - time1;
-        println!("time is {:?}", time_res);
-        for i in 0..config.rankn {
+        //println!("time is {:?}", time_res);
+        for i in 0..size_arr {
             println!("{}: {}", i, arr.read(i));
         }
+	println!("time is {:?}", time_res);
     }
 }
 fn distributed_array() {
