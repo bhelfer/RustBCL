@@ -26,7 +26,7 @@ use std::mem::size_of;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn main() {
-    let mut config = Config::init(size_of::<char>() * 5000000 / (1024 * 1024));
+    let mut config = Config::init(1024);
     let rankn = config.rankn;
 
     if config.rankn < 2 {
@@ -269,7 +269,7 @@ fn strong_scaling_queue(config: &mut Config) {
     if config.rank == 0 { println!("\n------------Queue's strong scaling------------\n"); }
     let rankn = config.rankn;
     comm::barrier();
-    let mut queue = Queue::<char>::new(config, 250000);
+    let mut queue = Queue::<char>::new(config, 300000);
     let mut i: u32 = 0;
     let local_length = (131072 + rankn - 1) / rankn;
     comm::barrier();
