@@ -23,7 +23,7 @@ pub struct Queue<T> {
     head_ptr: GlobalPointer<i32>,
 }
 
-impl<'a, T: Clone + Copy + Default> Queue<T> {
+impl<T: Clone + Copy + Default> Queue<T> {
     pub fn new(config: &mut Config, n: usize) -> Queue<T> {
         let mut tail_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
         let mut head_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
@@ -56,7 +56,8 @@ impl<'a, T: Clone + Copy + Default> Queue<T> {
 
     pub fn add(&mut self, data: T) -> bool {
         let mut tail = comm::int_finc(&mut self.tail_ptr) as usize;
-        let head = self.head_ptr.rget() as usize;
+//        let head = self.head_ptr.rget() as usize;
+        let head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
         if tail - head > self.capacity {
             panic!("The buffer is full!");
             return false;
@@ -71,8 +72,8 @@ impl<'a, T: Clone + Copy + Default> Queue<T> {
 
     pub fn remove(&mut self) -> Result<T, &str> {
         let mut head = comm::int_finc(&mut self.head_ptr) as usize;
-        let tail = self.tail_ptr.rget() as usize;
-
+//        let tail = self.tail_ptr.rget() as usize;
+        let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
         if tail <= head { // TODO test
             Err("The buffer is empty!")
         } else {
