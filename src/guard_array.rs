@@ -63,6 +63,7 @@ impl<T> GlobalGuardVec<T> {
 
 pub struct GuardArray<T> {
     pub ptrs: Vec<GlobalGuardVec<T>>,
+    pub local_size: usize
 }
 
 impl<T> GuardArray<T> {
@@ -74,10 +75,10 @@ impl<T> GuardArray<T> {
         for rank in 0..config.rankn {
             comm::broadcast(&mut ptrs[rank], rank);
         }
-        GuardArray {ptrs}
+        GuardArray {ptrs, local_size}
     }
     pub fn read(&self, idx: usize) -> T {
-        let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
+        // let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
         let rank: usize = idx / self.local_size;
         // changed to >= by lfz
         if rank >= shmemx::n_pes() {
@@ -89,7 +90,7 @@ impl<T> GuardArray<T> {
     }
 
     pub fn write(&mut self, c: T, idx: usize) {
-        let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
+        // let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
         let rank: usize = idx / self.local_size;
         // changed to >= by lfz
         if rank >= shmemx::n_pes() {
@@ -101,7 +102,7 @@ impl<T> GuardArray<T> {
     }
 
     pub fn lock(&mut self, idx: usize) -> GlobalValue<T> {
-        let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
+        // let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
         let rank: usize = idx / self.local_size;
         // changed to >= by lfz
         if rank >= shmemx::n_pes() {
