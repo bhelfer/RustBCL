@@ -3,6 +3,7 @@
 #![allow(deprecated)]
 
 extern crate rand;
+extern crate statistical;
 
 pub mod shmemx;
 pub mod global_pointer;
@@ -12,38 +13,66 @@ pub mod array;
 pub mod hash_table;
 pub mod queue;
 pub mod global_guard;
-
+pub mod guard_array;
+mod benchmark;
+use global_pointer::Bclable;
 use config::Config;
 use global_pointer::GlobalPointer;
 use array::Array;
 use hash_table::HashTable;
 use queue::Queue;
 use global_guard::GlobalGuard;
-use std::time::{Duration, SystemTime};
-use std::env;
-
-use self::rand::{Rng, SeedableRng, StdRng};
+use guard_array::{GuardArray, GlobalGuardVec};
+use self::rand::{Rng, StdRng, SeedableRng};
 use std::collections::HashMap;
 use std::mem::size_of;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem};
 
 fn main() {
 
-    let mut config = Config::init(1024);
+    let mut config = Config::init(1);
     let rankn = config.rankn;
 
-    strong_scaling_queue(&mut config);
+//    strong_scaling_queue(&mut config);
+
+//    test_ptr(&mut config);
+
+//    test_global_pointer(&mut config);
+
+//    test_shmem_atomic(&mut config);
+
+//    test_global_guard(&mut config);
+
+//	test_array(&mut config);
+
+//	test_hash_table(&mut config);
+
+//	test_queue(&mut config);
+
+//    test_global_guard_vec(&mut config);
+
+//    test_guard_array(&mut config);
+
+//    benchmark_guard_array(&mut config);
+
+    bench_global_guard::benchmark_global_guard(&mut config);
+    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
+    bench_global_pointer::benchmark_global_pointer_local(&mut config);
+    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
+    bench_shmem::benchmark_shmem(&mut config);
 }
 
 
 fn test_ptr(config: &mut Config) {
     // ----------- Global Pointer's part -------------
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     struct HE {
         key: i64,
         value: i64,
         other: i64,
     }
+    impl Bclable for HE {}
 
     if config.rank == 0 { println!("------------Global Pointer's test------------\n"); }
 
@@ -93,27 +122,25 @@ fn test_global_pointer(config: &mut Config) {
 
     // test rput, rget
     (ptr1 + config.rank as isize).rput(config.rank as i32);
+
+    comm::barrier();
+    
+    let mut value;
+    if config.rank == 1 {
+        println!("Rank 1 Sees: ");
+        for i in 0..config.rankn {
+            value = (ptr1 + i as isize).rget();
+            println!("{}: {}", i, value);
+        }
+    }
     comm::barrier();
 
-    let mut value;
     if config.rank == 0 {
         let p1 = ptr1.local();
         let p_slice = unsafe { std::slice::from_raw_parts(p1, config.rankn) };
         println!("Rank 0 Sees: ");
         for i in 0..config.rankn {
             value = p_slice[i];
-            println!("{}: {}", i, value);
-        }
-    }
-
-    comm::barrier();
-    println!("barrier1, rank{}!", config.rank);
-    comm::barrier();
-
-    if config.rank == 1 {
-        println!("Rank 1 Sees: ");
-        for i in 0..config.rankn {
-            value = (ptr1 + i as isize).rget();
             println!("{}: {}", i, value);
         }
     }
@@ -276,12 +303,12 @@ fn test_global_guard(config: &mut Config) {
     // ----------- Global Guard's part -------------
     if config.rank == 0 { println!("------------Global Guard's test------------\n"); }
 
+    let step = 100000;
     let mut guard1 = GlobalGuard::null();
     if config.rank == 0 {
         guard1 = GlobalGuard::init(config);
     }
     comm::broadcast(&mut guard1, 0);
-    // println!("rank:{}, guard1:{:?}", config.rank, guard1);
 
     if config.rank == 0 {
         let value = guard1.lock();
@@ -290,7 +317,6 @@ fn test_global_guard(config: &mut Config) {
     comm::barrier();
 
     // text mutex
-    let step = 100000;
     for i in 0..step {
         let value = guard1.lock();
         let t = value.rget();
@@ -331,10 +357,8 @@ fn test_shmem_atomic(config: &mut Config) {
     };
 }
 
-
 /// hash_table benchmarks
-pub fn hash_table_test(scale: i64) {
-    
+pub fn hash_table_benchmark(scale: i64) {
     let mut config = Config::init(512);
     let rankn: i64 = config.rankn as i64;
     let rank: i64 = config.rank as i64;
@@ -344,12 +368,12 @@ pub fn hash_table_test(scale: i64) {
 
     let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(&mut config, (n * 2) as usize);
     comm::barrier();
-    
+
     let mut rng: StdRng = SeedableRng::from_seed([233; 32]);
 
     comm::barrier();
     let insert_start = SystemTime::now();
-    for i in -m .. m {
+    for i in -m..m {
         // all PE
         let key = rng.gen_range(-m, m);
         let value = rng.gen_range(-m, m);
@@ -361,13 +385,13 @@ pub fn hash_table_test(scale: i64) {
     }
     comm::barrier();
     let insert_time = SystemTime::now().duration_since(insert_start)
-                    .expect("SystemTime::duration_since failed");
+        .expect("SystemTime::duration_since failed");
 
     // println!("HashTable({}) Done with insert!", shmemx::my_pe());
 
     comm::barrier();
     let find_start = SystemTime::now();
-    for i in -m .. m {
+    for i in -m..m {
         let mut v_lfz: i64 = 0;
         let mut success: bool = false;
         success = hash_table_lfz.find(&i, &mut v_lfz);
@@ -375,8 +399,109 @@ pub fn hash_table_test(scale: i64) {
     }
     comm::barrier();
     let find_time = SystemTime::now().duration_since(find_start)
-                    .expect("SystemTime::duration_since failed");
-    if (shmemx::my_pe() == 0) {
+        .expect("SystemTime::duration_since failed");
+    if shmemx::my_pe() == 0 {
         println!("(insert_time, find_time) = ({:?}, {:?})", insert_time, find_time);
+    }
+}
+
+fn test_global_guard_vec(config: &mut Config) {
+    // ----------- GlobalGuardVec's part -------------
+    if config.rank == 0 { println!("------------GlobalGuardVec's test------------\n"); }
+
+    // Initialize a guard array
+    let array_size = 8;
+    let step = 1000;
+    let mut guard_vec1 = GlobalGuardVec::<i16>::null();
+
+    // Initialize all values to 0
+    if config.rank == 0 {
+        guard_vec1 = GlobalGuardVec::init(config, array_size);
+        for idx in 0..array_size {
+            let value = guard_vec1.lock(idx);
+            value.rput(0);
+        }
+    }
+    comm::broadcast(&mut guard_vec1, 0);
+
+    for _ in 0..step {
+        for idx in 0..array_size {
+            let gval = guard_vec1.lock(idx);
+            gval.rput(gval.rget() + 1);
+        }
+    }
+    comm::barrier();
+
+    if config.rank == 0 {
+        for idx in 0..array_size {
+            let value = guard_vec1.lock(idx);
+            assert_eq!(value.rget(), step * config.rankn as i16, "error at idx: {}", idx);
+        }
+        println!("GlobalGuardVec test passed!");
+    }
+}
+
+fn test_guard_array(config: &mut Config) {
+    // ----------- GuardArray's part -------------
+    if config.rank == 0 { println!("------------Guard Array's test------------\n"); }
+
+    // Initialize a guard array
+    let array_size = 128;
+    let step = 1000;
+    let mut garr = GuardArray::<i32>::init(config, array_size);
+
+    // Initialize all values to 0
+    if config.rank == 0 {
+        for idx in 0..array_size {
+            garr.write(0, idx);
+        }
+    }
+    comm::barrier();
+
+    for _ in 0..step {
+        for idx in 0..array_size {
+            let gval = garr.lock(idx);
+            gval.rput(gval.rget() + 1);
+        }
+    }
+    comm::barrier();
+
+    if config.rank == 0 {
+        for idx in 0..array_size {
+            assert_eq!(garr.read(idx), step * config.rankn as i32, "error at idx: {}", idx);
+        }
+        println!("Guard Array test passed!");
+    }
+}
+
+fn benchmark_guard_array(config: &mut Config) {
+    let array_size = 1024;
+//    let total_workload = 131072; // strong scaling
+    let total_workload = 131072 * config.rankn; // weak scaling
+    let local_workload = (total_workload + config.rankn - 1) / config.rankn;
+
+    let mut rng = rand::thread_rng();
+    let mut garr = GuardArray::<i32>::init(config, array_size);
+
+    // Initialize all values to 0
+    if config.rank == 0 {
+        for idx in 0..array_size {
+            garr.write(0, idx);
+        }
+    }
+    comm::barrier();
+    let start = SystemTime::now();
+
+    for _ in 0..local_workload {
+        let idx = rng.gen_range(0, array_size);
+        let gval = garr.lock(idx);
+        gval.rput(gval.rget() + 1);
+    }
+    comm::barrier();
+    let since_the_epoch = SystemTime::now().duration_since(start)
+        .expect("SystemTime::duration_since failed");
+    if config.rank == 0 {
+        println!("rank num: {}; table size: {}; total workload: {}; time: {:?}",
+                 config.rankn, array_size, total_workload, since_the_epoch);
     }
 }

@@ -32,11 +32,24 @@ use config::SMALLEST_MEM_UNIT;
 //	}
 //}
 
+pub trait Bclable: Clone + Copy {}
+impl Bclable for i8 {}
+impl Bclable for i16 {}
+impl Bclable for i32 {}
+impl Bclable for i64 {}
+impl Bclable for isize {}
+impl Bclable for u8 {}
+impl Bclable for u16 {}
+impl Bclable for u32 {}
+impl Bclable for u64 {}
+impl Bclable for usize {}
+impl Bclable for char {}
+
 /*
 ----GlobalPointer----
 */
 #[derive(Debug, Copy, Clone)]
-pub struct GlobalPointer<T> {
+pub struct GlobalPointer<T: Bclable> {
     pub shared_segment_size: usize,
     pub smem_base_ptr: *mut u8,
 	pub rank: usize,
@@ -45,7 +58,7 @@ pub struct GlobalPointer<T> {
 }
 
 // implement GlobalPointer
-impl<T: Clone> GlobalPointer<T> {
+impl<T: Bclable> GlobalPointer<T> {
     pub fn init(config: &mut Config, mut size: usize) -> GlobalPointer<T> {
         let (_, offset) = config.alloc(size * size_of::<T>());
         
@@ -72,7 +85,20 @@ impl<T: Clone> GlobalPointer<T> {
         self.smem_base_ptr.is_null()
     }
 
-    pub fn local(&mut self) -> *mut T {
+    pub fn local(&self) -> *const T {
+    	let t = ptr::null_mut::<T>() as *const T;
+        if self.rank != shmemx::my_pe() {
+            eprintln!("error: calling local() on a remote GlobalPtr");
+            return ptr::null_mut::<T>() as *const T;
+        }
+        unsafe{
+            let p = self.smem_base_ptr.add(self.offset * size_of::<T>()) as *const T;
+            assert!(self.is_valid(p as *const u8, size_of::<T>()), "Global Pointer Out of bound!");
+            p
+        }
+    }
+
+    pub fn local_mut(&mut self) -> *mut T {
     	let t = ptr::null_mut::<T>() as *mut T;
         if self.rank != shmemx::my_pe() {
             eprintln!("error: calling local() on a remote GlobalPtr");
@@ -94,13 +120,23 @@ impl<T: Clone> GlobalPointer<T> {
     }
 
     pub fn rput(&mut self, value: T) -> &mut Self {
-        let type_size = size_of::<T>();
-        self.shmem_putmem(unsafe{self.smem_base_ptr.add(self.offset * type_size)}, &value as *const T as *const u8, type_size, self.rank);
-
-		self
+        if shmemx::my_pe() == self.rank {
+            unsafe {
+                *self.local_mut() = value;
+            }
+        } else {
+        	let type_size = size_of::<T>();
+	        self.shmem_putmem(unsafe{self.smem_base_ptr.add(self.offset * type_size)}, &value as *const T as *const u8, type_size, self.rank);
+        }
+		self        
 	}
 
 	pub fn rget(&self) -> T {
+        if shmemx::my_pe() == self.rank {
+            unsafe {
+                return *self.local();
+            }
+        }
         let mut value: T = unsafe{std::mem::uninitialized::<T>()};
         let type_size = size_of::<T>();
         self.shmem_getmem(&mut value as *mut T as *mut u8, unsafe{self.smem_base_ptr.add(self.offset * type_size)}, type_size, self.rank);
@@ -152,7 +188,7 @@ impl<T: Clone> GlobalPointer<T> {
 }
 
 // overload operator+
-impl<T> ops::Add<isize> for GlobalPointer<T> {
+impl<T: Bclable> ops::Add<isize> for GlobalPointer<T> {
     type Output = GlobalPointer<T>;
 
     fn add(self, n: isize) -> GlobalPointer<T> {
@@ -167,14 +203,14 @@ impl<T> ops::Add<isize> for GlobalPointer<T> {
 }
 
 // overload operator+=
-impl<T> ops::AddAssign<isize> for GlobalPointer<T> {
+impl<T: Bclable> ops::AddAssign<isize> for GlobalPointer<T> {
     fn add_assign(&mut self, n: isize) {
         self.offset = (self.offset as isize + n) as usize;
     }
 }
 
 // overload operator+
-impl<T> ops::Sub<isize> for GlobalPointer<T> {
+impl<T: Bclable> ops::Sub<isize> for GlobalPointer<T> {
     type Output = GlobalPointer<T>;
 
     fn sub(self, n: isize) -> GlobalPointer<T> {
@@ -189,7 +225,7 @@ impl<T> ops::Sub<isize> for GlobalPointer<T> {
 }
 
 // overload operator+=
-impl<T> ops::SubAssign<isize> for GlobalPointer<T> {
+impl<T: Bclable> ops::SubAssign<isize> for GlobalPointer<T> {
     fn sub_assign(&mut self, n: isize) {
         self.offset = (self.offset as isize - n) as usize;
     }
@@ -197,7 +233,7 @@ impl<T> ops::SubAssign<isize> for GlobalPointer<T> {
 
 use std::fmt;
 
-impl<T> fmt::Display for GlobalPointer<T> {
+impl<T: Bclable> fmt::Display for GlobalPointer<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({}, {})", self.rank, self.offset)
     }
