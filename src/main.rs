@@ -199,7 +199,7 @@ fn test_array(config: &mut Config) {
     for i in 0..iters {
         for j in 0..size_arr {
             let mut ptr = arr.get_ptr(j);
-            comm::long_atomic_fetch_add(&mut ptr, 1 as i64 as i32);
+            comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
         }
     }
     comm::barrier();
