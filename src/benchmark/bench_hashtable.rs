@@ -9,6 +9,8 @@ use containers::hash_table::HashTable;
 use std::time::{SystemTime, Duration};
 use std::vec::Vec;
 use std::env;
+
+extern crate rand;
 use rand::{rngs::StdRng, Rng, thread_rng, SeedableRng, ChaChaRng, seq::SliceRandom};
 
 /// hash_table benchmarks
