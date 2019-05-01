@@ -6,43 +6,42 @@ use std::vec::Vec;
 use comm;
 use rand::rngs::StdRng;
 use lib_bcl::shmemx;
-use rand::{Rng, thread_rng};
+use rand::{Rng, thread_rng, SeedableRng, ChaChaRng};
 use rand::seq::SliceRandom;
 use std::env;
 
 /// hash_table benchmarks
 pub fn benchmark_hash_table(config: &mut Config) {
     let args: Vec<String> = env::args().collect();
-    if args.len() <= 1 { return Err("not enough arguments"); }
+    if args.len() <= 1 { panic!("not enough arguments"); }
 
-    let rankn: i64 = config.rankn as i64;
-    let rank: i64 = config.rank as i64;
+    let rankn: i32 = config.rankn as i32;
+    let rank: i32 = config.rank as i32;
 
-    let n: i64 = args[1].clone().parse().unwrap();
-    let m: i64 = n / 2;
+    let n: i32 = args[1].clone().parse().unwrap();
+//    println!("n, rankn, rank = ({}, {}, {})", n, rankn, rank);
 
-    let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(config, (n * rankn * 2) as usize);
+    let mut hash_table_lfz: HashTable<i32, i32> = HashTable::new(config, (n * rankn * 2) as usize);
 
-    let mut keys: Vec<i64> = (-m .. m).collect();
-    let mut values: Vec<i64> = (-m .. m).collect();
+    let mut rng: StdRng = SeedableRng::from_seed([rankn as u8; 32]);
+    let mut keys: Vec<i32> = Vec::new();
+    let mut values: Vec<i32> = Vec::new();
+    for i in 0 .. n {
+        keys.push(rng.gen_range(std::i32::MIN, std::i32::MAX));
+        values.push(rng.gen_range(std::i32::MIN, std::i32::MAX));
+    }
     keys.shuffle(&mut thread_rng());
     values.shuffle(&mut thread_rng());
 
     comm::barrier();
-
-    let mut rng: StdRng = SeedableRng::from_seed([233; 32]);
-
-    comm::barrier();
     let insert_start = SystemTime::now();
-    for i in -m .. m {
+    for i in 0 .. n {
         // all PE
-        let key = keys[i];
-        let value = values[i];
-        let success = hash_table_lfz.insert(&key, &value);
+        let success = hash_table_lfz.insert(&keys[i as usize], &values[i as usize]);
         if success == false {
             panic!("HashTable({}) Agh! insertion failed", shmemx::my_pe());
         }
-        comm::barrier();
+//        comm::barrier();
     }
     comm::barrier();
     let insert_time = SystemTime::now().duration_since(insert_start)
@@ -52,11 +51,11 @@ pub fn benchmark_hash_table(config: &mut Config) {
 
     comm::barrier();
     let find_start = SystemTime::now();
-    for i in -m .. m {
-        let mut v_lfz: i64 = 0;
+    for i in keys.iter() {
+        let mut v_lfz: i32 = 0;
         let mut success: bool = false;
         success = hash_table_lfz.find(&i, &mut v_lfz);
-        comm::barrier();
+//        comm::barrier();
     }
     comm::barrier();
     let find_time = SystemTime::now().duration_since(find_start)

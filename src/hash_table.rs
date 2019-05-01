@@ -146,11 +146,12 @@ impl<K: Bclable, V: Bclable> HashTable<K, V>
 
     fn get_entry(&self, slot: usize) -> HE<K, V> {
         // println!("HashTable({})::get_entry slot {} enter", shmemx::my_pe(), slot);
-        let mut entry_ptr = self.slot_entry_ptr(slot);
+//        let mut entry_ptr = self.slot_entry_ptr(slot);
         // println!("HashTable({})::get_entry slot {} middle", shmemx::my_pe(), slot);
-        let ret = entry_ptr.rget();
+//        let ret = entry_ptr.rget();
         // println!("HashTable({})::get_entry slot {} leave", shmemx::my_pe(), slot);
-        ret
+//        ret
+        self.slot_entry_ptr(slot).rget()
     }
 
     fn set_entry(&self, slot: usize, entry: &HE<K, V>) {
@@ -272,7 +273,7 @@ impl<K: Bclable, V: Bclable> HashTable<K, V>
         let mut success = false;
 
         loop {
-            let slot: usize = ((hash + probe) % (self.global_size as u64)) as usize;
+            let slot: usize = ((hash + probe * probe) % (self.global_size as u64)) as usize;
             probe += 1;
 
             // println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Requesting slot {} / {}",
@@ -299,9 +300,6 @@ impl<K: Bclable, V: Bclable> HashTable<K, V>
                 self.make_ready_slot(slot/*, &key, &value*/);
                 // Note: this is not actually expected valid (atomicity)
                 // assert_ne!(self.slot_status(slot), self.free_flag);
-
-            } else {
-//              assert_ne!(self.slot_status(slot), self.reserved_flag);
             }
 
             if success || probe >= self.global_size as u64 { break; }
@@ -321,7 +319,7 @@ impl<K: Bclable, V: Bclable> HashTable<K, V>
         let mut status: U;
 
         loop {
-            let slot: usize = ((hash + probe) % (self.global_size as u64)) as usize;
+            let slot: usize = ((hash + probe * probe) % (self.global_size as u64)) as usize;
             probe += 1;
 
             status = self.slot_status(slot);
