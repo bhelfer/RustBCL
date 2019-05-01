@@ -4,7 +4,7 @@
 
 extern crate rand;
 extern crate statistical;
-//extern crate lib_bcl;
+extern crate lib_bcl;
 
 pub mod backend;
 pub mod base;

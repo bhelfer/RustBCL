@@ -1,3 +1,7 @@
+#![allow(dead_code)]
+#![allow(unused)]
+#![allow(deprecated)]
+
 use base::{global_pointer::GlobalPointer, config::Config};
 use backend::comm;
 
