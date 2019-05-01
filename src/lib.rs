@@ -5,4 +5,3 @@ pub mod global_pointer;
 pub mod hash_table;
 pub mod queue;
 pub mod shmemx;
-pub mod utils;
