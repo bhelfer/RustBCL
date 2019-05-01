@@ -2,14 +2,10 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
-use global_pointer::Bclable;
-use global_pointer;
-use comm;
-use config;
-use config::Config;
-use shmemx;
-use global_pointer::GlobalPointer;
-use array::Array;
+use backend::{comm, shmemx::{self, shmem_broadcast64, libc::{c_long, c_void, c_int}}};
+use base::{config::{self, Config}, global_pointer::{self, GlobalPointer, Bclable}};
+use containers::array::Array;
+
 use std::sync::Mutex;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -86,7 +82,7 @@ impl<T: Bclable> Queue<T> {
         }
     }
 
-    pub fn peek(&self) -> Result<T, &str> {
+    pub fn peek(&mut self) -> Result<T, &str> {
         let mut head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
         let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
 
@@ -100,7 +96,7 @@ impl<T: Bclable> Queue<T> {
         }
     }
 
-    pub fn len(&self) -> usize {
+    pub fn len(&mut self) -> usize {
         let head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
         let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
         return tail - head

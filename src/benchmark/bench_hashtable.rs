@@ -1,14 +1,16 @@
-use global_pointer::GlobalPointer;
-use hash_table::HashTable;
-use config::Config;
+#![allow(dead_code)]
+#![allow(unused)]
+#![allow(deprecated)]
+
+use base::{global_pointer::GlobalPointer, config::Config};
+use backend::{comm, shmemx};
+use containers::hash_table::HashTable;
+
 use std::time::{SystemTime, Duration};
 use std::vec::Vec;
-use comm;
-use rand::rngs::StdRng;
-use lib_bcl::shmemx;
-use rand::{Rng, thread_rng, SeedableRng, ChaChaRng};
-use rand::seq::SliceRandom;
 use std::env;
+
+use rand::{rngs::StdRng, Rng, thread_rng, SeedableRng, ChaChaRng, seq::SliceRandom};
 
 /// hash_table benchmarks
 pub fn benchmark_hash_table(config: &mut Config) {

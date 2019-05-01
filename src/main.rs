@@ -4,31 +4,23 @@
 
 extern crate rand;
 extern crate statistical;
-extern crate lib_bcl;
+extern crate time;
 
-pub mod shmemx;
-pub mod global_pointer;
-pub mod config;
-pub mod comm;
-pub mod array;
-pub mod hash_table;
-pub mod queue;
-pub mod global_guard;
-pub mod guard_array;
-mod benchmark;
-use global_pointer::Bclable;
-use config::Config;
-use global_pointer::GlobalPointer;
-use array::Array;
-use hash_table::HashTable;
-use queue::Queue;
-use global_guard::GlobalGuard;
-use guard_array::{GuardArray, GlobalGuardVec};
+pub mod backend;
+pub mod base;
+pub mod containers;
+pub mod benchmark;
+
+use base::{global_pointer::{Bclable, GlobalPointer}, global_guard::GlobalGuard, config::Config};
+use containers::{array::Array, hash_table::HashTable, queue::Queue};
+use containers::guard_array::{GuardArray, GlobalGuardVec};
+use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem, bench_hashtable};
+use backend::{comm, shmemx};
+
 use self::rand::{Rng, StdRng, SeedableRng};
 use std::collections::HashMap;
 use std::mem::size_of;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem, bench_hashtable};
 
 fn main() {
 
