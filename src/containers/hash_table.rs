@@ -344,13 +344,12 @@ impl<K: Bclable, V: Bclable> HashTable<K, V>
 pub mod tests {
 
     extern crate rand;
+    use containers::hash_table::HashTable;
+    use base::{global_pointer::GlobalPointer, config::Config};
+    use backend::{comm, shmemx};
+
     use std::collections::HashMap;
-    use hash_table::HashTable;
-    use config::Config;
     use self::rand::{Rng, SeedableRng, StdRng};
-    use global_pointer::GlobalPointer;
-    use comm;
-    use shmemx;
 
     #[test]
     pub fn same_entry_test() {
