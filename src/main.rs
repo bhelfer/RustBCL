@@ -24,7 +24,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 fn main() {
 
-    let mut config = Config::init(1024);
+    let mut config = Config::init(32);
     let rankn = config.rankn;
 
 //    strong_scaling_queue(&mut config);
