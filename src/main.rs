@@ -9,7 +9,7 @@ extern crate lib_bcl;
 pub mod backend;
 pub mod base;
 pub mod containers;
-mod benchmark;
+pub mod benchmark;
 
 use base::{global_pointer::{Bclable, GlobalPointer}, global_guard::GlobalGuard, config::Config};
 use containers::{array::Array, hash_table::HashTable, queue::Queue};
