@@ -4,7 +4,6 @@ use backend::comm;
 use std::time::{SystemTime, Duration};
 use std::vec::Vec;
 
-extern crate statistical;
 use statistical;
 
 fn duration_to_nano(duration: &Duration) -> u128 {
