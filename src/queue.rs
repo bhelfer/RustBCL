@@ -87,8 +87,8 @@ impl<T: Bclable> Queue<T> {
     }
 
     pub fn peek(&self) -> Result<T, &str> {
-        let mut head = self.head_ptr.rget() as usize;
-        let tail = self.tail_ptr.rget() as usize;
+        let mut head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
+        let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
 
         if tail <= head { // TODO test
             Err("The buffer is empty!")
@@ -101,9 +101,9 @@ impl<T: Bclable> Queue<T> {
     }
 
     pub fn len(&self) -> usize {
-        let head = self.head_ptr.rget();
-        let tail = self.tail_ptr.rget();
-        return (tail - head) as usize
+        let head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
+        let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
+        return tail - head
     }
 
     pub fn capacity(&self) ->usize {
