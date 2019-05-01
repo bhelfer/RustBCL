@@ -51,7 +51,7 @@ impl<T: Bclable> Queue<T> {
     }
 
 
-    pub fn add(&mut self, data: T) -> bool {
+    pub fn push(&mut self, data: T) -> bool {
         let mut tail = comm::int_finc(&mut self.tail_ptr) as usize;
 //        let head = self.head_ptr.rget() as usize;
         let head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
@@ -67,11 +67,11 @@ impl<T: Bclable> Queue<T> {
         return true;
     }
 
-    pub fn remove(&mut self) -> Result<T, &str> {
+    pub fn pop(&mut self) -> Result<T, &str> {
         let mut head = comm::int_finc(&mut self.head_ptr) as usize;
 //        let tail = self.tail_ptr.rget() as usize;
         let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
-        if tail <= head { // TODO test
+        if tail <= head {
             Err("The buffer is empty!")
         } else {
             head = head % self.capacity;
@@ -82,11 +82,11 @@ impl<T: Bclable> Queue<T> {
         }
     }
 
-    pub fn peek(&self) -> Result<T, &str> {
-        let mut head = self.head_ptr.rget() as usize;
-        let tail = self.tail_ptr.rget() as usize;
+    pub fn peek(&mut self) -> Result<T, &str> {
+        let mut head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
+        let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
 
-        if tail <= head { // TODO test
+        if tail <= head {
             Err("The buffer is empty!")
         } else {
             head = head % self.capacity;
@@ -96,10 +96,10 @@ impl<T: Bclable> Queue<T> {
         }
     }
 
-    pub fn len(&self) -> usize {
-        let head = self.head_ptr.rget();
-        let tail = self.tail_ptr.rget();
-        return (tail - head) as usize
+    pub fn len(&mut self) -> usize {
+        let head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
+        let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
+        return tail - head
     }
 
     pub fn capacity(&self) ->usize {
