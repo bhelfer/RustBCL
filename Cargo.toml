@@ -6,6 +6,7 @@ version = "0.0.1"
 libc = "0.2.51"
 rand = "0.6"
 statistical = "1.0.0"
+time = "0.1"
 
 #[dev-dependencies]
 #criterion = "0.2"

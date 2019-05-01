@@ -4,6 +4,7 @@
 
 extern crate rand;
 extern crate statistical;
+extern crate time;
 
 pub mod backend;
 pub mod base;
