@@ -2,6 +2,7 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
+use global_pointer::Bclable;
 use global_pointer;
 use comm;
 use config;
@@ -15,7 +16,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 // Circular Queue
 #[derive(Debug, Clone)]
-pub struct Queue<T> {
+pub struct Queue<T: Bclable> {
     local_size: usize,
     ptrs: Vec<GlobalPointer<T>>,
     capacity: usize,
@@ -23,14 +24,14 @@ pub struct Queue<T> {
     head_ptr: GlobalPointer<i32>,
 }
 
-impl<T: Clone + Copy + Default> Queue<T> {
+impl<T: Bclable> Queue<T> {
     pub fn new(config: &mut Config, n: usize) -> Queue<T> {
         let mut tail_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
         let mut head_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
         if config.rank == 0 {
             unsafe {
-                tail_ptr.local().write(0);
-                head_ptr.local().write(0);
+                tail_ptr.local_mut().write(0);
+                head_ptr.local_mut().write(0);
             }
         }
         comm::broadcast(&mut tail_ptr, 0);

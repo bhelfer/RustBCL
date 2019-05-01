@@ -1,0 +1,26 @@
+strong scaling
+N = 1, n = 4, local size = 32768
+(insert_time, find_time) = (537.190358ms, 106.963113ms)
+N = 2, n = 8, local size = 8192
+(insert_time, find_time) = (331.0442ms, 50.377336ms)
+N = 4, n = 16, local size = 2048
+(insert_time, find_time) = (186.574105ms, 13.895813ms)
+N = 8, n = 32, local size = 512
+(insert_time, find_time) = (98.23469ms, 4.830671ms)
+N = 12, n = 48, local size = 227
+(insert_time, find_time) = (69.805457ms, 2.480343ms)
+N = 16, n = 64, local size = 128
+(insert_time, find_time) = (54.306683ms, 1.641263ms)
+weak scaling
+N = 1, n = 4, local size = 131072
+(insert_time, find_time) = (2.084858345s, 406.377201ms)
+N = 2, n = 8, local size = 131072
+(insert_time, find_time) = (5.140755315s, 839.658778ms)
+N = 4, n = 16, local size = 131072
+(insert_time, find_time) = (11.199553778s, 958.094933ms)
+N = 8, n = 32, local size = 131072
+(insert_time, find_time) = (26.291286268s, 1.372705275s)
+N = 12, n = 48, local size = 131072
+(insert_time, find_time) = (40.792202046s, 1.710424357s)
+N = 16, n = 64, local size = 131072
+(insert_time, find_time) = (52.021957976s, 2.056552888s)

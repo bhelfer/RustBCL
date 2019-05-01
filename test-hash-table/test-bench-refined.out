@@ -1,0 +1,58 @@
+strong scaling
+N = 1, n = 1, local size = 131072
+(insert_time, find_time) = (928.669468ms, 361.528313ms)
+N = 1, n = 2, local size = 65536
+(insert_time, find_time) = (381.978803ms, 138.735753ms)
+N = 1, n = 4, local size = 32768
+(insert_time, find_time) = (198.270302ms, 64.531166ms)
+N = 1, n = 8, local size = 16384
+(insert_time, find_time) = (105.150989ms, 32.136597ms)
+N = 1, n = 12, local size = 10922
+(insert_time, find_time) = (76.207368ms, 21.944668ms)
+N = 1, n = 16, local size = 8192
+(insert_time, find_time) = (57.787669ms, 15.194988ms)
+N = 1, n = 32, local size = 4096
+(insert_time, find_time) = (46.819447ms, 8.854377ms)
+N = 1, n = 32, local size = 4096
+(insert_time, find_time) = (47.342178ms, 8.865064ms)
+N = 2, n = 32, local size = 2048
+(insert_time, find_time) = (29.33812ms, 6.761113ms)
+N = 4, n = 32, local size = 1024
+(insert_time, find_time) = (18.50545ms, 4.435512ms)
+N = 8, n = 32, local size = 512
+(insert_time, find_time) = (9.731653ms, 1.916274ms)
+N = 12, n = 32, local size = 341
+(insert_time, find_time) = (7.891913ms, 1.366524ms)
+N = 16, n = 32, local size = 256
+(insert_time, find_time) = (6.993009ms, 1.078042ms)
+N = 32, n = 32, local size = 128
+(insert_time, find_time) = (5.26199ms, 538.398µs)
+weak scaling
+N = 1, n = 1, local size = 131072
+(insert_time, find_time) = (682.281469ms, 286.261676ms)
+N = 1, n = 2, local size = 131072
+(insert_time, find_time) = (764.826548ms, 275.935047ms)
+N = 1, n = 4, local size = 131072
+(insert_time, find_time) = (753.358741ms, 253.668663ms)
+N = 1, n = 8, local size = 131072
+(insert_time, find_time) = (752.219901ms, 250.474992ms)
+N = 1, n = 12, local size = 131072
+(insert_time, find_time) = (785.02224ms, 255.213254ms)
+N = 1, n = 16, local size = 131072
+(insert_time, find_time) = (802.514044ms, 254.780988ms)
+N = 1, n = 32, local size = 131072
+(insert_time, find_time) = (1.077858695s, 291.390375ms)
+N = 1, n = 32, local size = 131072
+(insert_time, find_time) = (1.081348949s, 290.400765ms)
+N = 2, n = 32, local size = 131072
+(insert_time, find_time) = (1.154739308s, 392.318479ms)
+N = 4, n = 32, local size = 131072
+(insert_time, find_time) = (1.302243336s, 458.402307ms)
+N = 8, n = 32, local size = 131072
+(insert_time, find_time) = (1.334340927s, 502.217311ms)
+N = 12, n = 32, local size = 131072
+(insert_time, find_time) = (1.384382125s, 533.761656ms)
+N = 16, n = 32, local size = 131072
+(insert_time, find_time) = (1.381532396s, 541.911339ms)
+N = 32, n = 32, local size = 131072
+(insert_time, find_time) = (1.887560507s, 613.78823ms)

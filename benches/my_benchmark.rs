@@ -71,7 +71,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             "Default",
             Benchmark::new(
                 "Distributed queue test",
-                |b| b.iter_with_large_drop(|| distributed_queue(Config::init(32)))
+                |b| b.iter_with_large_drop(|| distributed_queue(Config::init(256)))
             )
             .with_function(
                 "Original queue test",
