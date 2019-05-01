@@ -3,3 +3,4 @@ pub mod bench_global_pointer;
 pub mod bench_shmem;
 pub mod bench_hashtable;
 pub mod bench_sample_sort;
+extern crate statistical;
