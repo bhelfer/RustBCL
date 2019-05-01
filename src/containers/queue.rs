@@ -2,14 +2,10 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
-use global_pointer::Bclable;
-use global_pointer;
-use comm;
-use config;
-use config::Config;
-use shmemx;
-use global_pointer::GlobalPointer;
-use array::Array;
+use backend::{comm, shmemx::{self, shmem_broadcast64, libc::{c_long, c_void, c_int}}};
+use base::{config::{self, Config}, global_pointer::{self, GlobalPointer, Bclable}};
+use containers::array::Array;
+
 use std::sync::Mutex;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};

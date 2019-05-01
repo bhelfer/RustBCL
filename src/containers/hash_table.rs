@@ -2,21 +2,15 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
-use global_pointer::Bclable;
-use global_pointer;
-use comm;
-use config;
-use config::Config;
-use shmemx;
+use backend::{comm, shmemx::{self, shmem_broadcast64, libc::{c_long, c_void, c_int}}};
+use base::{config::{self, Config}, global_pointer::{self, GlobalPointer, Bclable}};
+
 use std::marker::PhantomData;
-use global_pointer::GlobalPointer;
-use shmemx::shmem_broadcast64;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 use std::fmt::Debug;
 use std::ptr::null;
 use std::mem::size_of;
-use shmemx::libc::{c_long, c_void, c_int};
 use std::time::{SystemTime, UNIX_EPOCH};
 //use std::io::{stdout, Write};
 

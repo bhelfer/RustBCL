@@ -2,7 +2,7 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
-use shmemx;
+use backend::shmemx;
 pub extern crate libc;
 use self::libc::{c_int, size_t, c_long};
 use std::slice;

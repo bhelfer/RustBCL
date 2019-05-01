@@ -2,14 +2,9 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
-use global_pointer;
-use comm;
-use config;
-use config::Config;
-use shmemx;
+use backend::{comm, shmemx::{self, shmem_broadcast64}};
+use base::{config::{self, Config}, global_pointer::{self, GlobalPointer}};
 use std::marker::PhantomData;
-use global_pointer::GlobalPointer;
-use shmemx::shmem_broadcast64;
 
 pub struct Array<T>{
     pub local_size: usize,

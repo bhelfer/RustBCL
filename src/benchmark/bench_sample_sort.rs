@@ -1,11 +1,10 @@
-use global_pointer::GlobalPointer;
-use config::Config;
+use base::{global_pointer::GlobalPointer, config::Config};
+use backend::comm;
+
 use std::time::{SystemTime, Duration};
 use std::vec::Vec;
-use rand::{Rng, thread_rng, SeedableRng, ChaChaRng};
-use rand::rngs::StdRng;
 use std::env;
-use comm;
+use rand::{rngs::StdRng, Rng, thread_rng, SeedableRng, ChaChaRng};
 
 pub fn benchmark_sample_sort(config: &mut Config) {
 

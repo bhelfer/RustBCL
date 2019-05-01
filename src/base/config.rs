@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 #![allow(unused)]
 #![allow(deprecated)]
-use central::global_pointer::{self, GlobalPointer, Bclable};
+
+use base::global_pointer::{self, GlobalPointer, Bclable};
 use backend::shmemx;
 use std::ptr;
 use std::marker::PhantomData;

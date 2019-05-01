@@ -7,12 +7,11 @@ extern crate statistical;
 //extern crate lib_bcl;
 
 pub mod backend;
-pub mod central;
+pub mod base;
 pub mod containers;
 mod benchmark;
 
-use central::{self, global_pointer::{Bclable, GlobalPointer}, global_guard::GlobalGuard};
-use central::config::Config;
+use base::{global_pointer::{Bclable, GlobalPointer}, global_guard::GlobalGuard, config::Config};
 use containers::{array::Array, hash_table::HashTable, queue::Queue};
 use containers::guard_array::{GuardArray, GlobalGuardVec};
 use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem, bench_hashtable};

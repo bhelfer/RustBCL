@@ -2,10 +2,9 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
-use shmemx;
+use base::global_pointer::GlobalPointer;
+use backend::shmemx::{self, libc::{c_long, c_void, c_int}};
 use std::mem::size_of;
-use shmemx::libc::{c_long, c_void, c_int};
-use global_pointer::GlobalPointer;
 
 pub fn broadcast<T>(val: &mut T, root: usize) {
     unsafe{
