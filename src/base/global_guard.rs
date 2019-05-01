@@ -3,7 +3,7 @@
 
 use backend::comm::{self, LockT};
 use backend::shmemx::{self, libc::{c_int, size_t, c_long}};
-use central::config::Config;
+use base::config::Config;
 
 use std::marker::PhantomData;
 use std::ops;

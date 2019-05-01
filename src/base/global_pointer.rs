@@ -3,7 +3,7 @@
 #![allow(deprecated)]
 
 use backend::shmemx::{self, libc::{c_int, size_t, c_long}};
-use central::config::{self, Config, SMALLEST_MEM_UNIT};
+use base::config::{self, Config, SMALLEST_MEM_UNIT};
 
 use std::marker::PhantomData;
 use std::ops;
