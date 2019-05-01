@@ -1,11 +1,9 @@
 #![allow(dead_code)]
 #![allow(unused)]
 #![allow(deprecated)]
-
-use global_pointer::Bclable;
-use shmemx;
+use central::global_pointer::{self, GlobalPointer, Bclable};
+use backend::shmemx;
 use std::ptr;
-use global_pointer::GlobalPointer;
 use std::marker::PhantomData;
 use std::mem::size_of;
 use std::io::{stdout, Write};

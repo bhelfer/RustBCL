@@ -4,31 +4,25 @@
 
 extern crate rand;
 extern crate statistical;
-extern crate lib_bcl;
+//extern crate lib_bcl;
 
-pub mod shmemx;
-pub mod global_pointer;
-pub mod config;
-pub mod comm;
-pub mod array;
-pub mod hash_table;
-pub mod queue;
-pub mod global_guard;
-pub mod guard_array;
+pub mod backend;
+pub mod central;
+pub mod containers;
 mod benchmark;
-use global_pointer::Bclable;
-use config::Config;
-use global_pointer::GlobalPointer;
-use array::Array;
-use hash_table::HashTable;
-use queue::Queue;
-use global_guard::GlobalGuard;
-use guard_array::{GuardArray, GlobalGuardVec};
+
+use central::{self, global_pointer::{Bclable, GlobalPointer}, global_guard::GlobalGuard};
+use central::config::Config;
+use containers::{array::Array, hash_table::HashTable, queue::Queue};
+use containers::guard_array::{GuardArray, GlobalGuardVec};
+use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem, bench_hashtable};
+use backend::{comm, shmemx};
+
 use self::rand::{Rng, StdRng, SeedableRng};
 use std::collections::HashMap;
 use std::mem::size_of;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem, bench_hashtable};
+use std::time;
 
 fn main() {
 
@@ -207,7 +201,7 @@ fn test_array(config: &mut Config) {
     for i in 0..iters {
         for j in 0..size_arr {
             let mut ptr = arr.get_ptr(j);
-            comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
+            comm::long_atomic_fetch_add(&mut ptr, 1 as i64 as i32);
         }
     }
     comm::barrier();
