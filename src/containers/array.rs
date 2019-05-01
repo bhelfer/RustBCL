@@ -3,10 +3,10 @@
 #![allow(deprecated)]
 
 use backend::{comm, shmemx::{self, shmem_broadcast64}};
-use base::{config::{self, Config}, global_pointer::{self, GlobalPointer}};
+use base::{config::{self, Config}, global_pointer::{self, GlobalPointer, Bclable}};
 use std::marker::PhantomData;
 
-pub struct Array<T>{
+pub struct Array<T: Bclable>{
     pub local_size: usize,
     pub ptrs: Vec<GlobalPointer<T>>,
     // pub refer_type: PhantomData<T>, // JY: since you already use the type T in field ptrs, you do not need this PhantomData.
