@@ -20,7 +20,6 @@ use self::rand::{Rng, StdRng, SeedableRng};
 use std::collections::HashMap;
 use std::mem::size_of;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use std::time;
 
 fn main() {
 
