@@ -24,7 +24,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 fn main() {
 
-    let mut config = Config::init(1024);
+    let mut config = Config::init(32);
     let rankn = config.rankn;
 
 //    strong_scaling_queue(&mut config);
@@ -41,20 +41,18 @@ fn main() {
 
 //	test_hash_table(&mut config);
 
-//	test_queue(&mut config);
-
 //    test_global_guard_vec(&mut config);
 
 //    test_guard_array(&mut config);
 
 //    benchmark_guard_array(&mut config);
 
-//    bench_global_guard::benchmark_global_guard(&mut config);
-//    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
-//    bench_global_pointer::benchmark_global_pointer_local(&mut config);
-//    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
-//    bench_shmem::benchmark_shmem(&mut config);
-    bench_hashtable::benchmark_hash_table(&mut config);
+    bench_global_guard::benchmark_global_guard(&mut config);
+    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
+    bench_global_pointer::benchmark_global_pointer_local(&mut config);
+    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
+    bench_shmem::benchmark_shmem(&mut config);
+//    bench_hashtable::benchmark_hash_table(&mut config);
 }
 
 
@@ -174,7 +172,7 @@ fn test_array(config: &mut Config) {
     // ----------- array's part ------------
     if config.rank == 0 { println!("\n\n------------Array's test------------\n"); }
     let rankn = config.rankn;
-    let size_arr = 1024;
+    let size_arr = 32;
     let mut arr = Array::<i64>::init(config, size_arr);
     //arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
     //arr.write(0 as i64, config.rank);
