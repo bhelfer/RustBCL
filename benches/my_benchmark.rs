@@ -11,13 +11,13 @@ use criterion::Criterion;
 use criterion::black_box;
 
 use lib_bcl::containers::*;
-use lib_bcl::config::Config;
-use lib_bcl::global_pointer;
-use lib_bcl::comm;
-use lib_bcl::shmemx;
+use lib_bcl::backend::*;
+use lib_bcl::core::*;
 
 use std::collections::HashMap;
 use std::collections::VecDeque;
+use lib_bcl::containers::queue::Queue;
+use lib_bcl::core::config::Config;
 
 use hash_table::HashTable;
 use self::rand::{Rng, SeedableRng, StdRng};
@@ -26,7 +26,8 @@ use criterion::Benchmark;
 use criterion::ParameterizedBenchmark;
 use std::rc::Rc;
 use std::time::Duration;
-use lib_bcl::containers::queue::Queue;
+
+
 
 fn distributed_queue(mut config: Config) {
     let n = 1000000;

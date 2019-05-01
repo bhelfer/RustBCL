@@ -1,5 +1,3 @@
 pub mod containers;
-pub mod comm;
-pub mod config;
-pub mod global_pointer;
-pub mod shmemx;
+pub mod core;
+pub mod backend;
