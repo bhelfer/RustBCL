@@ -4,6 +4,7 @@
 
 extern crate rand;
 extern crate statistical;
+extern crate lib_bcl;
 
 pub mod shmemx;
 pub mod global_pointer;
@@ -27,11 +28,11 @@ use self::rand::{Rng, StdRng, SeedableRng};
 use std::collections::HashMap;
 use std::mem::size_of;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem};
+use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem, bench_hashtable};
 
 fn main() {
 
-    let mut config = Config::init(1);
+    let mut config = Config::init(1024);
     let rankn = config.rankn;
 
 //    strong_scaling_queue(&mut config);
@@ -56,11 +57,12 @@ fn main() {
 
 //    benchmark_guard_array(&mut config);
 
-    bench_global_guard::benchmark_global_guard(&mut config);
-    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
-    bench_global_pointer::benchmark_global_pointer_local(&mut config);
-    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
-    bench_shmem::benchmark_shmem(&mut config);
+//    bench_global_guard::benchmark_global_guard(&mut config);
+//    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
+//    bench_global_pointer::benchmark_global_pointer_local(&mut config);
+//    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
+//    bench_shmem::benchmark_shmem(&mut config);
+    bench_hashtable::benchmark_hash_table(&mut config);
 }
 
 
