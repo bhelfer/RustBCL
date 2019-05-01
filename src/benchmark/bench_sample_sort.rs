@@ -15,11 +15,11 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     let args: Vec<String> = env::args().collect();
     if args.len() <= 1 { panic!("not enough arguments"); }
 
-    let rankn: u32 = config.rankn as u32;
-    let rank: u32 = config.rank as u32;
+    let rankn: usize = config.rankn as usize;
+    let rank: usize = config.rank as usize;
 
-    let n: u32 = args[1].clone().parse().unwrap();
-    let size: u32 = n * rankn;
+    let n: usize = args[1].clone().parse().unwrap();
+    let size: usize = n * rankn;
 
     let mut data: Vec<i32> = Vec::new();
     let mut rng: StdRng = SeedableRng::from_seed([rankn as u8; 32]);
