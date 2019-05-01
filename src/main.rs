@@ -267,7 +267,7 @@ fn weak_scaling_queue(config: &mut Config) {
     comm::barrier();
     let start = SystemTime::now();
     for _ in 0..131072 {
-        queue.add(('a' as u8 + config.rank as u8) as char);
+        queue.push(('a' as u8 + config.rank as u8) as char);
     }
     comm::barrier();
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
@@ -276,7 +276,7 @@ fn weak_scaling_queue(config: &mut Config) {
     comm::barrier();
     let start = SystemTime::now();
     for i in 0..131072 {
-        let f = queue.remove();
+        let f = queue.pop();
     }
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
     if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }
@@ -311,7 +311,7 @@ fn strong_scaling_queue(config: &mut Config) {
     comm::barrier();
     let start = SystemTime::now();
     for _ in 0..local_length {
-        queue.add(('a' as u8 + config.rank as u8) as char);
+        queue.push(('a' as u8 + config.rank as u8) as char);
     }
     comm::barrier();
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
@@ -320,7 +320,7 @@ fn strong_scaling_queue(config: &mut Config) {
     comm::barrier();
     let start = SystemTime::now();
     for i in 0..local_length {
-        let f = queue.remove();
+        let f = queue.pop();
     }
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
     if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }

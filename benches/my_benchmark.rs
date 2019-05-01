@@ -33,14 +33,14 @@ fn distributed_queue(mut config: Config) {
     let rankn = config.rankn;
     let mut queue = Queue::<char>::new(&mut config, rankn * n);
     for i in 0..n {
-        queue.add((i as u8 + config.rank as u8) as char);
+        queue.push((i as u8 + config.rank as u8) as char);
     }
     comm::barrier();
 
     if config.rank == 0 {
         let len = queue.len();
         for i in 0..len {
-            let f = queue.remove();
+            let f = queue.pop();
         }
     }
     comm::barrier();
