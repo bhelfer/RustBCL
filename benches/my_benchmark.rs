@@ -10,12 +10,12 @@ extern crate rand;
 use criterion::Criterion;
 use criterion::black_box;
 
-use lib_bcl::hash_table;
+use lib_bcl::containers::*;
 use lib_bcl::config::Config;
 use lib_bcl::global_pointer;
 use lib_bcl::comm;
 use lib_bcl::shmemx;
-use lib_bcl::queue::Queue;
+
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
@@ -26,6 +26,7 @@ use criterion::Benchmark;
 use criterion::ParameterizedBenchmark;
 use std::rc::Rc;
 use std::time::Duration;
+use lib_bcl::containers::queue::Queue;
 
 fn distributed_queue(mut config: Config) {
     let n = 1000000;
