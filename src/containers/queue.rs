@@ -18,20 +18,24 @@ pub struct Queue<T: Bclable> {
     capacity: usize,
     tail_ptr: GlobalPointer<i32>,
     head_ptr: GlobalPointer<i32>,
+    slow_tail_ptr: GlobalPointer<i32>, // Used to prevent pop before finishing pushing
 }
 
 impl<T: Bclable> Queue<T> {
     pub fn new(config: &mut Config, n: usize) -> Queue<T> {
         let mut tail_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
         let mut head_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
+        let mut slow_tail_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
         if config.rank == 0 {
             unsafe {
                 tail_ptr.local_mut().write(0);
                 head_ptr.local_mut().write(0);
+                slow_tail_ptr.local_mut().write(0);
             }
         }
         comm::broadcast(&mut tail_ptr, 0);
         comm::broadcast(&mut head_ptr, 0);
+        comm::broadcast(&mut slow_tail_ptr, 0);
 
         let mut ptrs: Vec<GlobalPointer<T>> = Vec::new();
         ptrs.resize(config.rankn, GlobalPointer::null());
@@ -40,7 +44,7 @@ impl<T: Bclable> Queue<T> {
         for rank in 0..config.rankn {
             comm::broadcast(&mut ptrs[rank], rank);
         }
-        Queue { ptrs: ptrs, capacity: n, tail_ptr: tail_ptr, head_ptr: head_ptr, local_size: local_size }
+        Queue { ptrs: ptrs, capacity: n, tail_ptr: tail_ptr, head_ptr: head_ptr, local_size: local_size, slow_tail_ptr: slow_tail_ptr }
 
     }
 
@@ -53,7 +57,6 @@ impl<T: Bclable> Queue<T> {
 
     pub fn push(&mut self, data: T) -> bool {
         let mut tail = comm::int_finc(&mut self.tail_ptr) as usize;
-//        let head = self.head_ptr.rget() as usize;
         let head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
         if tail - head > self.capacity {
             panic!("The buffer is full!");
@@ -64,21 +67,25 @@ impl<T: Bclable> Queue<T> {
         let local_idx = tail - rank * self.local_size;
 //        println!("Add elemetn: tail: {}, rank :{}, local_idx: {}", tail, rank, local_idx);
         (self.ptrs[rank] + local_idx as isize).rput(data);
+        comm::int_finc(&mut self.slow_tail_ptr);
         return true;
     }
 
     pub fn pop(&mut self) -> Result<T, &str> {
         let mut head = comm::int_finc(&mut self.head_ptr) as usize;
-//        let tail = self.tail_ptr.rget() as usize;
         let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
         if tail <= head {
-            Err("The buffer is empty!")
+            return Err("The buffer is empty!");
         } else {
+            let slow_tail = comm::int_atomic_fetch(&mut self.slow_tail_ptr) as usize;
+            if slow_tail <= head {
+                return Err("Previous insertion has not finished!");
+            }
             head = head % self.capacity;
             let rank = head / self.local_size;
             let local_idx = head - rank * self.local_size;
 //            println!("Remove elemetn: head: {}, rank :{}, local_idx: {}", head, rank, local_idx);
-            Ok((self.ptrs[rank] + local_idx as isize).rget())
+            return Ok((self.ptrs[rank] + local_idx as isize).rget());
         }
     }
 
@@ -87,12 +94,16 @@ impl<T: Bclable> Queue<T> {
         let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
 
         if tail <= head {
-            Err("The buffer is empty!")
+            return Err("The buffer is empty!");
         } else {
+            let slow_tail = comm::int_atomic_fetch(&mut self.slow_tail_ptr) as usize;
+            if slow_tail <= head {
+                return Err("Previous insertion has not finished!");
+            }
             head = head % self.capacity;
             let rank = head / self.local_size;
             let local_idx = head - rank * self.local_size;
-            Ok((self.ptrs[rank] + local_idx as isize).rget())
+            return Ok((self.ptrs[rank] + local_idx as isize).rget());
         }
     }
 
