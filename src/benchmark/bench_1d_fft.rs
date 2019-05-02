@@ -114,7 +114,7 @@
 //    *w = *(&w.sqrt());
 //}
 //
-///*
+// /*
 //void  stepPar (vector <complex < double >> & data, complex < double > & w, int d) {
 //    int indGlobal;
 //    complex < double > oldElement;
