@@ -6,6 +6,7 @@ use shmemx;
 use std::mem::size_of;
 use shmemx::libc::{c_long, c_void, c_int};
 use global_pointer::GlobalPointer;
+use std::{thread, time};
 
 pub fn broadcast<T>(val: &mut T, root: usize) {
     unsafe{
@@ -71,6 +72,7 @@ pub fn set_lock(lock: *mut LockT, rank: usize) {
                 }
             }
             // emit a pause
+            thread::sleep(time::Duration::from_nanos(10));
         }
     }
 }

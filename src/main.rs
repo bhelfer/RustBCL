@@ -31,7 +31,7 @@ use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem};
 
 fn main() {
 
-    let mut config = Config::init(1);
+    let mut config = Config::init(1024);
     let rankn = config.rankn;
 
 //    strong_scaling_queue(&mut config);
@@ -58,9 +58,9 @@ fn main() {
 
     bench_global_guard::benchmark_global_guard(&mut config);
     bench_global_pointer::benchmark_global_pointer_remote(&mut config);
-    bench_global_pointer::benchmark_global_pointer_local(&mut config);
-    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
-    bench_shmem::benchmark_shmem(&mut config);
+//    bench_global_pointer::benchmark_global_pointer_local(&mut config);
+//    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
+//    bench_shmem::benchmark_shmem(&mut config);
 }
 
 
@@ -476,8 +476,8 @@ fn test_guard_array(config: &mut Config) {
 
 fn benchmark_guard_array(config: &mut Config) {
     let array_size = 1024;
-//    let total_workload = 131072; // strong scaling
-    let total_workload = 131072 * config.rankn; // weak scaling
+    let total_workload = 131072; // strong scaling
+//    let total_workload = 131072 * config.rankn; // weak scaling
     let local_workload = (total_workload + config.rankn - 1) / config.rankn;
 
     let mut rng = rand::thread_rng();
@@ -502,6 +502,8 @@ fn benchmark_guard_array(config: &mut Config) {
         .expect("SystemTime::duration_since failed");
     if config.rank == 0 {
         println!("rank num: {}; table size: {}; total workload: {}; time: {:?}",
+                 config.rankn, array_size, total_workload, since_the_epoch);
+        println!("{}, {}, {}, {:?}",
                  config.rankn, array_size, total_workload, since_the_epoch);
     }
 }
