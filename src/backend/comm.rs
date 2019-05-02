@@ -175,26 +175,21 @@ pub fn long_atomic_fetch_xor(ptr: &mut GlobalPointer<c_long>, value: c_long) -> 
     }
 }
 
-// added by lfz
-pub fn fence() {
-    unsafe {
-        shmemx::shmem_fence();
-    }
-}
-
 pub fn scatter<T: Bclable>(dest: &mut GlobalPointer<T>, src: &mut GlobalPointer<T>, root: usize, count: usize) {
     unsafe {
         let rank: usize = shmemx::my_pe() as usize;
         let rankn: usize = shmemx::n_pes() as usize;
-
-        shmemx::barrier();
         let nelem = size_of::<T>();
+
         let target = dest.local();
         let source = src.rptr();
+
+        shmemx::barrier();
+
         if rank == root {
             for i in 0 .. rankn {
                 let off_source = source.add(i * count);
-                shmem_putmem(target as *mut u8, off_source as *mut u8, count * nelem, i as i32);
+                shmem_putmem(target as *mut u8, off_source as *mut u8, nelem * count, i as i32);
             }
         }
     }
@@ -204,13 +199,33 @@ pub fn gather<T: Bclable>(dest: &mut GlobalPointer<T>, src: &mut GlobalPointer<T
     unsafe {
         let rank: usize = shmemx::my_pe() as usize;
         let rankn: usize = shmemx::n_pes() as usize;
-
-        shmemx::barrier();
         let nelem = size_of::<T>();
+
         let target = dest.rptr();
         let source = src.local();
 
+        shmemx::barrier();
+
         let off_target = target.add(rank * count);
         shmem_putmem(off_target as *mut u8, source as *mut u8, nelem * count, root as i32);
+    }
+}
+
+pub fn all_to_all<T: Bclable>(dest: &mut GlobalPointer<T>, src: &mut GlobalPointer<T>, count: usize) {
+    unsafe {
+        let rank: usize = shmemx::my_pe() as usize;
+        let rankn: usize = shmemx::n_pes() as usize;
+        let nelem = size_of::<T>();
+
+        let target = dest.rptr();
+        let source = src.local();
+
+        shmemx::barrier();
+
+        let off_target = target.add(rank * count);
+        for i in 0 .. rankn {
+            let off_source = source.add(i * count);
+            shmem_putmem(off_target as *mut u8, off_source as *mut u8, nelem * count, i as i32);
+        }
     }
 }
