@@ -10,7 +10,8 @@ use std::mem::size_of;
 
 pub static _SHMEM_SYNC_VALUE: c_long = -1; // docker
 pub static _SHMEM_BCAST_SYNC_SIZE: usize = 2; // docker
-#[link(name="oshmem", kind="dylib")] // docker
+//#[link(name="oshmem", kind="dylib")] // docker
+#[link(name="sma", kind="dylib")]
 //pub static _SHMEM_SYNC_VALUE: c_long = -3; // cori
 //pub static _SHMEM_BCAST_SYNC_SIZE: usize = 74; // cori
 //#[link(name="sma", kind="dylib")] // cori
