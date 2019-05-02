@@ -14,7 +14,6 @@ use std::vec::Vec;
 use std::env;
 use rand::{rngs::StdRng, Rng, thread_rng, SeedableRng, ChaChaRng};
 use is_sorted::IsSorted;
-use backend::comm::gather;
 
 pub fn benchmark_sample_sort(config: &mut Config) {
 
