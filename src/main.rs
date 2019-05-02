@@ -219,16 +219,16 @@ fn test_queue(config: &mut Config) {
     if config.rank == 0 { println!("\n------------Queue's strong scaling------------\n"); }
     let rankn = config.rankn;
     comm::barrier();
-    let mut queue = Queue::<char>::new(config, 300000);
-    let local_length = (131072 + rankn - 1) / rankn;
+    let mut queue = Queue::<char>::new(config, 30000);
+    let local_length = 500;
     if config.rank == 0 { println!("Local length is {}.", local_length); }
+    if config.rank == 0 { println!("Before inserting, length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty()); }
     comm::barrier();
-    if config.rank == 0 { println!("Length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty()); }
     for _ in 0..local_length {
         queue.push(('a' as u8 + config.rank as u8) as char);
     }
-    if config.rank == 0 { println!("Length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty()); }
     comm::barrier();
+    if config.rank == 0 { println!("After insertion, length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty()); }
     for _ in 0..local_length {
         let f = queue.pop();
         match f {
@@ -239,10 +239,13 @@ fn test_queue(config: &mut Config) {
             Ok(result) => (),
         }
     }
+    comm::barrier();
     if config.rank == 0 {
-        println!("Length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty());
+        println!("After popping, length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty());
+        queue.push('a');
+        println!("Before clear, length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty());
         queue.clear();
-        println!("Length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty());
+        println!("After clear, length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty());
     }
 }
 
@@ -338,15 +341,20 @@ fn strong_scaling_queue(config: &mut Config) {
     }
     comm::barrier();
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
-    if config.rank == 0 { println!("Insert time: {:?}, starting removing.", since_the_epoch); }
-
+    if config.rank == 0 { println!("Insert time: {:?}, start removing.", since_the_epoch); }
+    if config.rank == 0 {println!("Length of queue: {}", queue.len());}
     comm::barrier();
     let start = SystemTime::now();
-    for i in 0..local_length {
+    for _ in 0..local_length {
         let f = queue.pop();
+        match f {
+            Err(error) => println!("{}", error),
+            Ok(data) => (),
+        }
     }
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
     if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }
+    if config.rank == 0 {println!("Length of queue: {}", queue.len());}
 }
 
 fn test_global_guard(config: &mut Config) {

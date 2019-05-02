@@ -164,6 +164,17 @@ pub fn long_atomic_fetch_add(ptr: &mut GlobalPointer<c_long>, value: c_long) -> 
         )
     }
 }
+
+pub fn int_atomic_fetch_add(ptr: &mut GlobalPointer<c_int>, value: c_int) -> c_int {
+    unsafe {
+        shmemx::shmem_int_atomic_fetch_add(
+            ptr.rptr() as *mut c_int,
+            value,
+            ptr.rank as c_int
+        )
+    }
+}
+
 pub fn long_atomic_fetch_xor(ptr: &mut GlobalPointer<c_long>, value: c_long) -> c_long {
     unsafe {
         shmemx::shmem_long_atomic_fetch_xor(
