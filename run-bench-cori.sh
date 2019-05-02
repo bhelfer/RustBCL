@@ -9,7 +9,7 @@
 #    srun -N 1 -n $n ./target/release/main
 # done
 
-for N in 2 4 8 16 32
+for N in 1 2 4 8 16 32
 do
     srun -N $N -n $(($N*32)) ./target/release/main
 done
