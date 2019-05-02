@@ -7,6 +7,8 @@ use backend::shmemx::{self, libc::{c_long, c_void, c_int}};
 use std::mem::size_of;
 use backend::shmemx::shmem_putmem;
 use base::global_pointer::Bclable;
+use std::time::{SystemTime, Duration};
+use std::thread;
 
 pub fn broadcast<T>(val: &mut T, root: usize) {
     unsafe{
@@ -72,7 +74,7 @@ pub fn set_lock(lock: *mut LockT, rank: usize) {
                 }
             }
             // emit a pause
-            thread::sleep(time::Duration::from_nanos(10));
+            thread::sleep(Duration::from_nanos(10));
         }
     }
 }
