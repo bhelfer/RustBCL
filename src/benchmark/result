@@ -11,3 +11,20 @@ Global Pointer(remote)'s Benchmark: mean: 2098.53 nanos, std: 84.76 nanos
 Global Pointer(local)'s Benchmark: mean: 15.02 nanos, std: 0.95 nanos
 Global Pointer(local_raw)'s Benchmark: mean: 4.01 nanos, std: 0.80 nanos
 Shmem_get/putmem's Benchmark: mean: 2094.19 nanos, std: 83.67 nanos
+
+# CSV body
+# Across cores
+type, mean(nano), std(nano)
+GlobalGuard, 5313.15, 184.60
+GlobalPointer(remote), 55.43, 2.02
+GlobalPointer(local), 15.02, 0.99
+GlobalPointer(local_raw), 4.01, 0.74
+Shmem_get/putmem, 44.05, 1.55
+
+# Across nodes
+type, mean(nano), std(nano)
+GlobalGuard, 6806.64, 544.69
+GlobalPointer(remote), 2098.53, 84.76
+GlobalPointer(local), 15.02, 0.95
+GlobalPointer(local_raw), 4.01 0.80
+Shmem_get/putmem, 2094.19, 83.67
