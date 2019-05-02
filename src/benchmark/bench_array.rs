@@ -13,7 +13,7 @@ use std::env;
 use rand::{rngs::StdRng, Rng, thread_rng, SeedableRng, ChaChaRng, seq::SliceRandom};
 
 /// hash_table benchmarks
-pub fn benchmark_hash_table(config: &mut Config) {
+pub fn benchmark_array(config: &mut Config) {
     let args: Vec<String> = env::args().collect();
     if args.len() <= 1 { panic!("not enough arguments"); }
 
