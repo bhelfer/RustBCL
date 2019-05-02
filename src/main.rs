@@ -27,7 +27,7 @@ fn main() {
     let mut config = Config::init(32);
     let rankn = config.rankn;
 
-//    strong_scaling_queue(&mut config);
+    strong_scaling_queue(&mut config);
 
 //    test_ptr(&mut config);
 
@@ -41,7 +41,6 @@ fn main() {
 
 //	test_hash_table(&mut config);
 
-//	test_queue(&mut config);
 
 //    test_global_guard_vec(&mut config);
 
@@ -54,7 +53,7 @@ fn main() {
 //    bench_global_pointer::benchmark_global_pointer_local(&mut config);
 //    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
 //    bench_shmem::benchmark_shmem(&mut config);
-    bench_hashtable::benchmark_hash_table(&mut config);
+//    bench_hashtable::benchmark_hash_table(&mut config);
 }
 
 
