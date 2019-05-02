@@ -5,6 +5,8 @@
 use base::global_pointer::GlobalPointer;
 use backend::shmemx::{self, libc::{c_long, c_void, c_int}};
 use std::mem::size_of;
+use backend::shmemx::shmem_putmem;
+use base::global_pointer::Bclable;
 
 pub fn broadcast<T>(val: &mut T, root: usize) {
     unsafe{
@@ -177,6 +179,25 @@ pub fn long_atomic_fetch_xor(ptr: &mut GlobalPointer<c_long>, value: c_long) -> 
 pub fn fence() {
     unsafe {
         shmemx::shmem_fence();
+    }
+}
+
+pub fn scatter<T: Bclable>(ptr: &mut GlobalPointer<T>, src: &mut GlobalPointer<T>, root: usize, count: usize) {
+    unsafe {
+        let rank: usize = shmemx::my_pe() as usize;
+        let rankn: usize = shmemx::n_pes() as usize;
+
+        shmemx::barrier();
+        let nelem = size_of::<T>();
+        let target = ptr.local();
+        let src = src.rptr();
+        if rank == root {
+            for i in 0 .. rankn {
+                let start = src.add(i * count);
+                shmem_putmem(target as *mut u8, start as *mut u8, count * nelem, i as i32);
+            }
+        }
+        shmemx::barrier();
     }
 }
 

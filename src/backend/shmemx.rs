@@ -6,6 +6,7 @@ use backend::shmemx;
 pub extern crate libc;
 use self::libc::{c_int, size_t, c_long};
 use std::slice;
+use std::mem::size_of;
 
 pub static _SHMEM_SYNC_VALUE: c_long = -1; // docker
 pub static _SHMEM_BCAST_SYNC_SIZE: usize = 2; // docker

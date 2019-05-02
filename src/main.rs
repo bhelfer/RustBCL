@@ -14,7 +14,7 @@ pub mod benchmark;
 use base::{global_pointer::{Bclable, GlobalPointer}, global_guard::GlobalGuard, config::Config};
 use containers::{array::Array, hash_table::HashTable, queue::Queue};
 use containers::guard_array::{GuardArray, GlobalGuardVec};
-use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem, bench_hashtable};
+use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem, bench_hashtable, bench_sample_sort};
 use backend::{comm, shmemx};
 
 use self::rand::{Rng, StdRng, SeedableRng};
@@ -27,7 +27,8 @@ fn main() {
     let mut config = Config::init(32);
     let rankn = config.rankn;
 
-    strong_scaling_queue(&mut config);
+    bench_sample_sort::benchmark_sample_sort(&mut config);
+//    strong_scaling_queue(&mut config);
 
 //    test_ptr(&mut config);
 
