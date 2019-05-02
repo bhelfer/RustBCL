@@ -1,14 +1,14 @@
 #![allow(dead_code)]
 #![allow(unused)]
-use comm::LockT;
-use shmemx;
+
+use backend::comm::{self, LockT};
+use backend::shmemx::{self, libc::{c_int, size_t, c_long}};
+use base::config::Config;
+
 use std::marker::PhantomData;
 use std::ops;
 use std::mem::size_of;
-use Config;
 use std::ptr;
-use shmemx::libc::{c_int, size_t, c_long};
-use comm;
 
 #[derive(Debug, Copy, Clone)]
 pub struct GlobalGuard<T> {

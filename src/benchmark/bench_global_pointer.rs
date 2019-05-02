@@ -1,8 +1,9 @@
-use global_pointer::GlobalPointer;
-use config::Config;
+use base::{global_pointer::GlobalPointer, config::Config};
+use backend::comm;
+
 use std::time::{SystemTime, Duration};
 use std::vec::Vec;
-use comm;
+
 use statistical;
 
 fn duration_to_nano(duration: &Duration) -> u128 {

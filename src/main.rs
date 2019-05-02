@@ -4,37 +4,30 @@
 
 extern crate rand;
 extern crate statistical;
+extern crate time;
 
-pub mod shmemx;
-pub mod global_pointer;
-pub mod config;
-pub mod comm;
-pub mod array;
-pub mod hash_table;
-pub mod queue;
-pub mod global_guard;
-pub mod guard_array;
-mod benchmark;
-use global_pointer::Bclable;
-use config::Config;
-use global_pointer::GlobalPointer;
-use array::Array;
-use hash_table::HashTable;
-use queue::Queue;
-use global_guard::GlobalGuard;
-use guard_array::{GuardArray, GlobalGuardVec};
+pub mod backend;
+pub mod base;
+pub mod containers;
+pub mod benchmark;
+
+use base::{global_pointer::{Bclable, GlobalPointer}, global_guard::GlobalGuard, config::Config};
+use containers::{array::Array, hash_table::HashTable, queue::Queue};
+use containers::guard_array::{GuardArray, GlobalGuardVec};
+use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem, bench_hashtable};
+use backend::{comm, shmemx};
+
 use self::rand::{Rng, StdRng, SeedableRng};
 use std::collections::HashMap;
 use std::mem::size_of;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem};
 
 fn main() {
 
-    let mut config = Config::init(1);
+    let mut config = Config::init(32);
     let rankn = config.rankn;
 
-//    strong_scaling_queue(&mut config);
+    strong_scaling_queue(&mut config);
 
 //    test_ptr(&mut config);
 
@@ -48,7 +41,6 @@ fn main() {
 
 //	test_hash_table(&mut config);
 
-//	test_queue(&mut config);
 
 //    test_global_guard_vec(&mut config);
 
@@ -56,11 +48,12 @@ fn main() {
 
 //    benchmark_guard_array(&mut config);
 
-    bench_global_guard::benchmark_global_guard(&mut config);
-    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
-    bench_global_pointer::benchmark_global_pointer_local(&mut config);
-    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
-    bench_shmem::benchmark_shmem(&mut config);
+//    bench_global_guard::benchmark_global_guard(&mut config);
+//    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
+//    bench_global_pointer::benchmark_global_pointer_local(&mut config);
+//    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
+//    bench_shmem::benchmark_shmem(&mut config);
+//    bench_hashtable::benchmark_hash_table(&mut config);
 }
 
 
@@ -180,18 +173,47 @@ fn test_array(config: &mut Config) {
     // ----------- array's part ------------
     if config.rank == 0 { println!("\n\n------------Array's test------------\n"); }
     let rankn = config.rankn;
-
-    let mut arr = Array::<char>::init(config, rankn);
-    arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
-
+    let size_arr = 1024;
+    let mut arr = Array::<i64>::init(config, size_arr);
+    //arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
+    //arr.write(0 as i64, config.rank);
+    for i in 0..size_arr {
+        arr.write(0 as i64, i);
+    }
+    // comm::long_atomic_fetch(&mut ptr);
     comm::barrier();
-
+    //println!("here1");
+    let mut time1: time::Tm = time::now();
+    let mut time_res: time::Duration;
+    let mut time2: time::Tm;
+    //let workload = 131072;
+    let workload = 131072*rankn;
+    //let size_arr = 1024;
+    //let iters = (workload/rankn)/size_arr;
+    let iters = workload/size_arr;
     if config.rank == 0 {
-        for i in 0..config.rankn {
-            println!("{}: {}", i, arr.read(i));
+        time1 = time::now();
+    }
+
+    for i in 0..iters {
+        for j in 0..size_arr {
+            let mut ptr = arr.get_ptr(j);
+            comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
         }
     }
+    comm::barrier();
+    //println!("here2");
+    if config.rank == 0 {
+        time2 = time::now();
+        time_res = time2 - time1;
+        //println!("time is {:?}", time_res);
+        for i in 0..size_arr {
+            println!("{}: {}", i, arr.read(i));
+        }
+        println!("time is {:?}", time_res);
+    }
 }
+
 
 fn test_hash_table(config: &mut Config) {
     // ----------- HashTable's part ------------
@@ -233,12 +255,10 @@ fn weak_scaling_queue(config: &mut Config) {
     let rankn = config.rankn;
     comm::barrier();
     let mut queue = Queue::<char>::new(config, 131080 * rankn);
-    let mut i: u32 = 0;
     comm::barrier();
     let start = SystemTime::now();
     for _ in 0..131072 {
-        queue.add(('a' as u8 + config.rank as u8) as char);
-        i += 1;
+        queue.push(('a' as u8 + config.rank as u8) as char);
     }
     comm::barrier();
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
@@ -247,7 +267,7 @@ fn weak_scaling_queue(config: &mut Config) {
     comm::barrier();
     let start = SystemTime::now();
     for i in 0..131072 {
-        let f = queue.remove();
+        let f = queue.pop();
     }
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
     if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }
@@ -278,13 +298,11 @@ fn strong_scaling_queue(config: &mut Config) {
     let rankn = config.rankn;
     comm::barrier();
     let mut queue = Queue::<char>::new(config, 300000);
-//    let mut i: u32 = 0;
     let local_length = (131072 + rankn - 1) / rankn;
     comm::barrier();
     let start = SystemTime::now();
     for _ in 0..local_length {
-        queue.add(('a' as u8 + config.rank as u8) as char);
-//        i += 1;
+        queue.push(('a' as u8 + config.rank as u8) as char);
     }
     comm::barrier();
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
@@ -293,7 +311,7 @@ fn strong_scaling_queue(config: &mut Config) {
     comm::barrier();
     let start = SystemTime::now();
     for i in 0..local_length {
-        let f = queue.remove();
+        let f = queue.pop();
     }
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
     if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }

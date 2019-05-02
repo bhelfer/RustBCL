@@ -2,18 +2,11 @@
 name = "main"
 version = "0.0.1"
 
-[lib]
-name = "lib_bcl"
-path = "src/lib.rs"
-
 [dependencies]
 libc = "0.2.51"
 rand = "0.6"
 statistical = "1.0.0"
+time = "0.1"
 
-[dev-dependencies]
-criterion = "0.2"
-
-[[bench]]
-name = "my_benchmark"
-harness = false
+#[dev-dependencies]
+#criterion = "0.2"

@@ -2,14 +2,10 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
-use global_pointer::Bclable;
-use global_pointer;
-use comm;
-use config;
-use config::Config;
-use shmemx;
-use global_pointer::GlobalPointer;
-use array::Array;
+use backend::{comm, shmemx::{self, shmem_broadcast64, libc::{c_long, c_void, c_int}}};
+use base::{config::{self, Config}, global_pointer::{self, GlobalPointer, Bclable}};
+use containers::array::Array;
+
 use std::sync::Mutex;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -22,20 +18,24 @@ pub struct Queue<T: Bclable> {
     capacity: usize,
     tail_ptr: GlobalPointer<i32>,
     head_ptr: GlobalPointer<i32>,
+    slow_tail_ptr: GlobalPointer<i32>, // Used to prevent pop before finishing pushing
 }
 
 impl<T: Bclable> Queue<T> {
     pub fn new(config: &mut Config, n: usize) -> Queue<T> {
         let mut tail_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
         let mut head_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
+        let mut slow_tail_ptr: GlobalPointer<i32> = GlobalPointer::init(config, 1);
         if config.rank == 0 {
             unsafe {
                 tail_ptr.local_mut().write(0);
                 head_ptr.local_mut().write(0);
+                slow_tail_ptr.local_mut().write(0);
             }
         }
         comm::broadcast(&mut tail_ptr, 0);
         comm::broadcast(&mut head_ptr, 0);
+        comm::broadcast(&mut slow_tail_ptr, 0);
 
         let mut ptrs: Vec<GlobalPointer<T>> = Vec::new();
         ptrs.resize(config.rankn, GlobalPointer::null());
@@ -44,7 +44,7 @@ impl<T: Bclable> Queue<T> {
         for rank in 0..config.rankn {
             comm::broadcast(&mut ptrs[rank], rank);
         }
-        Queue { ptrs: ptrs, capacity: n, tail_ptr: tail_ptr, head_ptr: head_ptr, local_size: local_size }
+        Queue { ptrs: ptrs, capacity: n, tail_ptr: tail_ptr, head_ptr: head_ptr, local_size: local_size, slow_tail_ptr: slow_tail_ptr }
 
     }
 
@@ -55,9 +55,8 @@ impl<T: Bclable> Queue<T> {
     }
 
 
-    pub fn add(&mut self, data: T) -> bool {
+    pub fn push(&mut self, data: T) -> bool {
         let mut tail = comm::int_finc(&mut self.tail_ptr) as usize;
-//        let head = self.head_ptr.rget() as usize;
         let head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
         if tail - head > self.capacity {
             panic!("The buffer is full!");
@@ -68,42 +67,50 @@ impl<T: Bclable> Queue<T> {
         let local_idx = tail - rank * self.local_size;
 //        println!("Add elemetn: tail: {}, rank :{}, local_idx: {}", tail, rank, local_idx);
         (self.ptrs[rank] + local_idx as isize).rput(data);
+        comm::int_finc(&mut self.slow_tail_ptr);
         return true;
     }
 
-    pub fn remove(&mut self) -> Result<T, &str> {
+    pub fn pop(&mut self) -> Result<T, &str> {
         let mut head = comm::int_finc(&mut self.head_ptr) as usize;
-//        let tail = self.tail_ptr.rget() as usize;
         let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
-        if tail <= head { // TODO test
-            Err("The buffer is empty!")
+        if tail <= head {
+            return Err("The buffer is empty!");
         } else {
+            let slow_tail = comm::int_atomic_fetch(&mut self.slow_tail_ptr) as usize;
+            if slow_tail <= head {
+                return Err("Previous insertion has not finished!");
+            }
             head = head % self.capacity;
             let rank = head / self.local_size;
             let local_idx = head - rank * self.local_size;
 //            println!("Remove elemetn: head: {}, rank :{}, local_idx: {}", head, rank, local_idx);
-            Ok((self.ptrs[rank] + local_idx as isize).rget())
+            return Ok((self.ptrs[rank] + local_idx as isize).rget());
         }
     }
 
-    pub fn peek(&self) -> Result<T, &str> {
-        let mut head = self.head_ptr.rget() as usize;
-        let tail = self.tail_ptr.rget() as usize;
+    pub fn peek(&mut self) -> Result<T, &str> {
+        let mut head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
+        let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
 
-        if tail <= head { // TODO test
-            Err("The buffer is empty!")
+        if tail <= head {
+            return Err("The buffer is empty!");
         } else {
+            let slow_tail = comm::int_atomic_fetch(&mut self.slow_tail_ptr) as usize;
+            if slow_tail <= head {
+                return Err("Previous insertion has not finished!");
+            }
             head = head % self.capacity;
             let rank = head / self.local_size;
             let local_idx = head - rank * self.local_size;
-            Ok((self.ptrs[rank] + local_idx as isize).rget())
+            return Ok((self.ptrs[rank] + local_idx as isize).rget());
         }
     }
 
-    pub fn len(&self) -> usize {
-        let head = self.head_ptr.rget();
-        let tail = self.tail_ptr.rget();
-        return (tail - head) as usize
+    pub fn len(&mut self) -> usize {
+        let head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
+        let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
+        return tail - head
     }
 
     pub fn capacity(&self) ->usize {

@@ -1,8 +1,7 @@
-use shmemx;
-use comm;
-use global_pointer::GlobalPointer;
+use backend::{comm, shmemx};
+use base::{global_pointer::GlobalPointer, config::Config};
+
 use std::time::{SystemTime, Duration};
-use config::Config;
 
 fn duration_to_nano(duration: &Duration) -> u128 {
     let in_nanos = duration.as_secs() as u128 * 1000_000_000 +

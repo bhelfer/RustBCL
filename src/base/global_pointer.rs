@@ -2,15 +2,13 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
-use shmemx;
+use backend::shmemx::{self, libc::{c_int, size_t, c_long}};
+use base::config::{self, Config, SMALLEST_MEM_UNIT};
+
 use std::marker::PhantomData;
 use std::ops;
 use std::mem::size_of;
-use config;
-use config::Config;
 use std::ptr;
-use shmemx::libc::{c_int, size_t, c_long};
-use config::SMALLEST_MEM_UNIT;
 
 //pub trait GlobalPointerTrait<T>: ops::Add<isize> + ops::AddAssign<isize> + ops::Sub<isize> + ops::SubAssign<isize> + ops::Index<usize> + ops::IndexMut<usize> + ops::Deref + ops::DerefMut {
 //	fn new(rank: usize, ptr: usize) -> Self;
