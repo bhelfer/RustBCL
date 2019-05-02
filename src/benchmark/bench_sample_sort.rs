@@ -19,7 +19,8 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     let args: Vec<String> = env::args().collect();
     let n: usize;
-    let DEBUG: bool = true;
+    // output debug info or not
+    let mut DBG: bool = true;
 
     if args.len() <= 1 {
         n = 10;
