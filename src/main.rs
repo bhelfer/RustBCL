@@ -27,10 +27,11 @@ fn main() {
 
     let mut config = Config::init(1);
     let rankn = config.rankn;
-
+/*
     if config.rankn < 2 {
         return;
-    }
+    }*/
+    println!("number of threads is {}", config.rankn);
 
 //    test_ptr(&mut config);
 
@@ -179,10 +180,9 @@ fn test_array(config: &mut Config) {
     let mut time1: time::Tm = time::now();
     let mut time_res: time::Duration;
     let mut time2: time::Tm;
-    //let workload = 131072;
-    let workload = 131072*rankn;
-    //let size_arr = 1024;
-    //let iters = (workload/rankn)/size_arr;
+    let workload = 131072/rankn;
+//    let workload = 131072;
+    let size_arr = 1024;
     let iters = workload/size_arr;
     if config.rank == 0 {
         time1 = time::now();
