@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused)]
 #![allow(deprecated)]
+#![allow(non_snake_case)]
 
 extern crate is_sorted;
 extern crate quickersort;
@@ -51,6 +52,9 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     /* debug */ if DBG { println!("input = {:?}", input); comm::barrier(); }
 
     // here start the sorting
+    comm::barrier();
+    let start_time = SystemTime::now();
+
 
     // 0. scattering data from rank 0
     let mut loc_data: Vec<GlobalPointer<u32>> = Vec::new();
@@ -233,6 +237,9 @@ pub fn benchmark_sample_sort(config: &mut Config) {
         output.resize(pos, 0);
     }
     comm::barrier();
+    let total_time = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+
 
     if rank == 0 {
         let mut input = input.arget(size);
@@ -246,6 +253,8 @@ pub fn benchmark_sample_sort(config: &mut Config) {
             /* debug */ { println!("rank {}: output = {:?}", rank, output); }
             /* debug */ { println!("rank {}: input = {:?}", rank, input); }
         }
+
+        println!("total_time = {:?}", total_time);
     }
 
     comm::barrier();
