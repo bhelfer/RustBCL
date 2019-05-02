@@ -113,7 +113,7 @@ pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, n
     }
 }
 
-pub fn int_finc(ptr: &mut GlobalPointer<i32>) -> i32 {
+pub fn int_atomic_fetch_inc(ptr: &mut GlobalPointer<i32>) -> i32 {
     let rank = ptr.rank;
     unsafe {
         shmemx::shmem_int_atomic_fetch_inc(
@@ -166,6 +166,17 @@ pub fn long_atomic_fetch_add(ptr: &mut GlobalPointer<c_long>, value: c_long) -> 
         )
     }
 }
+
+pub fn int_atomic_fetch_add(ptr: &mut GlobalPointer<c_int>, value: c_int) -> c_int {
+    unsafe {
+        shmemx::shmem_int_atomic_fetch_add(
+            ptr.rptr() as *mut c_int,
+            value,
+            ptr.rank as c_int
+        )
+    }
+}
+
 pub fn long_atomic_fetch_xor(ptr: &mut GlobalPointer<c_long>, value: c_long) -> c_long {
     unsafe {
         shmemx::shmem_long_atomic_fetch_xor(

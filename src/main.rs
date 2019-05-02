@@ -24,7 +24,6 @@ use std::mem::size_of;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 fn main() {
-
     let mut config = Config::init(32);
     let rankn = config.rankn;
 
@@ -32,16 +31,18 @@ fn main() {
 //    strong_scaling_queue(&mut config);
 
 //    test_ptr(&mut config);
-
+//
 //    test_global_pointer(&mut config);
-
+//
 //    test_shmem_atomic(&mut config);
-
+//
 //    test_global_guard(&mut config);
+//
+//    test_array(&mut config);
+//
+//    test_hash_table(&mut config);
 
-//	test_array(&mut config);
-
-//	test_hash_table(&mut config);
+//    test_queue(&mut config);
 
 
 //    test_global_guard_vec(&mut config);
@@ -119,7 +120,7 @@ fn test_global_pointer(config: &mut Config) {
     (ptr1 + config.rank as isize).rput(config.rank as i32);
 
     comm::barrier();
-    
+
     let mut value;
     if config.rank == 1 {
         println!("Rank 1 Sees: ");
@@ -189,10 +190,10 @@ fn test_array(config: &mut Config) {
     let mut time_res: time::Duration;
     let mut time2: time::Tm;
     //let workload = 131072;
-    let workload = 131072*rankn;
+    let workload = 131072 * rankn;
     //let size_arr = 1024;
     //let iters = (workload/rankn)/size_arr;
-    let iters = workload/size_arr;
+    let iters = workload / size_arr;
     if config.rank == 0 {
         time1 = time::now();
     }
@@ -213,6 +214,40 @@ fn test_array(config: &mut Config) {
             println!("{}: {}", i, arr.read(i));
         }
         println!("time is {:?}", time_res);
+    }
+}
+
+fn test_queue(config: &mut Config) {
+    if config.rank == 0 { println!("\n------------Queue's strong scaling------------\n"); }
+    let rankn = config.rankn;
+    comm::barrier();
+    let mut queue = Queue::<char>::new(config, 30000);
+    let local_length = 500;
+    if config.rank == 0 { println!("Local length is {}.", local_length); }
+    if config.rank == 0 { println!("Before inserting, length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty()); }
+    comm::barrier();
+    for _ in 0..local_length {
+        queue.push(('a' as u8 + config.rank as u8) as char);
+    }
+    comm::barrier();
+    if config.rank == 0 { println!("After insertion, length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty()); }
+    for _ in 0..local_length {
+        let f = queue.pop();
+        match f {
+            Err(error) => {
+                println!("{}", error);
+                break;
+            },
+            Ok(result) => (),
+        }
+    }
+    comm::barrier();
+    if config.rank == 0 {
+        println!("After popping, length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty());
+        queue.push('a');
+        println!("Before clear, length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty());
+        queue.clear();
+        println!("After clear, length of the queue is {}, is empty: {}.", queue.len(), queue.is_empty());
     }
 }
 
@@ -308,15 +343,20 @@ fn strong_scaling_queue(config: &mut Config) {
     }
     comm::barrier();
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
-    if config.rank == 0 { println!("Insert time: {:?}, starting removing.", since_the_epoch); }
-
+    if config.rank == 0 { println!("Insert time: {:?}, start removing.", since_the_epoch); }
+    if config.rank == 0 {println!("Length of queue: {}", queue.len());}
     comm::barrier();
     let start = SystemTime::now();
-    for i in 0..local_length {
+    for _ in 0..local_length {
         let f = queue.pop();
+        match f {
+            Err(error) => println!("{}", error),
+            Ok(data) => (),
+        }
     }
     let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
     if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }
+    if config.rank == 0 {println!("Length of queue: {}", queue.len());}
 }
 
 fn test_global_guard(config: &mut Config) {
