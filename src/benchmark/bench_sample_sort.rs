@@ -19,6 +19,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     let args: Vec<String> = env::args().collect();
     let n: usize;
+    let DEBUG: bool = true;
 
     if args.len() <= 1 {
         n = 10;
@@ -26,6 +27,8 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     } else {
         n = args[1].clone().parse().unwrap();
     }
+
+    if n >= 100 { DBG = false; }
 
     let rankn: usize = config.rankn as usize;
     let rank: usize = config.rank as usize;
@@ -44,7 +47,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     }
     comm::barrier();
 
-    /* debug */ { println!("input = {:?}", input); comm::barrier(); }
+    /* debug */ if DBG { println!("input = {:?}", input); comm::barrier(); }
 
     // here start the sorting
 
@@ -57,15 +60,17 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     comm::scatter(&mut loc_data[rank], &mut input, 0, n);
     comm::barrier();
 
+
     // 1. local sorting(user serial type)
     let mut loc_data_serial = loc_data[rank].arget(n);
     quickersort::sort(&mut loc_data_serial[..]);
     comm::barrier();
 
-    /* debug */ {
+    /* debug */ if DBG {
         assert_eq!(IsSorted::is_sorted(&mut loc_data_serial.iter()), true);
         println!("rank {}: {:?}", rank, loc_data_serial); comm::barrier();
     }
+
 
     // 2. choosing local pivots
     let mut loc_pivots: Vec<GlobalPointer<u32>> = Vec::new();
@@ -79,10 +84,12 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     }
     comm::barrier();
 
+
     // 3. gather local pivots to rank 0
     let mut pivots: GlobalPointer<u32> = GlobalPointer::init(config, rankn * (rankn - 1));
     comm::gather(&mut pivots, &mut loc_pivots[rank], 0, rankn - 1);
     comm::barrier();
+
 
     // 4. sort all pivots in rank 0
 
@@ -90,7 +97,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
         let mut pivots_serial = pivots.arget(rankn * (rankn - 1));
         quickersort::sort(&mut pivots_serial[..]);
 
-        /* debug */ {  println!("root is rank {}: {:?}", rank, pivots_serial); }
+        /* debug */ if DBG {  println!("root is rank {}: {:?}", rank, pivots_serial); }
         for i in 0 .. rankn - 1 {
             loc_pivots[0].idx_rput(
                 i as isize,
@@ -103,10 +110,11 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     comm::broadcast(&mut loc_pivots[rank], 0);
     comm::barrier();
 
-    /* debug */ {
+    /* debug */ if DBG {
         let mut loc_pivots_serial = loc_pivots[rank].arget(rankn - 1);
         println!("rank {}: {:?}", rank, loc_pivots_serial); comm::barrier();
     }
+
 
     // 5. partitioning by pivots (spare many empty spaces)
     // (notice: this is not the optimal algorithm, but easy to all_to_all broadcast)
@@ -139,10 +147,11 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     buckets[rank].idx_rput(((n + 1) * j) as isize, (k - 1) as u32);
     comm::barrier();
 
-    /* debug */ {
+    /* debug */ if DBG {
         let mut buckets_serial = buckets[rank].arget(size + rankn);
         println!("rank {}: buckets = {:?}", rank, buckets_serial); comm::barrier();
     }
+
 
     // 6. exchange local buckets
     let mut swap_buckets: Vec<GlobalPointer<u32>> = Vec::new();
@@ -153,10 +162,11 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     comm::all_to_all(&mut swap_buckets[rank], &mut buckets[rank], n + 1);
     comm::barrier();
 
-    /* debug */ {
+    /* debug */ if DBG {
         let mut swap_buckets_serial = swap_buckets[rank].arget(size + rankn);
         println!("rank {}: swap_buckets = {:?}", rank, swap_buckets_serial); comm::barrier();
     }
+
 
     // 7. rearrange buffers
     let mut loc_buckets: Vec<GlobalPointer<u32>> = Vec::new();
@@ -184,19 +194,20 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     let mut loc_buckets_serial = (loc_buckets[rank] + 1).arget(pos - 1);
     quickersort::sort(&mut loc_buckets_serial[..]);
 
-    /* debug */ {
+    /* debug */ if DBG {
         println!("rank {}: loc_buckets = {:?}", rank, loc_buckets_serial); comm::barrier();
     }
 
     (loc_buckets[rank] + 1).arput(&loc_buckets_serial);
     comm::barrier();
 
+
     // 8. gathering sorted buckets to rank 0
     let mut out_bucket: GlobalPointer<u32> = GlobalPointer::init(config, 2 * size);
     comm::gather(&mut out_bucket, &mut loc_buckets[rank], 0, 2 * n);
     comm::barrier();
 
-    /* debug */ {
+    /* debug */ if DBG {
         if rank == 0 {
             let mut out_bucket_serial = out_bucket.arget(size + rankn);
             println!("rank {}: out_bucket = {:?}", rank, out_bucket_serial);
@@ -227,8 +238,14 @@ pub fn benchmark_sample_sort(config: &mut Config) {
         quickersort::sort(&mut input[..]);
 
         assert_eq!(output, input);
-        /* debug */ { println!(); }
-        /* debug */ { println!("rank {}: output = {:?}", rank, output); }
-        /* debug */ { println!("rank {}: input = {:?}", rank, input); }
+
+        /* do not want to crash the screen */
+        if DBG {
+            /* debug */ { println!(); }
+            /* debug */ { println!("rank {}: output = {:?}", rank, output); }
+            /* debug */ { println!("rank {}: input = {:?}", rank, input); }
+        }
     }
+
+    comm::barrier();
 }
