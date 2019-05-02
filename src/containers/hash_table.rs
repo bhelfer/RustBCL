@@ -2,21 +2,15 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
-use global_pointer::Bclable;
-use global_pointer;
-use comm;
-use config;
-use config::Config;
-use shmemx;
+use backend::{comm, shmemx::{self, shmem_broadcast64, libc::{c_long, c_void, c_int}}};
+use base::{config::{self, Config}, global_pointer::{self, GlobalPointer, Bclable}};
+
 use std::marker::PhantomData;
-use global_pointer::GlobalPointer;
-use shmemx::shmem_broadcast64;
 use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
 use std::fmt::Debug;
 use std::ptr::null;
 use std::mem::size_of;
-use shmemx::libc::{c_long, c_void, c_int};
 use std::time::{SystemTime, UNIX_EPOCH};
 //use std::io::{stdout, Write};
 
@@ -146,11 +140,12 @@ impl<K: Bclable, V: Bclable> HashTable<K, V>
 
     fn get_entry(&self, slot: usize) -> HE<K, V> {
         // println!("HashTable({})::get_entry slot {} enter", shmemx::my_pe(), slot);
-        let mut entry_ptr = self.slot_entry_ptr(slot);
+//        let mut entry_ptr = self.slot_entry_ptr(slot);
         // println!("HashTable({})::get_entry slot {} middle", shmemx::my_pe(), slot);
-        let ret = entry_ptr.rget();
+//        let ret = entry_ptr.rget();
         // println!("HashTable({})::get_entry slot {} leave", shmemx::my_pe(), slot);
-        ret
+//        ret
+        self.slot_entry_ptr(slot).rget()
     }
 
     fn set_entry(&self, slot: usize, entry: &HE<K, V>) {
@@ -272,7 +267,7 @@ impl<K: Bclable, V: Bclable> HashTable<K, V>
         let mut success = false;
 
         loop {
-            let slot: usize = ((hash + probe) % (self.global_size as u64)) as usize;
+            let slot: usize = ((hash + probe * probe) % (self.global_size as u64)) as usize;
             probe += 1;
 
             // println!("HashTable({})::insert (k, v) = ({:?}, {:?}) Requesting slot {} / {}",
@@ -299,9 +294,6 @@ impl<K: Bclable, V: Bclable> HashTable<K, V>
                 self.make_ready_slot(slot/*, &key, &value*/);
                 // Note: this is not actually expected valid (atomicity)
                 // assert_ne!(self.slot_status(slot), self.free_flag);
-
-            } else {
-//              assert_ne!(self.slot_status(slot), self.reserved_flag);
             }
 
             if success || probe >= self.global_size as u64 { break; }
@@ -321,7 +313,7 @@ impl<K: Bclable, V: Bclable> HashTable<K, V>
         let mut status: U;
 
         loop {
-            let slot: usize = ((hash + probe) % (self.global_size as u64)) as usize;
+            let slot: usize = ((hash + probe * probe) % (self.global_size as u64)) as usize;
             probe += 1;
 
             status = self.slot_status(slot);
@@ -352,13 +344,12 @@ impl<K: Bclable, V: Bclable> HashTable<K, V>
 pub mod tests {
 
     extern crate rand;
+    use containers::hash_table::HashTable;
+    use base::{global_pointer::GlobalPointer, config::Config};
+    use backend::{comm, shmemx};
+
     use std::collections::HashMap;
-    use hash_table::HashTable;
-    use config::Config;
     use self::rand::{Rng, SeedableRng, StdRng};
-    use global_pointer::GlobalPointer;
-    use comm;
-    use shmemx;
 
     #[test]
     pub fn same_entry_test() {

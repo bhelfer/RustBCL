@@ -2,14 +2,11 @@
 #![allow(unused)]
 #![allow(deprecated)]
 
-use global_guard::GlobalValue;
+use base::{global_guard::GlobalValue, config::{self, Config}};
+use backend::{shmemx, comm::{self, LockT}};
+
 use std::mem::size_of;
-use comm::LockT;
-use config;
-use config::Config;
-use comm;
 use std::ptr;
-use shmemx;
 use std::marker::PhantomData;
 
 #[derive(Debug, Clone)]

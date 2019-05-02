@@ -1,0 +1,12 @@
+N = 1, n = 4, local size = 131072
+(insert_time, find_time) = (753.324442ms, 254.633347ms)
+N = 2, n = 8, local size = 131072
+(insert_time, find_time) = (969.297895ms, 368.420108ms)
+N = 4, n = 16, local size = 131072
+(insert_time, find_time) = (1.190026789s, 448.292054ms)
+N = 8, n = 32, local size = 131072
+(insert_time, find_time) = (1.340632975s, 497.777113ms)
+N = 12, n = 48, local size = 131072
+(insert_time, find_time) = (1.42346207s, 523.415121ms)
+N = 16, n = 64, local size = 131072
+(insert_time, find_time) = (1.448502099s, 530.425693ms)

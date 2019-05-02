@@ -18,3 +18,5 @@ LibBCL/
 .DS_Store
 
 core*
+*.iml
+
