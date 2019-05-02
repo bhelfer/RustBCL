@@ -60,5 +60,4 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     assert_eq!(IsSorted::is_sorted(&mut serial_local.iter()), true);
     comm::barrier();
 
-    //
 }
