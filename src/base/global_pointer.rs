@@ -9,6 +9,7 @@ use std::marker::PhantomData;
 use std::ops;
 use std::mem::size_of;
 use std::ptr;
+use num::complex::{Complex, Complex32, Complex64};
 
 //pub trait GlobalPointerTrait<T>: ops::Add<isize> + ops::AddAssign<isize> + ops::Sub<isize> + ops::SubAssign<isize> + ops::Index<usize> + ops::IndexMut<usize> + ops::Deref + ops::DerefMut {
 //	fn new(rank: usize, ptr: usize) -> Self;
@@ -42,6 +43,8 @@ impl Bclable for u32 {}
 impl Bclable for u64 {}
 impl Bclable for usize {}
 impl Bclable for char {}
+impl Bclable for Complex32 {}
+impl Bclable for Complex64 {}
 
 /*
 ----GlobalPointer----

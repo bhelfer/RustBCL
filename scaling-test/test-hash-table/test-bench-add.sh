@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #srun -N 1 -n 6 ./target/release/main
 base_scale=$((2**17))
 #
