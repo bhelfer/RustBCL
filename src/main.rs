@@ -27,7 +27,7 @@ fn main() {
     let mut config = Config::init(32);
     let rankn = config.rankn;
 
-    bench_sample_sort::benchmark_sample_sort(&mut config);
+//    bench_sample_sort::benchmark_sample_sort(&mut config);
 //    strong_scaling_queue(&mut config);
 
 //    test_ptr(&mut config);
@@ -38,7 +38,7 @@ fn main() {
 //
 //    test_global_guard(&mut config);
 //
-//    test_array(&mut config);
+    test_array(&mut config);
 //
 //    test_hash_table(&mut config);
 
