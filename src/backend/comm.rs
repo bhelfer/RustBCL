@@ -182,22 +182,35 @@ pub fn fence() {
     }
 }
 
-pub fn scatter<T: Bclable>(ptr: &mut GlobalPointer<T>, src: &mut GlobalPointer<T>, root: usize, count: usize) {
+pub fn scatter<T: Bclable>(dest: &mut GlobalPointer<T>, src: &mut GlobalPointer<T>, root: usize, count: usize) {
     unsafe {
         let rank: usize = shmemx::my_pe() as usize;
         let rankn: usize = shmemx::n_pes() as usize;
 
         shmemx::barrier();
         let nelem = size_of::<T>();
-        let target = ptr.local();
-        let src = src.rptr();
+        let target = dest.local();
+        let source = src.rptr();
         if rank == root {
             for i in 0 .. rankn {
-                let start = src.add(i * count);
-                shmem_putmem(target as *mut u8, start as *mut u8, count * nelem, i as i32);
+                let off_source = source.add(i * count);
+                shmem_putmem(target as *mut u8, off_source as *mut u8, count * nelem, i as i32);
             }
         }
-        shmemx::barrier();
     }
 }
 
+pub fn gather<T: Bclable>(dest: &mut GlobalPointer<T>, src: &mut GlobalPointer<T>, root: usize, count: usize) {
+    unsafe {
+        let rank: usize = shmemx::my_pe() as usize;
+        let rankn: usize = shmemx::n_pes() as usize;
+
+        shmemx::barrier();
+        let nelem = size_of::<T>();
+        let target = dest.rptr();
+        let source = src.local();
+
+        let off_target = target.add(rank * count);
+        shmem_putmem(off_target as *mut u8, source as *mut u8, nelem * count, root as i32);
+    }
+}
