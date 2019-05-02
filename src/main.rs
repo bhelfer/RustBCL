@@ -29,7 +29,7 @@ fn main() {
     let mut config = Config::init(32);
     let rankn = config.rankn;
 
-    bench_1d_fft::benchmark_1d_fft(&mut config);
+//    bench_1d_fft::benchmark_1d_fft(&mut config);
 //    bench_sample_sort::benchmark_sample_sort(&mut config);
 //    strong_scaling_queue(&mut config);
 
@@ -59,7 +59,7 @@ fn main() {
 //    bench_global_pointer::benchmark_global_pointer_local(&mut config);
 //    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
 //    bench_shmem::benchmark_shmem(&mut config);
-//    bench_hashtable::benchmark_hash_table(&mut config);
+    bench_hashtable::benchmark_hash_table(&mut config);
 }
 
 
