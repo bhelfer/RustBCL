@@ -44,5 +44,4 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     // local sorting
 
-
 }
