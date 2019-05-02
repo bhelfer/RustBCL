@@ -56,23 +56,22 @@ impl<T: Bclable> Queue<T> {
 
 
     pub fn push(&mut self, data: T) -> bool {
-        let mut tail = comm::int_finc(&mut self.tail_ptr) as usize;
+        let mut tail = comm::int_atomic_fetch_inc(&mut self.tail_ptr) as usize;
         let head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
         if tail - head > self.capacity {
-            panic!("The buffer is full!");
+            println!("The buffer is full!");
             return false;
         }
         tail = tail % self.capacity;
         let rank = tail / self.local_size;
         let local_idx = tail - rank * self.local_size;
-//        println!("Add elemetn: tail: {}, rank :{}, local_idx: {}", tail, rank, local_idx);
         (self.ptrs[rank] + local_idx as isize).rput(data);
-        comm::int_finc(&mut self.slow_tail_ptr);
+        comm::int_atomic_fetch_inc(&mut self.slow_tail_ptr);
         return true;
     }
 
     pub fn pop(&mut self) -> Result<T, &str> {
-        let mut head = comm::int_finc(&mut self.head_ptr) as usize;
+        let mut head = comm::int_atomic_fetch_inc(&mut self.head_ptr) as usize;
         let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
         if tail <= head {
             return Err("The buffer is empty!");
@@ -84,7 +83,6 @@ impl<T: Bclable> Queue<T> {
             head = head % self.capacity;
             let rank = head / self.local_size;
             let local_idx = head - rank * self.local_size;
-//            println!("Remove elemetn: head: {}, rank :{}, local_idx: {}", head, rank, local_idx);
             return Ok((self.ptrs[rank] + local_idx as isize).rget());
         }
     }
@@ -92,7 +90,6 @@ impl<T: Bclable> Queue<T> {
     pub fn peek(&mut self) -> Result<T, &str> {
         let mut head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
         let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
-
         if tail <= head {
             return Err("The buffer is empty!");
         } else {
@@ -111,6 +108,16 @@ impl<T: Bclable> Queue<T> {
         let head = comm::int_atomic_fetch(&mut self.head_ptr) as usize;
         let tail = comm::int_atomic_fetch(&mut self.tail_ptr) as usize;
         return tail - head
+    }
+
+    pub fn is_empty(&mut self) -> bool {
+        return self.len() == 0
+    }
+
+    pub fn clear(&mut self) {
+        self.head_ptr.rput(0);
+        self.tail_ptr.rput(0);
+        self.slow_tail_ptr.rput(0);
     }
 
     pub fn capacity(&self) ->usize {
