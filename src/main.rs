@@ -52,8 +52,8 @@ fn main() {
 
 //    bench_global_guard::benchmark_global_guard(&mut config);
 //    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
-//    bench_global_pointer::benchmark_global_pointer_local(&mut config);
-//    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
+    bench_global_pointer::benchmark_global_pointer_local(&mut config);
+    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
 //    bench_shmem::benchmark_shmem_atomic_cas(&mut config);
 //    bench_shmem::benchmark_shmem_atomic_fetch_put(&mut config);
 //    bench_hashtable::benchmark_hash_table(&mut config);
