@@ -39,7 +39,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     let mut rng: StdRng = SeedableRng::from_seed([rankn as u8; 32]);
 
     let size: usize = n * rankn;
-    println!("n, rankn, size = {}, {}, {}", n, rankn, size);
+    println!("n, rank / rankn, size = {}, {} / {}, {}", n, rank, rankn, size);
 
     let mut input: GlobalPointer<u32> = GlobalPointer::init(config, size);
     if rank == 0 {
