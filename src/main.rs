@@ -29,7 +29,6 @@ fn main() {
     let mut config = Config::init(32);
     let rankn = config.rankn;
 
-//    bench_1d_fft::benchmark_1d_fft(&mut config);
 //    bench_sample_sort::benchmark_sample_sort(&mut config);
 //    strong_scaling_queue(&mut config);
 
@@ -176,44 +175,45 @@ fn test_global_pointer(config: &mut Config) {
 }
 
 fn test_array(config: &mut Config) {
-    // ----------- array's part ------------
-    if config.rank == 0 { println!("\n\n------------Array's test------------\n"); }
-    let rankn = config.rankn;
-    let size_arr = 1024;
-    let mut arr = Array::<i64>::init(config, size_arr);
-    //arr.write(('a' as u8 + config.rank as u8) as char, config.rank);
-    //arr.write(0 as i64, config.rank);
-    for i in 0..size_arr {
+    //let args: Vec<String> = env::args().collect();
+    //if args.len() <= 1 { panic!("not enough arguments"); }
+
+    let rankn: i32 = config.rankn as i32;
+    let rank: i32 = config.rank as i32;
+    
+    //let n: i32 = args[1].clone().parse().unwrap();
+    let n = 120;
+    let size_array = (n*rankn) as usize;
+    let workload = 131072 * rankn;
+    let iters = workload as usize / size_array;
+//    println!("n, rankn, rank = ({}, {}, {})", n, rankn, rank);
+    let mut arr = Array::<i64>::init(config, size_array);
+    let mut rng: StdRng = SeedableRng::from_seed([rankn as u8; 32]);
+    /*for i in 0..(n*rankn)  {
         arr.write(0 as i64, i);
+    }*/
+    for i in rank..(rank+n) {
+        arr.write(0 as i64, i as usize);
     }
-    // comm::long_atomic_fetch(&mut ptr);
     comm::barrier();
-    //println!("here1");
     let mut time1: time::Tm = time::now();
     let mut time_res: time::Duration;
     let mut time2: time::Tm;
-    //let workload = 131072;
-    let workload = 131072 * rankn;
-    //let size_arr = 1024;
-    //let iters = (workload/rankn)/size_arr;
-    let iters = workload / size_arr;
     if config.rank == 0 {
         time1 = time::now();
     }
-
     for i in 0..iters {
-        for j in 0..size_arr {
-            let mut ptr = arr.get_ptr(j);
+        for j in 0..size_array {
+            //let mut ptr = arr.get_ptr(j);
+            let mut ptr = arr.get_ptr(rng.gen_range(0, size_array as i32) as usize);
             comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
         }
     }
     comm::barrier();
-    //println!("here2");
     if config.rank == 0 {
         time2 = time::now();
         time_res = time2 - time1;
-        //println!("time is {:?}", time_res);
-        for i in 0..size_arr {
+        for i in 0..size_array {
             println!("{}: {}", i, arr.read(i));
         }
         println!("time is {:?}", time_res);
@@ -539,8 +539,8 @@ fn test_guard_array(config: &mut Config) {
 
 fn benchmark_guard_array(config: &mut Config) {
     let array_size = 1024;
-//    let total_workload = 131072; // strong scaling
-    let total_workload = 131072 * config.rankn; // weak scaling
+    let total_workload = 131072; // strong scaling
+//    let total_workload = 131072 * config.rankn; // weak scaling
     let local_workload = (total_workload + config.rankn - 1) / config.rankn;
 
     let mut rng = rand::thread_rng();
@@ -565,6 +565,8 @@ fn benchmark_guard_array(config: &mut Config) {
         .expect("SystemTime::duration_since failed");
     if config.rank == 0 {
         println!("rank num: {}; table size: {}; total workload: {}; time: {:?}",
+                 config.rankn, array_size, total_workload, since_the_epoch);
+        println!("{}, {}, {}, {:?}",
                  config.rankn, array_size, total_workload, since_the_epoch);
     }
 }

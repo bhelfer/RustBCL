@@ -72,6 +72,7 @@ pub fn set_lock(lock: *mut LockT, rank: usize) {
                 }
             }
             // emit a pause
+            thread::sleep(time::Duration::from_nanos(10));
         }
     }
 }
