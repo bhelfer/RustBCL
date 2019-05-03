@@ -248,6 +248,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
         let mut input = input.arget(size);
         quickersort::sort(&mut input[..]);
 
+        println!("out.size, in.size = {}, {}", output.len(), input.len());
         assert_eq!(output, input);
 
         /* do not want to crash the screen */
