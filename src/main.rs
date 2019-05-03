@@ -32,6 +32,7 @@ fn main() {
 //    bench_fft::benchmark_fft(&mut config);
 //    bench_sample_sort::benchmark_sample_sort(&mut config);
     strong_scaling_queue(&mut config);
+    weak_scaling_queue(&mut config);
 
 //    test_ptr(&mut config);
 //
@@ -56,8 +57,8 @@ fn main() {
 
 //    bench_global_guard::benchmark_global_guard(&mut config);
 //    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
-    bench_global_pointer::benchmark_global_pointer_local(&mut config);
-    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
+//    bench_global_pointer::benchmark_global_pointer_local(&mut config);
+//    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
 //    bench_shmem::benchmark_shmem_atomic_cas(&mut config);
 //    bench_shmem::benchmark_shmem_atomic_fetch_put(&mut config);
 //    bench_hashtable::benchmark_hash_table(&mut config);
@@ -290,7 +291,7 @@ fn test_hash_table(config: &mut Config) {
 }
 
 fn weak_scaling_queue(config: &mut Config) {
-    if config.rank == 0 { println!("\n------------Queue's weak scaling------------\n"); }
+//    if config.rank == 0 { println!("\n------------Queue's weak scaling------------\n"); }
     let rankn = config.rankn;
     comm::barrier();
     let mut queue = Queue::<char>::new(config, 131080 * rankn);
@@ -300,16 +301,19 @@ fn weak_scaling_queue(config: &mut Config) {
         queue.push(('a' as u8 + config.rank as u8) as char);
     }
     comm::barrier();
-    let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
-    if config.rank == 0 { println!("Insert time: {:?}, starting removing.", since_the_epoch); }
+    let push_time = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
+//    if config.rank == 0 { println!("Insert time: {:?}, starting removing.", since_the_epoch); }
 
     comm::barrier();
     let start = SystemTime::now();
     for i in 0..131072 {
         let f = queue.pop();
     }
-    let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
-    if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }
+    let pop_time = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
+//    if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }
+    if config.rank == 0 {
+        println!("weak scaling: {}, {:?}, {:?}", rankn, push_time, pop_time);
+    }
 //    comm::barrier();
 //    if config.rank == 0 {
 //        println!("Finished inserting!");
@@ -333,7 +337,7 @@ fn weak_scaling_queue(config: &mut Config) {
 }
 
 fn strong_scaling_queue(config: &mut Config) {
-    if config.rank == 0 { println!("\n------------Queue's strong scaling------------\n"); }
+//    if config.rank == 0 { println!("\n------------Queue's strong scaling------------\n"); }
     let rankn = config.rankn;
     comm::barrier();
     let mut queue = Queue::<char>::new(config, 300000);
@@ -344,9 +348,9 @@ fn strong_scaling_queue(config: &mut Config) {
         queue.push(('a' as u8 + config.rank as u8) as char);
     }
     comm::barrier();
-    let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
-    if config.rank == 0 { println!("Insert time: {:?}, start removing.", since_the_epoch); }
-    if config.rank == 0 {println!("Length of queue: {}", queue.len());}
+    let push_time = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
+//    if config.rank == 0 { println!("Insert time: {:?}, start removing.", since_the_epoch); }
+//    if config.rank == 0 {println!("Length of queue: {}", queue.len());}
     comm::barrier();
     let start = SystemTime::now();
     for _ in 0..local_length {
@@ -356,9 +360,12 @@ fn strong_scaling_queue(config: &mut Config) {
             Ok(data) => (),
         }
     }
-    let since_the_epoch = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
-    if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }
-    if config.rank == 0 {println!("Length of queue: {}", queue.len());}
+    let pop_time = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
+//    if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }
+//    if config.rank == 0 {println!("Length of queue: {}", queue.len());}
+    if config.rank == 0 {
+        println!("strong scaling: {}, {:?}, {:?}", rankn, push_time, pop_time);
+    }
 }
 
 fn test_global_guard(config: &mut Config) {

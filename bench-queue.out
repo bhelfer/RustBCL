@@ -1,0 +1,18 @@
+N = 1, n = 32
+strong scaling: 32, 48.289093ms, 24.720421ms
+weak scaling: 32, 1.047840246s, 799.544832ms
+N = 2, n = 64
+strong scaling: 64, 34.649587ms, 13.767125ms
+weak scaling: 64, 1.517401199s, 2.161026003s
+N = 4, n = 128
+strong scaling: 128, 27.323769ms, 18.775004ms
+weak scaling: 128, 1.349964626s, 2.404697567s
+N = 8, n = 256
+strong scaling: 256, 23.382799ms, 12.150439ms
+weak scaling: 256, 2.788003567s, 5.488089632s
+N = 16, n = 512
+strong scaling: 512, 21.738736ms, 6.588585ms
+weak scaling: 512, 3.088878464s, 3.243192399s
+N = 32, n = 1024
+strong scaling: 1024, 20.417351ms, 3.469498ms
+weak scaling: 1024, 7.444527495s, 2.433623548s

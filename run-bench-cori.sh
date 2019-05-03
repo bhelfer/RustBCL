@@ -11,5 +11,6 @@
 
 for N in 1 2 4 8 16 32
 do
-    srun -N $N -n $(($N*32)) ./target/release/main
+    echo "N = $N, n = $(($N*32))" | tee -a "run-bench-cori.out"
+    srun -N $N -n $(($N*32)) ./target/release/main | tee -a "run-bench-cori.out"
 done
