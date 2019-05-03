@@ -21,7 +21,7 @@ pub fn benchmark_shmem_getmem_putmem(config: &mut Config) {
         ptr1.rput(0 as i32);
     }
     comm::broadcast(&mut ptr1, 0);
-    let raw_ptr = ptr1.rptr() as *mut u8;
+    let raw_ptr = ptr1.remote_mut() as *mut u8;
     let rank = ptr1.rank;
     let len = 4; //i32
     let mut value = 0;
@@ -68,13 +68,9 @@ pub fn benchmark_shmem_atomic_cas(config: &mut Config) {
         ptr1.rput(0 as i64);
     }
     comm::broadcast(&mut ptr1, 0);
-    let raw_ptr = ptr1.rptr() as *mut u8;
+    let raw_ptr = ptr1.remote_mut() as *mut i64;
     let rank = ptr1.rank;
     let len = 4; //i32
-    let mut value:i64 = 0;
-    let value_ptr = &mut value as *mut i64;
-
-
 
     // benchmark code
     let mut data = Vec::new();
@@ -83,8 +79,8 @@ pub fn benchmark_shmem_atomic_cas(config: &mut Config) {
             let start = SystemTime::now();
             for _ in 0..iter/2 {
                 unsafe {
-                    shmemx::shmem_long_atomic_compare_swap(value_ptr, 0, 1, rank as i32);
-                    shmemx::shmem_long_atomic_compare_swap(value_ptr, 1, 0, rank as i32);
+                    shmemx::shmem_long_atomic_compare_swap(raw_ptr, 0, 1, rank as i32);
+                    shmemx::shmem_long_atomic_compare_swap(raw_ptr, 1, 0, rank as i32);
                 }
             }
             let duration = SystemTime::now().duration_since(start).unwrap();
@@ -114,13 +110,9 @@ pub fn benchmark_shmem_atomic_fetch_put(config: &mut Config) {
         ptr1.rput(0 as i64);
     }
     comm::broadcast(&mut ptr1, 0);
-    let raw_ptr = ptr1.rptr() as *mut u8;
+    let raw_ptr = ptr1.remote_mut() as *mut i64;
     let rank = ptr1.rank;
     let len = 4; //i32
-    let mut value:i64 = 0;
-    let value_ptr = &mut value as *mut i64;
-
-
 
     // benchmark code
     let mut data = Vec::new();
@@ -129,8 +121,8 @@ pub fn benchmark_shmem_atomic_fetch_put(config: &mut Config) {
             let start = SystemTime::now();
             for _ in 0..iter {
                 unsafe {
-                    let t = shmemx::shmem_long_atomic_fetch(value_ptr, rank as i32);
-                    shmemx::shmem_long_atomic_set(value_ptr, t+1, rank as i32);
+                    let t = shmemx::shmem_long_atomic_fetch(raw_ptr, rank as i32);
+                    shmemx::shmem_long_atomic_set(raw_ptr, t+1, rank as i32);
                 }
             }
             let duration = SystemTime::now().duration_since(start).unwrap();

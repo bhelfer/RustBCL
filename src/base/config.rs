@@ -57,10 +57,8 @@ impl Config {
 
     pub unsafe fn new_ptr<T: Bclable>(&self, rank: usize, offset: usize) -> GlobalPointer<T> {
 		GlobalPointer{ 
-			shared_segment_size: self.shared_segment_size, 
-			smem_base_ptr: self.smem_base_ptr,
 			rank, 
-			offset, 
+			ptr: self.smem_base_ptr.add(offset * size_of::<T>()), 
 			refer_type: PhantomData 
 		}
 	}

@@ -27,12 +27,11 @@ fn main() {
     let mut config = Config::init(32);
     let rankn = config.rankn;
 
-    bench_sample_sort::benchmark_sample_sort(&mut config);
 //    strong_scaling_queue(&mut config);
 
 //    test_ptr(&mut config);
 //
-//    test_global_pointer(&mut config);
+    test_global_pointer(&mut config);
 //
 //    test_shmem_atomic(&mut config);
 //
@@ -55,9 +54,11 @@ fn main() {
 //    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
 //    bench_global_pointer::benchmark_global_pointer_local(&mut config);
 //    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
-    bench_shmem::benchmark_shmem_atomic_cas(&mut config);
-    bench_shmem::benchmark_shmem_atomic_fetch_put(&mut config);
+//    bench_shmem::benchmark_shmem_atomic_cas(&mut config);
+//    bench_shmem::benchmark_shmem_atomic_fetch_put(&mut config);
 //    bench_hashtable::benchmark_hash_table(&mut config);
+//    bench_sample_sort::benchmark_sample_sort(&mut config);
+
 }
 
 
@@ -108,8 +109,6 @@ fn test_ptr(config: &mut Config) {
 
 fn test_global_pointer(config: &mut Config) {
     // ----------- Global Pointer's part -------------
-    if config.rank == 0 { println!("------------Global Pointer's test------------\n"); }
-
     let mut ptr1 = GlobalPointer::null();
     if config.rank == 0 {
         let rankn = config.rankn;
@@ -124,10 +123,9 @@ fn test_global_pointer(config: &mut Config) {
 
     let mut value;
     if config.rank == 1 {
-        println!("Rank 1 Sees: ");
         for i in 0..config.rankn {
             value = (ptr1 + i as isize).rget();
-            println!("{}: {}", i, value);
+            assert_eq!(i as i32, value, "fail at rput, rget");
         }
     }
     comm::barrier();
@@ -135,42 +133,40 @@ fn test_global_pointer(config: &mut Config) {
     if config.rank == 0 {
         let p1 = ptr1.local();
         let p_slice = unsafe { std::slice::from_raw_parts(p1, config.rankn) };
-        println!("Rank 0 Sees: ");
         for i in 0..config.rankn {
             value = p_slice[i];
-            println!("{}: {}", i, value);
+            assert_eq!(i as i32, value, "fail at test local");
         }
     }
     comm::barrier();
 
     // test idx_rget, idx_rput
-    ptr1.idx_rput(config.rank as isize, 2 * config.rank as i32);
+    ptr1.idx_rput(config.rank as isize, 2 * config.rank as i32 + 1);
     comm::barrier();
 
     let mut value;
     if config.rank == 1 {
-        println!("test idx_rget, idx_rput");
-        println!("Rank 1 Sees: ");
         for i in 0..config.rankn {
             value = ptr1.idx_rget(i as isize);
-            println!("{}: {}", i, value);
+            assert_eq!(2*i as i32 + 1, value, "fail at idx_rget, idx_rput");
+//            println!("{}, {}", i, value);
         }
     }
     comm::barrier();
 
     // test arput, arget
+    let values = vec![0, 1, 2, 3, 4, 5];
     let mut ptr2 = GlobalPointer::null();
     if config.rank == 0 {
         ptr2 = GlobalPointer::init(config, 6);
-        let values = vec![0, 1, 2, 3, 4, 5];
         ptr2.arput(&values);
     }
     comm::broadcast(&mut ptr2, 0);
     if config.rank == 1 {
-        println!("test arget, arput");
-        let values = ptr2.arget(6);
-        println!("Rank{}: arget {:?}", config.rank, values);
+        let values2 = ptr2.arget(6);
+        assert_eq!(values, values2, "fail at arget, arput");
     }
+    if config.rank == 0 { println!("Global Pointer correctness test pass!   "); }
 }
 
 fn test_array(config: &mut Config) {
