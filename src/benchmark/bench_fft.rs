@@ -48,6 +48,7 @@ pub fn benchmark_fft(config: &mut Config) {
         if N < min_size { N = min_size; }
     }
 
+    N *= rankn;
     if N >= 100 { DBG = false; }
 
     // double N for polynomial squaring
