@@ -31,7 +31,6 @@ pub fn benchmark_sample_sort(config: &mut Config) {
         println!("not enough arguments\nUse default argument n = {}", n);
     } else {
         n = args[1].clone().parse().unwrap();
-        n /= rankn;
         if n < min_size { n = min_size; }
     }
 
@@ -40,6 +39,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     let mut rng: StdRng = SeedableRng::from_seed([rankn as u8; 32]);
 
     let size: usize = n * rankn;
+    println!("n, rankn, size = {}, {}, {}", n, rankn, size);
 
     let mut input: GlobalPointer<u32> = GlobalPointer::init(config, size);
     if rank == 0 {
@@ -84,6 +84,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     let mut loc_pivots: Vec<GlobalPointer<u32>> = Vec::new();
     loc_pivots.resize(rankn, GlobalPointer::null());
     loc_pivots[rank] = GlobalPointer::init(config, rankn - 1);
+    comm::barrier();
     for i in 0 .. rankn - 1 {
         loc_pivots[rank].idx_rput(
             i as isize,
@@ -217,7 +218,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     /* debug */ if DBG {
         if rank == 0 {
-            let mut out_bucket_serial = out_bucket.arget(size + rankn);
+            let mut out_bucket_serial = out_bucket.arget(size);
             println!("rank {}: out_bucket = {:?}", rank, out_bucket_serial);
         }
         comm::barrier();
@@ -248,7 +249,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
         let mut input = input.arget(size);
         quickersort::sort(&mut input[..]);
 
-        println!("out.size, in.size = {}, {}", output.len(), input.len());
+        println!("out.len(), in.len() = {}, {}", output.len(), input.len());
         assert_eq!(output, input);
 
         /* do not want to crash the screen */
