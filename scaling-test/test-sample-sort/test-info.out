@@ -1,0 +1,62 @@
+srun -N 8 -n $((8 * 32)) ./target/release/main $((2**23 / (8 * 32)))
+
+scattering data in 9.769191ms
+local sorting in 2.066917ms
+choosing local pivots in 31.885µs
+gather local pivots to rank 0 in 158.728µs
+sort all pivots in rank 0 in 12.913886ms
+partitioning by pivots (spare many empty spaces) in 258.793369ms
+exchange local buckets in 445.187954ms
+rearrange buffers in 1.36759ms
+rearranged buffers local sorting in 1.8992ms
+gathering sorted buckets to rank 0 in 5.771499ms
+rearraging buffers in 133.508281ms
+total_time = 871.588023ms
+
+
+srun -N 1 -n $((1 * 32)) ./target/release/main $((2**23 / (1 * 32)))
+
+scattering data in 40.074446ms
+local sorting in 18.597146ms
+choosing local pivots in 7.966µs
+gather local pivots to rank 0 in 36.934µs
+sort all pivots in rank 0 in 9.15281ms
+partitioning by pivots (spare many empty spaces) in 9.265029ms
+exchange local buckets in 71.106354ms
+rearrange buffers in 7.690095ms
+rearranged buffers local sorting in 10.654532ms
+gathering sorted buckets to rank 0 in 11.474154ms
+rearraging buffers in 135.12082ms
+total_time = 313.30659ms
+
+
+srun -N 1 -n 1 ./target/release/main $((2**23))
+
+scattering data in 2.222293ms
+local sorting in 585.75652ms
+choosing local pivots in 1.001µs
+gather local pivots to rank 0 in 1.038µs
+sort all pivots in rank 0 in 414.857µs
+partitioning by pivots (spare many empty spaces) in 97.904794ms
+exchange local buckets in 3.317298ms
+rearrange buffers in 182.173869ms
+rearranged buffers local sorting in 33.245599ms
+gathering sorted buckets to rank 0 in 7.496684ms
+rearraging buffers in 105.824855ms
+total_time = 1.018489745s
+
+
+srun -N 1 -n 8 ./target/release/main $((2**23 / 8))
+
+scattering data in 34.540781ms
+local sorting in 77.216723ms
+choosing local pivots in 3.84µs
+gather local pivots to rank 0 in 27.841µs
+sort all pivots in rank 0 in 2.114736ms
+partitioning by pivots (spare many empty spaces) in 31.5699ms
+exchange local buckets in 43.391689ms
+rearrange buffers in 26.979825ms
+rearranged buffers local sorting in 34.433918ms
+gathering sorted buckets to rank 0 in 11.825041ms
+rearraging buffers in 122.92454ms
+total_time = 385.173909ms
