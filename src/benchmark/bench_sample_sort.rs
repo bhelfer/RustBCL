@@ -72,7 +72,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     let total_time_0 = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
-    if rank == 0 && DETAIL { println!("scattering data in {}", total_time_0); }
+    if rank == 0 && DETAIL { println!("scattering data in {:?}", total_time_0); }
 
 
     // 1. local sorting(user serial type)
@@ -90,7 +90,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     comm::barrier();
     let total_time_1 = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
-    if rank == 0 && DETAIL { println!("local sorting in {}", total_time_1); }
+    if rank == 0 && DETAIL { println!("local sorting in {:?}", total_time_1); }
 
     // 2. choosing local pivots
     let start_time_2 = SystemTime::now();
@@ -109,7 +109,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     comm::barrier();
     let total_time_2 = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
-    if rank == 0 && DETAIL { println!("choosing local pivots in {}", total_time_2); }
+    if rank == 0 && DETAIL { println!("choosing local pivots in {:?}", total_time_2); }
 
     // 3. gather local pivots to rank 0
     let start_time_3 = SystemTime::now();
@@ -119,7 +119,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     comm::barrier();
     let total_time_3 = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
-    if rank == 0 && DETAIL { println!("gather local pivots to rank 0 in {}", total_time_3); }
+    if rank == 0 && DETAIL { println!("gather local pivots to rank 0 in {:?}", total_time_3); }
 
     // 4. sort all pivots in rank 0
     let start_time_4 = SystemTime::now();
@@ -142,7 +142,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     comm::barrier();
     let total_time_4 = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
-    if rank == 0 && DETAIL { println!("sort all pivots in rank 0 in {}", total_time_4); }
+    if rank == 0 && DETAIL { println!("sort all pivots in rank 0 in {:?}", total_time_4); }
 
     /* debug */ if DBG {
         let mut loc_pivots_serial = loc_pivots[rank].arget(rankn - 1);
@@ -185,7 +185,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     let total_time_5 = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
-    if rank == 0 && DETAIL { println!("partitioning by pivots (spare many empty spaces) in {}", total_time_5); }
+    if rank == 0 && DETAIL { println!("partitioning by pivots (spare many empty spaces) in {:?}", total_time_5); }
 
     /* debug */ if DBG {
         let mut buckets_serial = buckets[rank].arget(size + rankn);
@@ -206,7 +206,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     let total_time_6 = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
-    if rank == 0 && DETAIL { println!("exchange local buckets in {}", total_time_6); }
+    if rank == 0 && DETAIL { println!("exchange local buckets in {:?}", total_time_6); }
 
     /* debug */ if DBG {
         let mut swap_buckets_serial = swap_buckets[rank].arget(size + rankn);
@@ -241,7 +241,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     let total_time_7 = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
-    if rank == 0 && DETAIL { println!("rearrange buffers in {}", total_time_7); }
+    if rank == 0 && DETAIL { println!("rearrange buffers in {:?}", total_time_7); }
 
     // 8. local sorting
     let start_time_8 = SystemTime::now();
@@ -257,7 +257,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     comm::barrier();
     let total_time_8 = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
-    if rank == 0 && DETAIL { println!("rearranged buffers local sorting in {}", total_time_8); }
+    if rank == 0 && DETAIL { println!("rearranged buffers local sorting in {:?}", total_time_8); }
 
     // 9. gathering sorted buckets to rank 0
     let start_time_9 = SystemTime::now();
@@ -267,7 +267,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     comm::barrier();
     let total_time_9 = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
-    if rank == 0 && DETAIL { println!("gathering sorted buckets to rank 0 in {}", total_time_9); }
+    if rank == 0 && DETAIL { println!("gathering sorted buckets to rank 0 in {:?}", total_time_9); }
 
     /* debug */ if DBG {
         if rank == 0 {
@@ -298,7 +298,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     }
     let total_time_10 = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
-    if rank == 0 && DETAIL { println!("rearraging buffers in {}", total_time_10); }
+    if rank == 0 && DETAIL { println!("rearraging buffers in {:?}", total_time_10); }
 
     comm::barrier();
     let total_time = SystemTime::now().duration_since(time)

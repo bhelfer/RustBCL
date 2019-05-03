@@ -149,7 +149,7 @@ impl<T: Bclable> GlobalPointer<T> {
         self.shmem_putmem(unsafe{self.smem_base_ptr.add(self.offset * type_size)}, values.as_ptr() as *const u8, type_size * values.len(), self.rank);
 
 		self
-	}
+	}w
 
 	pub fn arget(&self, len: usize) -> Vec<T> {
         let mut values: Vec<T> = vec![unsafe{std::mem::uninitialized::<T>()}; len];
