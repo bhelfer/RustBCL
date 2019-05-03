@@ -7,8 +7,8 @@ use backend::shmemx::{self, libc::{c_long, c_void, c_int}};
 use std::mem::size_of;
 use backend::shmemx::shmem_putmem;
 use base::global_pointer::Bclable;
+use std::time::{SystemTime, Duration};
 use std::thread;
-use std::time;
 
 pub fn broadcast<T>(val: &mut T, root: usize) {
     unsafe{
@@ -74,7 +74,7 @@ pub fn set_lock(lock: *mut LockT, rank: usize) {
                 }
             }
             // emit a pause
-            thread::sleep(time::Duration::from_nanos(10));
+            thread::sleep(Duration::from_nanos(10));
         }
     }
 }
@@ -108,7 +108,7 @@ pub fn long_compare_and_swap(ptr: &mut GlobalPointer<c_long>, old_val: c_long, n
     let rank = ptr.rank;
     unsafe {
         shmemx::shmem_long_atomic_compare_swap(
-            ptr.rptr() as *mut c_long,
+            ptr.remote_mut() as *mut c_long,
             old_val as c_long,
             new_val as c_long,
             rank as c_int
@@ -120,25 +120,25 @@ pub fn int_atomic_fetch_inc(ptr: &mut GlobalPointer<i32>) -> i32 {
     let rank = ptr.rank;
     unsafe {
         shmemx::shmem_int_atomic_fetch_inc(
-            ptr.rptr() as *mut i32,
+            ptr.remote_mut() as *mut i32,
             rank as c_int
         )
     }
 }
 
-pub fn long_atomic_fetch(ptr: &mut GlobalPointer<c_long>) -> c_long {
+pub fn long_atomic_fetch(ptr: &GlobalPointer<c_long>) -> c_long {
     unsafe {
         shmemx::shmem_long_atomic_fetch(
-            ptr.rptr() as *const c_long,
+            ptr.remote() as *const c_long,
             ptr.rank as c_int
         )
     }
 }
 
-pub fn int_atomic_fetch(ptr: &mut GlobalPointer<c_int>) -> c_int {
+pub fn int_atomic_fetch(ptr: &GlobalPointer<c_int>) -> c_int {
     unsafe {
         shmemx::shmem_int_atomic_fetch(
-            ptr.rptr() as *const c_int,
+            ptr.remote() as *const c_int,
             ptr.rank as c_int
         )
     }
@@ -147,7 +147,7 @@ pub fn int_atomic_fetch(ptr: &mut GlobalPointer<c_int>) -> c_int {
 pub fn int_atomic_fetch_and(ptr: &mut GlobalPointer<c_int>, value: c_int) -> c_int {
     unsafe {
         shmemx::shmem_int_atomic_fetch_and(
-            ptr.rptr() as * mut c_int,
+            ptr.remote_mut() as * mut c_int,
             value, ptr.rank as c_int
         )
     }
@@ -156,7 +156,7 @@ pub fn int_atomic_fetch_and(ptr: &mut GlobalPointer<c_int>, value: c_int) -> c_i
 pub fn long_atomic_fetch_and(ptr: &mut GlobalPointer<c_long>, value: c_long) -> c_long {
     unsafe {
         shmemx::shmem_long_atomic_fetch_and(
-            ptr.rptr() as * mut c_long,
+            ptr.remote_mut() as * mut c_long,
             value, ptr.rank as c_long
         )
     }
@@ -164,7 +164,7 @@ pub fn long_atomic_fetch_and(ptr: &mut GlobalPointer<c_long>, value: c_long) -> 
 pub fn long_atomic_fetch_add(ptr: &mut GlobalPointer<c_long>, value: c_long) -> c_long {
     unsafe {
         shmemx::shmem_long_atomic_fetch_add(
-            ptr.rptr() as * mut c_long,
+            ptr.remote_mut() as * mut c_long,
             value, ptr.rank as c_long
         )
     }
@@ -173,7 +173,7 @@ pub fn long_atomic_fetch_add(ptr: &mut GlobalPointer<c_long>, value: c_long) -> 
 pub fn int_atomic_fetch_add(ptr: &mut GlobalPointer<c_int>, value: c_int) -> c_int {
     unsafe {
         shmemx::shmem_int_atomic_fetch_add(
-            ptr.rptr() as *mut c_int,
+            ptr.remote_mut() as *mut c_int,
             value,
             ptr.rank as c_int
         )
@@ -183,7 +183,7 @@ pub fn int_atomic_fetch_add(ptr: &mut GlobalPointer<c_int>, value: c_int) -> c_i
 pub fn long_atomic_fetch_xor(ptr: &mut GlobalPointer<c_long>, value: c_long) -> c_long {
     unsafe {
         shmemx::shmem_long_atomic_fetch_xor(
-            ptr.rptr() as * mut c_long,
+            ptr.remote_mut() as * mut c_long,
             value, ptr.rank as c_long
         )
     }
@@ -196,7 +196,7 @@ pub fn scatter<T: Bclable>(dest: &mut GlobalPointer<T>, src: &mut GlobalPointer<
         let nelem = size_of::<T>();
 
         let target = dest.local();
-        let source = src.rptr();
+        let source = src.remote_mut();
 
         shmemx::barrier();
 
@@ -215,7 +215,7 @@ pub fn gather<T: Bclable>(dest: &mut GlobalPointer<T>, src: &mut GlobalPointer<T
         let rankn: usize = shmemx::n_pes() as usize;
         let nelem = size_of::<T>();
 
-        let target = dest.rptr();
+        let target = dest.remote_mut();
         let source = src.local();
 
         shmemx::barrier();
@@ -231,7 +231,7 @@ pub fn all_to_all<T: Bclable>(dest: &mut GlobalPointer<T>, src: &mut GlobalPoint
         let rankn: usize = shmemx::n_pes() as usize;
         let nelem = size_of::<T>();
 
-        let target = dest.rptr();
+        let target = dest.remote_mut();
         let source = src.local();
 
         shmemx::barrier();
