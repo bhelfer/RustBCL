@@ -58,7 +58,7 @@ pub fn benchmark_fft(config: &mut Config) {
     let n = data.local_size;
     let offset: usize = n * rank;
 
-    if rank == 0 { println!("n = {}, N = {}", n, N); }
+//    if rank == 0 { println!("n = {}, N = {}", n, N); }
     for i in 0 .. n {
         let idx = i + offset;
 
@@ -83,7 +83,7 @@ pub fn benchmark_fft(config: &mut Config) {
     comm::barrier();
     let total_time = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
-    println!("total_time = {:?}", total_time);
+    if rank == 0 { println!("total_time = {:?}", total_time); }
 
     comm::barrier();
 
