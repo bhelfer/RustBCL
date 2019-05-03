@@ -17,6 +17,7 @@ use std::vec::Vec;
 use std::env;
 use std::f64::consts::PI;
 use std::mem;
+use std::process::exit;
 
 type Tp = f64;
 type Cp = Complex<Tp>;
@@ -118,7 +119,7 @@ fn bit_reverse(config: &mut Config, data: &mut Array<Cp>, size: usize) {
     let rank: usize = config.rank as usize;
     let n = data.local_size;
     let offset = rank * n;
-    let logN = ((rankn * n) as f64).log2().ceil() as usize;
+    let logN = ((rankn * n) as f64).log2() as usize;
 
     let mut idx = 0;
     let mut buf: Array<Cp> = Array::init(config, rankn);
@@ -209,7 +210,7 @@ fn print_array(data: &Array<Cp>, rank: usize, n: usize) {
     comm::barrier();
     let offset = rank * n;
     let data_serial = data.get_ptr(offset).arget(n);
-    let data_real: Vec<i32> = data_serial.iter().map(|x| x.re as i32).collect();
+    let data_real: Vec<i32> = data_serial.iter().map(|x| x.re.round() as i32).collect();
     println!("rank {}: = {:?}\n", rank, data_real);
     comm::barrier();
 }
