@@ -68,12 +68,22 @@ pub fn benchmark_fft(config: &mut Config) {
     }
     comm::barrier();
 
-    /* debug */ { print_array(config, &data, n, "input"); }
+    /* debug */ if DBG { print_array(config, &data, n, "input"); }
 
     // here start the parallel fft
 
     // forward fft, dir = 1
+    // just recording time for one fft
+    comm::barrier();
+    let start_time = SystemTime::now();
+
     fft_parallel(config, &mut data, 1);
+
+    comm::barrier();
+    let total_time = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+    println!("total_time = {:?}", total_time);
+
     comm::barrier();
 
     for i in 0 .. n {
@@ -85,7 +95,7 @@ pub fn benchmark_fft(config: &mut Config) {
     fft_parallel(config, &mut data, -1);
     comm::barrier();
 
-    /* debug */ { print_array(config, &data, n, "output"); }
+    /* debug */ if DBG { print_array(config, &data, n, "output"); }
 }
 
 fn fft_parallel(config: &mut Config, data: &mut Array<Cp>, dir: i8) {

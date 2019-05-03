@@ -26,7 +26,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use self::num::complex::{Complex, Complex32, Complex64};
 
 fn main() {
-    let mut config = Config::init(32);
+    let mut config = Config::init(1024);
     let rankn = config.rankn;
 
     bench_fft::benchmark_fft(&mut config);
