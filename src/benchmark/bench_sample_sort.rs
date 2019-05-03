@@ -301,7 +301,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     if rank == 0 && DETAIL { println!("rearraging buffers in {:?}", total_time_10); }
 
     comm::barrier();
-    let total_time = SystemTime::now().duration_since(time)
+    let total_time = SystemTime::now().duration_since(start_time)
         .expect("SystemTime::duration_since failed");
 
 
