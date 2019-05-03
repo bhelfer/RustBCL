@@ -22,6 +22,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     let min_size: usize = 3;
     // output debug info or not
     let mut DBG: bool = true;
+    let mut DETAIL: bool = true;
 
     let rankn: usize = config.rankn as usize;
     let rank: usize = config.rank as usize;
@@ -58,8 +59,9 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     comm::barrier();
     let start_time = SystemTime::now();
 
-
     // 0. scattering data from rank 0
+    let start_time_0 = SystemTime::now();
+
     let mut loc_data: Vec<GlobalPointer<u32>> = Vec::new();
     loc_data.resize(rankn as usize, GlobalPointer::null());
     loc_data[rank] = GlobalPointer::init(config, n as usize);
@@ -68,8 +70,14 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     comm::scatter(&mut loc_data[rank], &mut input, 0, n);
     comm::barrier();
 
+    let total_time_0 = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+    if rank == 0 && DETAIL { println!("scattering data in {}", total_time_0); }
+
 
     // 1. local sorting(user serial type)
+    let start_time_1 = SystemTime::now();
+
     let mut loc_data_serial = loc_data[rank].arget(n);
     quickersort::sort(&mut loc_data_serial[..]);
     comm::barrier();
@@ -79,8 +87,14 @@ pub fn benchmark_sample_sort(config: &mut Config) {
         println!("rank {}: {:?}", rank, loc_data_serial); comm::barrier();
     }
 
+    comm::barrier();
+    let total_time_1 = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+    if rank == 0 && DETAIL { println!("local sorting in {}", total_time_1); }
 
     // 2. choosing local pivots
+    let start_time_2 = SystemTime::now();
+
     let mut loc_pivots: Vec<GlobalPointer<u32>> = Vec::new();
     loc_pivots.resize(rankn, GlobalPointer::null());
     loc_pivots[rank] = GlobalPointer::init(config, rankn - 1);
@@ -91,16 +105,24 @@ pub fn benchmark_sample_sort(config: &mut Config) {
             loc_data_serial[size / (rankn * rankn) * (i + 1)]
         );
     }
-    comm::barrier();
 
+    comm::barrier();
+    let total_time_2 = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+    if rank == 0 && DETAIL { println!("choosing local pivots in {}", total_time_2); }
 
     // 3. gather local pivots to rank 0
+    let start_time_3 = SystemTime::now();
+
     let mut pivots: GlobalPointer<u32> = GlobalPointer::init(config, rankn * (rankn - 1));
     comm::gather(&mut pivots, &mut loc_pivots[rank], 0, rankn - 1);
     comm::barrier();
-
+    let total_time_3 = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+    if rank == 0 && DETAIL { println!("gather local pivots to rank 0 in {}", total_time_3); }
 
     // 4. sort all pivots in rank 0
+    let start_time_4 = SystemTime::now();
 
     if rank == 0 {
         let mut pivots_serial = pivots.arget(rankn * (rankn - 1));
@@ -118,6 +140,9 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     comm::broadcast(&mut loc_pivots[rank], 0);
     comm::barrier();
+    let total_time_4 = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+    if rank == 0 && DETAIL { println!("sort all pivots in rank 0 in {}", total_time_4); }
 
     /* debug */ if DBG {
         let mut loc_pivots_serial = loc_pivots[rank].arget(rankn - 1);
@@ -127,6 +152,8 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     // 5. partitioning by pivots (spare many empty spaces)
     // (notice: this is not the optimal algorithm, but easy to all_to_all broadcast)
+
+    let start_time_5 = SystemTime::now();
 
     let mut buckets: Vec<GlobalPointer<u32>> = Vec::new();
     buckets.resize(rankn, GlobalPointer::null());
@@ -156,6 +183,10 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     buckets[rank].idx_rput(((n + 1) * j) as isize, (k - 1) as u32);
     comm::barrier();
 
+    let total_time_5 = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+    if rank == 0 && DETAIL { println!("partitioning by pivots (spare many empty spaces) in {}", total_time_5); }
+
     /* debug */ if DBG {
         let mut buckets_serial = buckets[rank].arget(size + rankn);
         println!("rank {}: buckets = {:?}", rank, buckets_serial); comm::barrier();
@@ -163,6 +194,8 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
 
     // 6. exchange local buckets
+    let start_time_6 = SystemTime::now();
+
     let mut swap_buckets: Vec<GlobalPointer<u32>> = Vec::new();
     swap_buckets.resize(rankn, GlobalPointer::null());
     swap_buckets[rank] = GlobalPointer::init(config, size + rankn);
@@ -171,6 +204,10 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     comm::all_to_all(&mut swap_buckets[rank], &mut buckets[rank], n + 1);
     comm::barrier();
 
+    let total_time_6 = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+    if rank == 0 && DETAIL { println!("exchange local buckets in {}", total_time_6); }
+
     /* debug */ if DBG {
         let mut swap_buckets_serial = swap_buckets[rank].arget(size + rankn);
         println!("rank {}: swap_buckets = {:?}", rank, swap_buckets_serial); comm::barrier();
@@ -178,6 +215,8 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
 
     // 7. rearrange buffers
+    let start_time_7 = SystemTime::now();
+
     let mut loc_buckets: Vec<GlobalPointer<u32>> = Vec::new();
     loc_buckets.resize(rankn, GlobalPointer::null());
     // maximum size is proofed on class
@@ -200,6 +239,13 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     loc_buckets[rank].idx_rput(0, (pos - 1) as u32);
     comm::barrier();
 
+    let total_time_7 = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+    if rank == 0 && DETAIL { println!("rearrange buffers in {}", total_time_7); }
+
+    // 8. local sorting
+    let start_time_8 = SystemTime::now();
+
     let mut loc_buckets_serial = (loc_buckets[rank] + 1).arget(pos - 1);
     quickersort::sort(&mut loc_buckets_serial[..]);
 
@@ -209,12 +255,19 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     (loc_buckets[rank] + 1).arput(&loc_buckets_serial);
     comm::barrier();
+    let total_time_8 = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+    if rank == 0 && DETAIL { println!("rearranged buffers local sorting in {}", total_time_8); }
 
+    // 9. gathering sorted buckets to rank 0
+    let start_time_9 = SystemTime::now();
 
-    // 8. gathering sorted buckets to rank 0
     let mut out_bucket: GlobalPointer<u32> = GlobalPointer::init(config, 2 * size);
     comm::gather(&mut out_bucket, &mut loc_buckets[rank], 0, 2 * n);
     comm::barrier();
+    let total_time_9 = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+    if rank == 0 && DETAIL { println!("gathering sorted buckets to rank 0 in {}", total_time_9); }
 
     /* debug */ if DBG {
         if rank == 0 {
@@ -223,6 +276,9 @@ pub fn benchmark_sample_sort(config: &mut Config) {
         }
         comm::barrier();
     }
+
+    // 10. rearraging buffers
+    let start_time_10 = SystemTime::now();
 
     let mut output: Vec<u32> = Vec::new();
     if rank == 0 {
@@ -240,8 +296,12 @@ pub fn benchmark_sample_sort(config: &mut Config) {
         }
         output.resize(pos, 0);
     }
+    let total_time_10 = SystemTime::now().duration_since(start_time)
+        .expect("SystemTime::duration_since failed");
+    if rank == 0 && DETAIL { println!("rearraging buffers in {}", total_time_10); }
+
     comm::barrier();
-    let total_time = SystemTime::now().duration_since(start_time)
+    let total_time = SystemTime::now().duration_since(time)
         .expect("SystemTime::duration_since failed");
 
 
