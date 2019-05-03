@@ -34,13 +34,17 @@ pub fn benchmark_fft(config: &mut Config) {
     let rank: usize = config.rank as usize;
     let mut rng: StdRng = SeedableRng::from_seed([rankn as u8; 32]);
 
+    if (rankn & (rankn - 1)) != 0 {
+        if rank == 0 { println!("only support rankn of 2's power now"); }
+        return;
+    }
+
     if args.len() <= 1 {
         N = min_size;
-        println!("not enough arguments\nUse default argument N = {}", N);
+        if rank == 0 { println!("not enough arguments\nUse default argument N = {}", N); }
     } else {
         N = args[1].clone().parse().unwrap();
-        N /= rankn;
-        N = (N as f64).log2().ceil() as usize;
+        N = (1 << ((N as f64).log2().ceil() as usize));
         if N < min_size { N = min_size; }
     }
 
@@ -53,6 +57,7 @@ pub fn benchmark_fft(config: &mut Config) {
     let n = data.local_size;
     let offset: usize = n * rank;
 
+    if rank == 0 { println!("n = {}, N = {}", n, N); }
     for i in 0 .. n {
         let idx = i + offset;
 
@@ -63,7 +68,7 @@ pub fn benchmark_fft(config: &mut Config) {
     }
     comm::barrier();
 
-    /* debug */ { print_array(&data, rank, n); }
+    /* debug */ { print_array(config, &data, n, "input"); }
 
     // here start the parallel fft
 
@@ -80,7 +85,7 @@ pub fn benchmark_fft(config: &mut Config) {
     fft_parallel(config, &mut data, -1);
     comm::barrier();
 
-    /* debug */ { print_array(&data, rank, n); }
+    /* debug */ { print_array(config, &data, n, "output"); }
 }
 
 fn fft_parallel(config: &mut Config, data: &mut Array<Cp>, dir: i8) {
@@ -206,11 +211,34 @@ fn step_sequential(config: &mut Config, data: &mut Array<Cp>, w: &mut Cp, stride
     comm::barrier();
 }
 
-fn print_array(data: &Array<Cp>, rank: usize, n: usize) {
-    comm::barrier();
+fn print_array(config: &mut Config, data: &Array<Cp>, n: usize, msg: &str) {
+    let rank = config.rank;
     let offset = rank * n;
+
     let data_serial = data.get_ptr(offset).arget(n);
     let data_real: Vec<i32> = data_serial.iter().map(|x| x.re.round() as i32).collect();
-    println!("rank {}: = {:?}\n", rank, data_real);
+    println!("{}: rank {}: = {:?}\n", msg, rank, data_real);
+    comm::barrier();
+}
+
+fn print_array_all(config: &mut Config, data: &Array<Cp>, n: usize, msg: &str) {
+    let rank = config.rank;
+    let rankn = config.rankn;
+    let offset = rank * n;
+    let N = rankn * n;
+
+    let mut data_ptrs: Vec<GlobalPointer<Cp>> = Vec::new();
+    data_ptrs.resize(rankn, GlobalPointer::null());
+    data_ptrs[rank] = data.get_ptr(offset);
+    comm::barrier();
+    let mut output_ptr: GlobalPointer<Cp> = GlobalPointer::init(config, N);
+    comm::gather(&mut output_ptr, &mut data_ptrs[rank], 0, n);
+    comm::barrier();
+
+    if rank == 0 {
+        let data_serial = output_ptr.arget(N);
+        let data_real: Vec<i32> = data_serial.iter().map(|x| x.re.round() as i32).collect();
+        println!("{}: {:?}\n", msg, data_real);
+    }
     comm::barrier();
 }
