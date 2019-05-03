@@ -9,7 +9,6 @@ use std::marker::PhantomData;
 pub struct Array<T: Bclable>{
     pub local_size: usize,
     pub ptrs: Vec<GlobalPointer<T>>,
-    // pub refer_type: PhantomData<T>, // JY: since you already use the type T in field ptrs, you do not need this PhantomData.
 }
 impl <'a, T: Bclable> Array<T>
     where T: Clone + Copy + Default
@@ -36,7 +35,6 @@ impl <'a, T: Bclable> Array<T>
 
     pub fn read(&self, idx: usize) -> T {
         let rank: usize = idx / self.local_size;
-        // changed to >= by lfz
         if rank >= shmemx::n_pes() {
             panic!("Array::read: index {} out of bound!", idx);
         }
@@ -46,7 +44,6 @@ impl <'a, T: Bclable> Array<T>
 
     pub fn write(&mut self, c: T, idx: usize) {
         let rank: usize = idx / self.local_size;
-        // changed to >= by lfz
         if rank >= shmemx::n_pes() {
             panic!("Array::read: index {} out of bound!", idx);
         }
@@ -55,13 +52,10 @@ impl <'a, T: Bclable> Array<T>
     }
     pub fn get_ptr(&self, idx: usize) -> GlobalPointer<T> {
         let rank: usize = idx / self.local_size;
-        // changed to >= by lfz
         if rank >= shmemx::n_pes() {
             panic!("Array::read: index {} out of bound!", idx);
         }
         let local_idx: usize = idx % self.local_size; // mod % is enough
-        //let t = self.ptrs[1];
-        //return t + local_idx as isize;
         return self.ptrs[rank] + local_idx as isize;
     }
 
