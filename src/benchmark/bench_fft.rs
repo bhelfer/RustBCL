@@ -171,7 +171,7 @@ fn step_parallel(config: &mut Config, data: &mut Array<Cp>, w: &mut Cp, stride: 
     let n = data.local_size;
     let offset = rank * n;
 
-    wk *= *(&w.powf(offset % stride as f64));
+    wk *= *(&w.powf((offset % stride) as f64));
 
     let mut idx = 0;
     for i in 0 .. n {
