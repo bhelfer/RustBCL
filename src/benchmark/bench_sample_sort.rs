@@ -14,26 +14,29 @@ use std::vec::Vec;
 use std::env;
 use rand::{rngs::StdRng, Rng, thread_rng, SeedableRng, ChaChaRng};
 use is_sorted::IsSorted;
-use backend::comm::gather;
 
 pub fn benchmark_sample_sort(config: &mut Config) {
 
     let args: Vec<String> = env::args().collect();
-    let n: usize;
+    let mut n: usize;
+    let min_size: usize = 3;
     // output debug info or not
     let mut DBG: bool = true;
 
+    let rankn: usize = config.rankn as usize;
+    let rank: usize = config.rank as usize;
+
     if args.len() <= 1 {
-        n = 10;
+        n = min_size;
         println!("not enough arguments\nUse default argument n = {}", n);
     } else {
         n = args[1].clone().parse().unwrap();
+        n /= rankn;
+        if n < min_size { n = min_size; }
     }
 
-    if n >= 100 { DBG = false; }
+    if n * rankn >= 100 { DBG = false; }
 
-    let rankn: usize = config.rankn as usize;
-    let rank: usize = config.rank as usize;
     let mut rng: StdRng = SeedableRng::from_seed([rankn as u8; 32]);
 
     let size: usize = n * rankn;
@@ -43,7 +46,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
         for i in 0 .. size {
             input.idx_rput(
                 i as isize,
-                rng.gen_range(0, 500)
+                rng.gen_range(0, std::u32::MAX)
             );
         }
     }

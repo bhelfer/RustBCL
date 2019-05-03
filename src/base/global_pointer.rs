@@ -10,6 +10,7 @@ use std::ops;
 use std::mem::size_of;
 use std::ptr;
 use std::fmt;
+use num::complex::{Complex, Complex32, Complex64};
 
 /*
 ----Bclable----
@@ -26,6 +27,8 @@ impl Bclable for u32 {}
 impl Bclable for u64 {}
 impl Bclable for usize {}
 impl Bclable for char {}
+impl Bclable for Complex32 {}
+impl Bclable for Complex64 {}
 
 /*
 ----GlobalPointer----
