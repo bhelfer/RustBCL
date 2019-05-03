@@ -86,6 +86,7 @@ pub fn benchmark_fft(config: &mut Config) {
     if rank == 0 { println!("total_time = {:?}", total_time); }
 
     comm::barrier();
+    return;
 
     for i in 0 .. n {
         let t: Cp = data.read(i + offset).powf(2.0);
@@ -170,9 +171,7 @@ fn step_parallel(config: &mut Config, data: &mut Array<Cp>, w: &mut Cp, stride: 
     let n = data.local_size;
     let offset = rank * n;
 
-    for i in 0 .. (offset % stride) {
-        wk *= *w;
-    }
+    wk *= *(&w.powf(offset % stride as f64));
 
     let mut idx = 0;
     for i in 0 .. n {
