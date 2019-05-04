@@ -26,11 +26,11 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use self::num::complex::{Complex, Complex32, Complex64};
 
 fn main() {
-    let mut config = Config::init(1024);
+    let mut config = Config::init(2048);
     let rankn = config.rankn;
 
-    bench_fft::benchmark_fft(&mut config);
-//    bench_sample_sort::benchmark_sample_sort(&mut config);
+//    bench_fft::benchmark_fft(&mut config);
+    bench_sample_sort::benchmark_sample_sort(&mut config);
 //    strong_scaling_queue(&mut config);
 //    weak_scaling_queue(&mut config);
 
