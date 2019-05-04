@@ -19,7 +19,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     let args: Vec<String> = env::args().collect();
     let mut n: usize;
-    let min_size: usize = 3;
+    let min_size: usize = 8;
     // output debug info or not
     let mut DBG: bool = true;
     let mut DETAIL: bool = false;
@@ -62,8 +62,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     // 0. scattering data from rank 0
     let start_time_0 = SystemTime::now();
 
-    let mut loc_data: Vec<GlobalPointer<u32>> = Vec::new();
-    loc_data.resize(rankn as usize, GlobalPointer::null());
+    let mut loc_data: Vec<GlobalPointer<u32>> = vec!(GlobalPointer::null(); rankn);
     loc_data[rank] = GlobalPointer::init(config, n as usize);
     comm::barrier();
 
@@ -96,8 +95,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     // 2. choosing local pivots
     let start_time_2 = SystemTime::now();
 
-    let mut loc_pivots: Vec<GlobalPointer<u32>> = Vec::new();
-    loc_pivots.resize(rankn, GlobalPointer::null());
+    let mut loc_pivots: Vec<GlobalPointer<u32>> = vec!(GlobalPointer::null(); rankn);
     loc_pivots[rank] = GlobalPointer::init(config, rankn - 1);
     comm::barrier();
     for i in 0 .. rankn - 1 {
@@ -156,8 +154,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
 
     let start_time_5 = SystemTime::now();
 
-    let mut buckets: Vec<GlobalPointer<u32>> = Vec::new();
-    buckets.resize(rankn, GlobalPointer::null());
+    let mut buckets: Vec<GlobalPointer<u32>> = vec!(GlobalPointer::null(); rankn);
     buckets[rank] = GlobalPointer::init(config, size + rankn);
     comm::barrier();
 
@@ -197,8 +194,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     // 6. exchange local buckets
     let start_time_6 = SystemTime::now();
 
-    let mut swap_buckets: Vec<GlobalPointer<u32>> = Vec::new();
-    swap_buckets.resize(rankn, GlobalPointer::null());
+    let mut swap_buckets: Vec<GlobalPointer<u32>> = vec!(GlobalPointer::null(); rankn);
     swap_buckets[rank] = GlobalPointer::init(config, size + rankn);
     comm::barrier();
 
@@ -218,8 +214,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     // 7. rearrange buffers
     let start_time_7 = SystemTime::now();
 
-    let mut loc_buckets: Vec<GlobalPointer<u32>> = Vec::new();
-    loc_buckets.resize(rankn, GlobalPointer::null());
+    let mut loc_buckets: Vec<GlobalPointer<u32>> = vec!(GlobalPointer::null(); rankn);
     // maximum size is proofed on class
     loc_buckets[rank] = GlobalPointer::init(config, 2 * size / rankn);
     comm::barrier();

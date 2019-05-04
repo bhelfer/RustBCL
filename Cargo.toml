@@ -10,6 +10,7 @@ time = "0.1"
 quickersort = "3.0"
 is_sorted = "0.1.1"
 num = "0.2.0"
+polynomial = "*"
 
 #[dev-dependencies]
 #criterion = "0.2"
