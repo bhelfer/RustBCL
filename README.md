@@ -37,7 +37,10 @@ TODO:
 - Done:
   - Distributed Sample Sort
     - Base mostly on GlobalPtr
-    - Possible problem: all-to-all communication with each PE sending $local\_size$ data to each other processor.
+    - Possible problem: 
+      - all-to-all communication with each PE sending $local\_size$ data to each other processor, which is not optimized in communication
+      - simpified buffer with many sparing spaces, leading to bad scaling by Amdahl's law
+      
   - Distributed Fast Fourier Transformation on 1D (only work when the processor's number is $2^k$, $k \in N$.
     - Based mostly on Array
     - Possible problem: too much blocking in communications
