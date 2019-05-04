@@ -30,18 +30,20 @@ TODO:
 ## Algorithms
 
 - TODO:
-  - Make more testing, including find-grained time testing of each sub-part. 
-  - Find the reason why the scalings on multil nodes are so terrible.
-  - Try to improve the algorithms.
+  - Make more testing, including fine-grained time testing of each subpart. 
+  - Find the reason why the scalings on multi-nodes are so terrible.
+  - Try to improve the two algorithms.
   
 - Done:
   - Distributed Sample Sort
     - Base mostly on GlobalPtr
-  - Distributed Fast Fourier Transformation on 1D (only work when processor's number is $2^k$, $k \in N$.
+    - Possible problem: all-to-all communication with each PE sending $local\_size$ data to each other processor.
+  - Distributed Fast Fourier Transformation on 1D (only work when the processor's number is $2^k$, $k \in N$.
     - Based mostly on Array
+    - Possible problem: too much blocking in communications
   - Made some scaling tests on Cori
-    - Scales not too bad on 1 node, multi cores.
-    - Scales extremely terrible on multi nodes.
+    - Scales not too bad on 1 node, multi-cores.
+    - Scales extremely terrible on multi-nodes.
   
 ## HashTable
   
