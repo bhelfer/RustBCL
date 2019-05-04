@@ -3,7 +3,6 @@
 #![allow(deprecated)]
 #![allow(non_snake_case)]
 
-extern crate polynomial;
 
 use num::complex::{Complex, Complex32, Complex64};
 use rand::{rngs::StdRng, Rng, thread_rng, SeedableRng, ChaChaRng};
@@ -20,6 +19,9 @@ use std::env;
 use std::f64::consts::PI;
 use std::mem;
 use std::process::exit;
+
+extern crate polynomial;
+//use polynomial::Polynomial;
 
 type Tp = f64;
 type Cp = Complex<Tp>;
@@ -84,6 +86,7 @@ pub fn benchmark_fft(config: &mut Config) {
     if rank == 0 { println!("total_time = {:?}", total_time); }
 }
 
+
 pub fn fft_polynomial_squaring(config: &mut Config) {
 
     // ----------------------  init issues -----------------------
@@ -116,20 +119,30 @@ pub fn fft_polynomial_squaring(config: &mut Config) {
 
     // double N for polynomial squaring
     let mut data: Array<Cp> = Array::init(config, 2 * N);
-    let mut data_vec: Vec<Cp> = vec!(Complex::new(0.0, 0.0); 2 * N);
+    let mut data_vec: Vec<Tp> = vec!(0.0; 2 * N);
+    let mut data_poly: polynomial::Polynomial<Tp> = polynomial::Polynomial::new(vec![]);
 
     comm::barrier();
 
     let n = data.local_size;
     let offset: usize = n * rank;
 
+    for idx in 0 .. N {
+        let mut val = rng.gen_range(-1000, 1000) as f64;
+        if idx >= N { val = 0.0; }
+        data_vec[idx] = val;
+    }
+
     for i in 0 .. n {
         let idx = i + offset;
-        let mut val = idx as f64;
-        if idx >= N { val = 0.0; }
-        data.write(Complex::new(val, 0.0), idx);
+        data.write(Complex::new(data_vec[idx], 0.0), idx);
     }
+
     comm::barrier();
+
+    if rank == 0 {
+        data_poly = polynomial::Polynomial::new(data_vec);
+    }
 
     /* debug */ if DBG { print_array(config, &data, n, "input"); }
 
@@ -150,7 +163,35 @@ pub fn fft_polynomial_squaring(config: &mut Config) {
     fft_parallel(config, &mut data, -1);
     comm::barrier();
 
-    /* debug */ if DBG { print_array(config, &data, n, "output"); }
+
+    // ---------------- here start the polynomial squaring by brute force -----------------
+    if rank == 0 {
+        data_poly = data_poly.clone() * data_poly.clone();
+    }
+
+    // ---------------- here start the comparison between two methods ---------------------
+
+    // gather distributed array to rank 0
+    let mut data_ptrs: Vec<GlobalPointer<Cp>> = vec!(GlobalPointer::null(); rankn);
+    data_ptrs[rank] = data.get_ptr(offset);
+    let mut output_ptr: GlobalPointer<Cp> = GlobalPointer::init(config, 2 * N);
+    comm::gather(&mut output_ptr, &mut data_ptrs[rank], 0, n);
+    comm::barrier();
+
+    if rank == 0 {
+        let mut data_serial: Vec<Cp> = output_ptr.arget(2 * N);
+        let mut data_poly: Vec<Tp> = Vec::from(data_poly.data());
+
+        let mut data_serial: Vec<i32> = data_serial.iter().map(|x| x.re.round() as i32).collect();
+        let data_poly: Vec<i32> = data_poly.iter().map(|x| x.round() as i32).collect();
+        data_serial.resize(data_poly.len(), 0);
+
+        /* debug */ if DBG { println!("data_serial: {:?}", data_serial); }
+        /* debug */ if DBG { println!("data_poly: {:?}", data_poly); }
+
+        assert_eq!(data_serial, data_poly);
+    }
+
 }
 
 
@@ -158,7 +199,7 @@ fn fft_parallel(config: &mut Config, data: &mut Array<Cp>, dir: i8) {
     let rankn: usize = config.rankn as usize;
     let rank: usize = config.rank as usize;
 
-    let DETAIL: bool = true;
+    let DETAIL: bool = false;
 
     let mut w: Cp = Complex::from_polar(&(1.0), &(-dir as f64 * PI));
 

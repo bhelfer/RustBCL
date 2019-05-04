@@ -29,9 +29,9 @@ fn main() {
     let mut config = Config::init(2048);
     let rankn = config.rankn;
 
-//    bench_fft::fft_polynomial_squaring(&mut config);
+    bench_fft::fft_polynomial_squaring(&mut config);
 //    bench_fft::benchmark_fft(&mut config);
-    bench_sample_sort::benchmark_sample_sort(&mut config);
+//    bench_sample_sort::benchmark_sample_sort(&mut config);
 //    strong_scaling_queue(&mut config);
 //    weak_scaling_queue(&mut config);
 
