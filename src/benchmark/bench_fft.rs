@@ -199,7 +199,7 @@ fn fft_parallel(config: &mut Config, data: &mut Array<Cp>, dir: i8) {
     let rankn: usize = config.rankn as usize;
     let rank: usize = config.rank as usize;
 
-    let DETAIL: bool = false;
+    let DETAIL: bool = true;
 
     let mut w: Cp = Complex::from_polar(&(1.0), &(-dir as f64 * PI));
 
@@ -219,7 +219,18 @@ fn fft_parallel(config: &mut Config, data: &mut Array<Cp>, dir: i8) {
     if rank == 0 && DETAIL { println!("bit reversal in {:?}", total_time_0); }
 
     while stride < N {
+
+        comm::barrier();
+        let start_time_1 = SystemTime::now();
+
         step_fft(config, data, &mut w, stride);
+
+        let total_time_1 = SystemTime::now().duration_since(start_time_1).expect("SystemTime::duration_since failed");
+        if rank == 0 && DETAIL {
+            if stride < n { println!("step_sequential(stride = {}) in {:?}", stride, total_time_1); }
+            else { println!("step_parallel(stride = {}) in {:?}", stride, total_time_1); }
+        }
+
         stride <<= 1;
     }
     comm::barrier();

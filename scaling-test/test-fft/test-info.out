@@ -1,0 +1,123 @@
+-------------------------------------------------------------------------------
+
+srun -N 1 -n 1 ./target/release/main $((2**23 / 1))
+
+bit reversal in 1.756042882s
+step_sequential(stride = 1) in 552.148969ms
+step_sequential(stride = 2) in 556.858989ms
+step_sequential(stride = 4) in 548.713019ms
+step_sequential(stride = 8) in 563.871892ms
+step_sequential(stride = 16) in 554.990861ms
+step_sequential(stride = 32) in 555.007353ms
+step_sequential(stride = 64) in 573.794436ms
+step_sequential(stride = 128) in 568.02253ms
+step_sequential(stride = 256) in 551.393501ms
+step_sequential(stride = 512) in 550.189217ms
+step_sequential(stride = 1024) in 548.85521ms
+step_sequential(stride = 2048) in 547.154561ms
+step_sequential(stride = 4096) in 547.02224ms
+step_sequential(stride = 8192) in 546.32086ms
+step_sequential(stride = 16384) in 546.875332ms
+step_sequential(stride = 32768) in 546.743135ms
+step_sequential(stride = 65536) in 546.803965ms
+step_sequential(stride = 131072) in 546.279973ms
+step_sequential(stride = 262144) in 546.782269ms
+step_sequential(stride = 524288) in 546.517899ms
+step_sequential(stride = 1048576) in 546.748731ms
+step_sequential(stride = 2097152) in 546.4995ms
+step_sequential(stride = 4194304) in 546.466876ms
+step_sequential(stride = 8388608) in 546.671159ms
+total_time = 14.987090214s
+
+-------------------------------------------------------------------------------
+
+srun -N 1 -n 8 ./target/release/main $((2**23 / 8))
+
+bit reversal in 749.107948ms
+step_sequential(stride = 1) in 80.003782ms
+step_sequential(stride = 2) in 77.921284ms
+step_sequential(stride = 4) in 76.848874ms
+step_sequential(stride = 8) in 78.375952ms
+step_sequential(stride = 16) in 76.965394ms
+step_sequential(stride = 32) in 77.02491ms
+step_sequential(stride = 64) in 80.356594ms
+step_sequential(stride = 128) in 79.553273ms
+step_sequential(stride = 256) in 77.077899ms
+step_sequential(stride = 512) in 76.51151ms
+step_sequential(stride = 1024) in 76.289244ms
+step_sequential(stride = 2048) in 76.478183ms
+step_sequential(stride = 4096) in 76.248248ms
+step_sequential(stride = 8192) in 76.462971ms
+step_sequential(stride = 16384) in 76.063832ms
+step_sequential(stride = 32768) in 76.185282ms
+step_sequential(stride = 65536) in 76.128885ms
+step_sequential(stride = 131072) in 76.032979ms
+step_sequential(stride = 262144) in 76.064293ms
+step_sequential(stride = 524288) in 76.043681ms
+step_sequential(stride = 1048576) in 76.130879ms
+step_parallel(stride = 2097152) in 205.746486ms
+step_parallel(stride = 4194304) in 206.266104ms
+step_parallel(stride = 8388608) in 204.73285ms
+total_time = 2.98496417s
+
+-------------------------------------------------------------------------------
+
+srun -N 1 -n 32 ./target/release/main $((2**23 / 32))
+
+bit reversal in 689.981748ms
+step_sequential(stride = 1) in 22.46943ms
+step_sequential(stride = 2) in 22.486302ms
+step_sequential(stride = 4) in 22.405781ms
+step_sequential(stride = 8) in 22.942544ms
+step_sequential(stride = 16) in 22.758029ms
+step_sequential(stride = 32) in 22.445531ms
+step_sequential(stride = 64) in 23.106224ms
+step_sequential(stride = 128) in 22.998976ms
+step_sequential(stride = 256) in 22.307349ms
+step_sequential(stride = 512) in 22.373957ms
+step_sequential(stride = 1024) in 22.336655ms
+step_sequential(stride = 2048) in 22.241673ms
+step_sequential(stride = 4096) in 22.287546ms
+step_sequential(stride = 8192) in 22.298023ms
+step_sequential(stride = 16384) in 22.304681ms
+step_sequential(stride = 32768) in 22.224016ms
+step_sequential(stride = 65536) in 22.387279ms
+step_sequential(stride = 131072) in 22.287524ms
+step_sequential(stride = 262144) in 22.185357ms
+step_parallel(stride = 524288) in 60.261502ms
+step_parallel(stride = 1048576) in 59.387796ms
+step_parallel(stride = 2097152) in 59.479081ms
+step_parallel(stride = 4194304) in 59.426214ms
+step_parallel(stride = 8388608) in 60.183972ms
+total_time = 1.415976425s
+
+-------------------------------------------------------------------------------
+
+srun -N 16 -n 512 ./target/release/main $((2**23 / 512))
+
+bit reversal in 4.78155779s
+step_sequential(stride = 1) in 1.652074ms
+step_sequential(stride = 2) in 1.542274ms
+step_sequential(stride = 4) in 1.516032ms
+step_sequential(stride = 8) in 1.519259ms
+step_sequential(stride = 16) in 1.436364ms
+step_sequential(stride = 32) in 1.507105ms
+step_sequential(stride = 64) in 1.452821ms
+step_sequential(stride = 128) in 1.478252ms
+step_sequential(stride = 256) in 1.428117ms
+step_sequential(stride = 512) in 1.424415ms
+step_sequential(stride = 1024) in 1.436975ms
+step_sequential(stride = 2048) in 1.466713ms
+step_sequential(stride = 4096) in 1.47291ms
+step_sequential(stride = 8192) in 1.435446ms
+step_sequential(stride = 16384) in 1.518787ms
+step_parallel(stride = 32768) in 4.252292ms
+step_parallel(stride = 65536) in 4.031811ms
+step_parallel(stride = 131072) in 4.062959ms
+step_parallel(stride = 262144) in 4.111943ms
+step_parallel(stride = 524288) in 4.054372ms
+step_parallel(stride = 1048576) in 100.865415ms
+step_parallel(stride = 2097152) in 99.181219ms
+step_parallel(stride = 4194304) in 101.115333ms
+step_parallel(stride = 8388608) in 101.752869ms
+total_time = 5.227676405s
