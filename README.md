@@ -27,17 +27,32 @@ TODO:
   - Hash table: need to be refined
   - Queue
   
-## HashTable
+## Algorithms
 
-#### TODO?
-  - Test Not Passed Yet!!!
-    - Do not know why PE will stuck in functions like `rget()` (large number of inputs, 2 PEs)
+- TODO:
+  - Make more testing, including find-grained time testing of each sub-part. 
+  - Find the reason why the scalings on multil nodes are so terrible.
+  - Try to improve the algorithms.
+  
+- Done:
+  - Distributed Sample Sort
+    - Base mostly on GlobalPtr
+  - Distributed Fast Fourier Transformation on 1D (only work when processor's number is $2^k$, $k \in N$.
+    - Based mostly on Array
+  - Made some scaling tests on Cori
+    - Scales not too bad on 1 node, multi cores.
+    - Scales extremely terrible on multi nodes.
+  
+## HashTable
+  
 
 #### Apr. 20:
 - Done:
   - Add test.sh, used to genereate test in `[test]` to binary and run it with `oshrun`.
   - need **jq** to find the binary (you can `sudo apt-get install jq`)
-
+  - Test Not Passed Yet on docker
+    - That's because the Openshmem is not implemented well on the docker version. The version on Cori is robust to millions of operations. No problem now.
+    
 #### Apr. 19:
 - Done:
   - use `Config::alloc()` for initializing
