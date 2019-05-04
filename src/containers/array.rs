@@ -23,7 +23,7 @@ impl <'a, T: Bclable> Array<T>
     I have implemented the first way in your init function.
     */
     pub fn init(config: &mut Config, n:usize) -> Array<T> {
-        let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
+        let local_size = (n + config.rankn - 1) / config.rankn;
         let mut ptrs = vec!(GlobalPointer::null(); config.rankn);
         ptrs[config.rank] = GlobalPointer::init(config, local_size);
 
