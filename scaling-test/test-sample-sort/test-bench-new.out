@@ -1,0 +1,40 @@
+strong scaling
+N = 1, n = 1, local size = 1048576
+total_time = 83.576001ms
+N = 1, n = 2, local size = 524288
+total_time = 64.705701ms
+N = 1, n = 4, local size = 262144
+total_time = 44.15684ms
+N = 1, n = 8, local size = 131072
+total_time = 35.313549ms
+N = 1, n = 16, local size = 65536
+total_time = 32.132059ms
+N = 1, n = 32, local size = 32768
+total_time = 35.924023ms
+N = 1, n = 32, local size = 32768
+total_time = 36.125429ms
+N = 2, n = 64, local size = 16384
+total_time = 79.479772ms
+N = 4, n = 128, local size = 8192
+total_time = 91.839843ms
+N = 8, n = 256, local size = 4096
+total_time = 98.045168ms
+N = 16, n = 512, local size = 2048
+total_time = 146.161298ms
+weak scaling
+N = 1, n = 1, local size = 1048576
+total_time = 83.381005ms
+N = 1, n = 2, local size = 1048576
+total_time = 131.25978ms
+N = 1, n = 4, local size = 1048576
+total_time = 180.48251ms
+N = 1, n = 8, local size = 1048576
+total_time = 279.496419ms
+N = 1, n = 16, local size = 1048576
+total_time = 470.164299ms
+N = 1, n = 32, local size = 1048576
+total_time = 869.595885ms
+N = 1, n = 32, local size = 1048576
+total_time = 867.358578ms
+N = 2, n = 64, local size = 1048576
+total_time = 3.939725429s
