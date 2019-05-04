@@ -20,3 +20,5 @@ LibBCL/
 core*
 *.iml
 
+test-bench.sh
+test-bench.out
