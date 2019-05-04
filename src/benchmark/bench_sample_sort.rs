@@ -79,6 +79,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     let start_time_1 = SystemTime::now();
 
     let mut loc_data_serial = loc_data[rank].arget(n);
+    comm::barrier();
     quickersort::sort(&mut loc_data_serial[..]);
     comm::barrier();
 
