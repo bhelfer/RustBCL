@@ -5,6 +5,8 @@
 use backend::{comm, shmemx::{self, shmem_broadcast64}};
 use base::{config::{self, Config}, global_pointer::{self, GlobalPointer, Bclable}};
 use std::marker::PhantomData;
+use std::slice::SliceIndex;
+use std::ops::{IndexMut, Index};
 
 pub struct Array<T: Bclable>{
     pub local_size: usize,
@@ -27,7 +29,7 @@ impl <'a, T: Bclable> Array<T>
         let local_size = (n + config.rankn - 1) / config.rankn;
         let mut ptrs = vec!(GlobalPointer::null(); config.rankn);
         ptrs[config.rank] = GlobalPointer::init(config, local_size);
-
+        comm::barrier();
         for rank in 0..config.rankn {
             comm::broadcast(&mut ptrs[rank], rank);
         }
@@ -60,5 +62,9 @@ impl <'a, T: Bclable> Array<T>
         let local_idx: usize = idx % self.local_size; // mod % is enough
         return self.ptrs[rank] + local_idx as isize;
     }
+
+//    pub fn rptr(&self, rank: usize) -> GlobalPointer<T> {
+//        self.ptrs[rank]
+//    }
 
 }
