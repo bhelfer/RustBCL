@@ -10,6 +10,7 @@ pub struct Array<T: Bclable>{
     pub local_size: usize,
     pub ptrs: Vec<GlobalPointer<T>>,
 }
+
 impl <'a, T: Bclable> Array<T>
     where T: Clone + Copy + Default
 {
@@ -50,6 +51,7 @@ impl <'a, T: Bclable> Array<T>
         let local_idx = idx % self.local_size; // mod % is enough
         self.ptrs[rank].idx_rput(local_idx as isize, c);
     }
+
     pub fn get_ptr(&self, idx: usize) -> GlobalPointer<T> {
         let rank: usize = idx / self.local_size;
         if rank >= shmemx::n_pes() {

@@ -22,7 +22,7 @@ pub fn benchmark_sample_sort(config: &mut Config) {
     let min_size: usize = 8;
     // output debug info or not
     let mut DBG: bool = true;
-    let mut DETAIL: bool = false;
+    let mut DETAIL: bool = true;
 
     let rankn: usize = config.rankn as usize;
     let rank: usize = config.rank as usize;

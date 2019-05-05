@@ -19,6 +19,7 @@ use std::env;
 use std::f64::consts::PI;
 use std::mem;
 use std::process::exit;
+use std::mem::swap;
 
 extern crate polynomial;
 //use polynomial::Polynomial;
@@ -58,6 +59,7 @@ pub fn benchmark_fft(config: &mut Config) {
 
     // double N for polynomial squaring
     let mut data: Array<Cp> = Array::init(config, 2 * N);
+    let mut data_swap: Array<Cp> = Array::init(config, 2 * N);
     comm::barrier();
 
     let n = data.local_size;
@@ -73,13 +75,13 @@ pub fn benchmark_fft(config: &mut Config) {
     }
     comm::barrier();
 
-    /* debug */ if DBG { print_array(config, &data, n, "input"); }
+    /* debug */ if DBG { print_array_all(config, &data, n, "input"); }
 
     // ---------------- forward fft, dir = 1 ------------------
     comm::barrier();
     let start_time = SystemTime::now();
 
-    fft_parallel(config, &mut data, 1);
+    fft_parallel(config, &mut data, &mut data_swap, 1);
 
     comm::barrier();
     let total_time = SystemTime::now().duration_since(start_time).expect("SystemTime::duration_since failed");
@@ -122,6 +124,7 @@ pub fn fft_polynomial_squaring(config: &mut Config) {
     let mut data_vec: Vec<Tp> = vec!(0.0; 2 * N);
     let mut data_poly: polynomial::Polynomial<Tp> = polynomial::Polynomial::new(vec![]);
 
+    let mut data_swap: Array<Cp> = Array::init(config, 2 * N);
     comm::barrier();
 
     let n = data.local_size;
@@ -149,7 +152,7 @@ pub fn fft_polynomial_squaring(config: &mut Config) {
     // ---------------- here start the polynomial squaring by fft ------------------------
 
     // ---------------- forward fft, dir = 1 ------------------
-    fft_parallel(config, &mut data, 1);
+    fft_parallel(config, &mut data, &mut data_swap, 1);
     comm::barrier();
 
     // ---------------- squaring in freq domain ---------------
@@ -160,7 +163,7 @@ pub fn fft_polynomial_squaring(config: &mut Config) {
     comm::barrier();
 
     // ---------------- reverse fft, dir = -1 ------------------
-    fft_parallel(config, &mut data, -1);
+    fft_parallel(config, &mut data, &mut data_swap, -1);
     comm::barrier();
 
 
@@ -195,11 +198,11 @@ pub fn fft_polynomial_squaring(config: &mut Config) {
 }
 
 
-fn fft_parallel(config: &mut Config, data: &mut Array<Cp>, dir: i8) {
+fn fft_parallel(config: &mut Config, data: &mut Array<Cp>, data_swap: &mut Array<Cp>, dir: i8) {
     let rankn: usize = config.rankn as usize;
     let rank: usize = config.rank as usize;
 
-    let DETAIL: bool = false;
+    let DETAIL: bool = true;
 
     let mut w: Cp = Complex::from_polar(&(1.0), &(-dir as f64 * PI));
 
@@ -212,14 +215,28 @@ fn fft_parallel(config: &mut Config, data: &mut Array<Cp>, dir: i8) {
     comm::barrier();
     let start_time_0 = SystemTime::now();
 
-    bit_reverse(config, data, n);
+    slow_bit_reverse(config, data, n);
+//    another_slow_bit_reverse(config, data, data_swap, n);
     comm::barrier();
+//    print_array_all(config, &data, n, "bit reversal data");
+//    print_array_all(config, &data_swap, n, "bit reversal swap");
 
     let total_time_0 = SystemTime::now().duration_since(start_time_0).expect("SystemTime::duration_since failed");
     if rank == 0 && DETAIL { println!("bit reversal in {:?}", total_time_0); }
 
     while stride < N {
+
+        comm::barrier();
+        let start_time_1 = SystemTime::now();
+
         step_fft(config, data, &mut w, stride);
+
+        let total_time_1 = SystemTime::now().duration_since(start_time_1).expect("SystemTime::duration_since failed");
+        if rank == 0 && DETAIL {
+            if stride < n { println!("step_sequential(stride = {}) in {:?}", stride, total_time_1); }
+            else { println!("step_parallel(stride = {}) in {:?}", stride, total_time_1); }
+        }
+
         stride <<= 1;
     }
     comm::barrier();
@@ -298,7 +315,54 @@ fn step_sequential(config: &mut Config, data: &mut Array<Cp>, w: &mut Cp, stride
     *w = *(&w.sqrt());
 }
 
-fn bit_reverse(config: &mut Config, data: &mut Array<Cp>, size: usize) {
+fn another_slow_bit_reverse(config: &mut Config, data: &mut Array<Cp>, data_swap: &mut Array<Cp>, size: usize) {
+    let rankn: usize = config.rankn as usize;
+    let rank: usize = config.rank as usize;
+    let n = data.local_size;
+    let N = rankn * n;
+    let offset = rank * n;
+
+    let mut fft_offset: Vec<usize> = vec!(0; rankn);
+    let mut j = 0;
+    let mut k = 0;
+
+    for i in 0 .. rankn {
+        if i == 0 {
+            j = 0;
+        } else {
+            k = rankn >> 1;
+            while k <= j {
+                j = j - k;
+                k = k >> 1;
+            }
+            j = j + k;
+            fft_offset[i] = j;
+        }
+    }
+    // debug: println!("offset = {:?}", fft_offset);
+
+    let mut num = 0;
+    let mut idx = rank * n;
+    for i in 0 .. n {
+        if i == 0 {
+            num = 0;
+        } else {
+            k = N >> 1;
+            while k <= num {
+                num -= k;
+                k = k >> 1;
+            }
+            num += k;
+        }
+        let t = data.read(num + fft_offset[rank]);
+        data_swap.write(t, idx);
+        idx += 1;
+    }
+
+    mem::swap(data, data_swap);
+}
+
+fn slow_bit_reverse(config: &mut Config, data: &mut Array<Cp>, size: usize) {
     let rankn: usize = config.rankn as usize;
     let rank: usize = config.rank as usize;
     let n = data.local_size;
@@ -306,8 +370,6 @@ fn bit_reverse(config: &mut Config, data: &mut Array<Cp>, size: usize) {
     let logN = ((rankn * n) as f64).log2() as usize;
 
     let mut idx = 0;
-    let mut buf: Array<Cp> = Array::init(config, rankn);
-
     for i in 0 .. n {
         idx = i + offset;
         let idx_rev = rev(idx, logN);
