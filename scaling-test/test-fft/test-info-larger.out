@@ -269,6 +269,9 @@ step_parallel(stride = 2097152) in 195.66048ms
 step_parallel(stride = 4194304) in 194.532329ms
 step_parallel(stride = 8388608) in 193.948103ms
 total_time = 867.520618ms
+
+------------------------------------------------------------------------------------------------
+
 weak scaling
 N = 1, n = 1, local size = 8388608
 bit reversal in 1.759710223s
