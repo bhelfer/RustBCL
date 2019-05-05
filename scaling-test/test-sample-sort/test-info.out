@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 strong scaling
 
 N = 1, n = 1, local size = 8388608
@@ -211,4 +212,3 @@ exchange local buckets in 875.562665ms
 rearrange buffers in 49.539194ms
 rearranged buffers local sorting in 343.980691ms
 THEN RUN OUT OF SYMETTRIC SPACE
-
