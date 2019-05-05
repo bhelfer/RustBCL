@@ -215,8 +215,8 @@ fn fft_parallel(config: &mut Config, data: &mut Array<Cp>, data_swap: &mut Array
     comm::barrier();
     let start_time_0 = SystemTime::now();
 
-    slow_bit_reverse(config, data, n);
-//    another_slow_bit_reverse(config, data, data_swap, n);
+//    slow_bit_reverse(config, data, n);
+    another_slow_bit_reverse(config, data, data_swap, n);
     comm::barrier();
 //    print_array_all(config, &data, n, "bit reversal data");
 //    print_array_all(config, &data_swap, n, "bit reversal swap");
