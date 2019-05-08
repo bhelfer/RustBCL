@@ -27,7 +27,7 @@ fn main() {
     let mut config = Config::init(32);
     let rankn = config.rankn;
 
-    bench_sample_sort::benchmark_sample_sort(&mut config);
+//    bench_sample_sort::benchmark_sample_sort(&mut config);
 //    strong_scaling_queue(&mut config);
 
 //    test_ptr(&mut config);
@@ -38,7 +38,7 @@ fn main() {
 //
 //    test_global_guard(&mut config);
 //
-//    test_array(&mut config);
+    test_array(&mut config);
 //
 //    test_hash_table(&mut config);
 
@@ -177,8 +177,8 @@ fn test_array(config: &mut Config) {
     let rankn: i32 = config.rankn as i32;
     let rank: i32 = config.rank as i32;
     let array_size = 1024;
-//    let total_workload = 131072; // strong scaling
-    let total_workload = 131072 * config.rankn; // weak scaling
+    let total_workload = 131072; // strong scaling
+//    let total_workload = 131072 * config.rankn; // weak scaling
     let local_workload = (total_workload + config.rankn - 1) / config.rankn;
     let mut arr = Array::<i64>::init(config, array_size);
     let mut rng: StdRng = SeedableRng::from_seed([rankn as u8; 32]);
