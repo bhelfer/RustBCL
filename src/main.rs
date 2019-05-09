@@ -31,7 +31,7 @@ fn main() {
 
 //    bench_fft::fft_polynomial_squaring(&mut config);
 //    bench_fft::benchmark_fft(&mut config);
- //   bench_sample_sort::benchmark_sample_sort(&mut config);
+    bench_sample_sort::benchmark_sample_sort(&mut config);
 //    bench_sample_sort_array::benchmark_sample_sort(&mut config);
 //    strong_scaling_queue(&mut config);
 //    weak_scaling_queue(&mut config);
@@ -44,7 +44,7 @@ fn main() {
 //
 //    test_global_guard(&mut config);
 //
-    test_array(&mut config);
+ //   test_array(&mut config);
 //
 //    test_hash_table(&mut config);
 
