@@ -14,9 +14,22 @@ pub mod containers;
 pub mod benchmark;
 
 use base::{global_pointer::{Bclable, GlobalPointer}, global_guard::GlobalGuard, config::Config};
-use containers::{array::Array, hash_table::HashTable, queue::Queue};
-use containers::guard_array::{GuardArray, GlobalGuardVec};
-use benchmark::{bench_global_guard, bench_global_pointer, bench_shmem, bench_hashtable, bench_sample_sort, bench_fft};
+use containers::{
+    array::Array,
+    hash_table::HashTable,
+    queue::Queue,
+    guard_array::{GuardArray, GlobalGuardVec}
+};
+use benchmark::{
+    bench_global_guard,
+    bench_global_pointer,
+    bench_shmem,
+    bench_hashtable,
+    bench_sample_sort,
+    bench_fft,
+    bench_guard_array,
+    bench_queue
+};
 use backend::{comm, shmemx};
 
 use self::rand::{Rng, StdRng, SeedableRng};
@@ -29,31 +42,15 @@ fn main() {
     let mut config = Config::init(1024);
     let rankn = config.rankn;
 
-//    bench_fft::benchmark_fft(&mut config);
-//    bench_sample_sort::benchmark_sample_sort(&mut config);
-    strong_scaling_queue(&mut config);
-    weak_scaling_queue(&mut config);
-
 //    test_ptr(&mut config);
-//
 //    test_global_pointer(&mut config);
-//
 //    test_shmem_atomic(&mut config);
-//
 //    test_global_guard(&mut config);
-//
 //    test_array(&mut config);
-//
 //    test_hash_table(&mut config);
-
 //    test_queue(&mut config);
-
-
 //    test_global_guard_vec(&mut config);
-
 //    test_guard_array(&mut config);
-
-//    benchmark_guard_array(&mut config);
 
 //    bench_global_guard::benchmark_global_guard(&mut config);
 //    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
@@ -63,7 +60,23 @@ fn main() {
 //    bench_shmem::benchmark_shmem_atomic_fetch_put(&mut config);
 //    bench_hashtable::benchmark_hash_table(&mut config);
 //    bench_sample_sort::benchmark_sample_sort(&mut config);
+//    bench_fft::benchmark_fft(&mut config);
+//    bench_sample_sort::benchmark_sample_sort(&mut config);
 
+//    let workload = 131072;
+//    bench_queue::test_rand(&mut config, workload);
+    let workload = 131072;
+    let label = "strong sclaing";
+    benchmark(&mut config, workload, label);
+
+//    let workload = 131072 * config.rankn;
+//    let label = "weak sclaing";
+//    benchmark(&mut config, workload, label);
+}
+
+fn benchmark(config: &mut Config, workload: usize, label: &str) {
+    bench_guard_array::benchmark_guard_array(config, workload, label);
+    bench_queue::benchmark_queue(config, workload, label);
 }
 
 
@@ -290,83 +303,6 @@ fn test_hash_table(config: &mut Config) {
     }
 }
 
-fn weak_scaling_queue(config: &mut Config) {
-//    if config.rank == 0 { println!("\n------------Queue's weak scaling------------\n"); }
-    let rankn = config.rankn;
-    comm::barrier();
-    let mut queue = Queue::<char>::new(config, 131080 * rankn);
-    comm::barrier();
-    let start = SystemTime::now();
-    for _ in 0..131072 {
-        queue.push(('a' as u8 + config.rank as u8) as char);
-    }
-    comm::barrier();
-    let push_time = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
-//    if config.rank == 0 { println!("Insert time: {:?}, starting removing.", since_the_epoch); }
-
-    comm::barrier();
-    let start = SystemTime::now();
-    for i in 0..131072 {
-        let f = queue.pop();
-    }
-    let pop_time = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
-//    if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }
-    if config.rank == 0 {
-        println!("weak scaling: {}, {:?}, {:?}", rankn, push_time, pop_time);
-    }
-//    comm::barrier();
-//    if config.rank == 0 {
-//        println!("Finished inserting!");
-//        let mut count_vector = vec![0; rankn];
-//        let len = queue.len();
-//        println!("The length of the queue is {}.", len);
-//        for i in 0..len {
-//            let f = queue.remove();
-//            match f {
-//                Ok(data) => {
-//                    let idx = (data as u32 - 'a' as u32) as usize;
-//                    count_vector[idx] += 1;
-//                }
-//                Err(err) => println!("{}", err),
-//            }
-//        }
-//        for i in 0..rankn {
-//            println!("Data: {}, count: {}", ('a' as u8 + i as u8) as char, count_vector[i]);
-//        }
-//    }
-}
-
-fn strong_scaling_queue(config: &mut Config) {
-//    if config.rank == 0 { println!("\n------------Queue's strong scaling------------\n"); }
-    let rankn = config.rankn;
-    comm::barrier();
-    let mut queue = Queue::<char>::new(config, 300000);
-    let local_length = (131072 + rankn - 1) / rankn;
-    comm::barrier();
-    let start = SystemTime::now();
-    for _ in 0..local_length {
-        queue.push(('a' as u8 + config.rank as u8) as char);
-    }
-    comm::barrier();
-    let push_time = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
-//    if config.rank == 0 { println!("Insert time: {:?}, start removing.", since_the_epoch); }
-//    if config.rank == 0 {println!("Length of queue: {}", queue.len());}
-    comm::barrier();
-    let start = SystemTime::now();
-    for _ in 0..local_length {
-        let f = queue.pop();
-        match f {
-            Err(error) => println!("{}", error),
-            Ok(data) => (),
-        }
-    }
-    let pop_time = SystemTime::now().duration_since(start).expect("SystemTime::duration_since failed");
-//    if config.rank == 0 { println!("Removing time: {:?}.", since_the_epoch); }
-//    if config.rank == 0 {println!("Length of queue: {}", queue.len());}
-    if config.rank == 0 {
-        println!("strong scaling: {}, {:?}, {:?}", rankn, push_time, pop_time);
-    }
-}
 
 fn test_global_guard(config: &mut Config) {
     // ----------- Global Guard's part -------------

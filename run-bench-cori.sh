@@ -2,15 +2,4 @@
 # run 'run-bench-cori.sh' on the shell with interactive session.
 # check https://bheisler.github.io/criterion.rs/book/criterion_rs.html for how to write benchmark file.
 
-# srun -N 1 -n 4 ./target/release/benchmark
-
-# for n in 1 2 4 8 16 32
-# do
-#    srun -N 1 -n $n ./target/release/main
-# done
-
-for N in 1 2 4 8 16 32
-do
-    echo "N = $N, n = $(($N*32))" | tee -a "run-bench-cori.out"
-    srun -N $N -n $(($N*32)) ./target/release/main | tee -a "run-bench-cori.out"
-done
+srun -N 1 -n 4 ./target/release/benchmark

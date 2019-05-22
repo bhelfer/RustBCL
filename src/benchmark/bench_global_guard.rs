@@ -1,16 +1,11 @@
 use base::{config::Config, global_guard::GlobalGuard};
 use backend::comm;
+use benchmark::tools::duration_to_nano;
 
 use std::time::{SystemTime, Duration};
 use std::vec::Vec;
 
 use statistical;
-
-fn duration_to_nano(duration: &Duration) -> u128 {
-    let in_nanos = duration.as_secs() as u128 * 1000_000_000 +
-            duration.subsec_nanos() as u128;
-    in_nanos
-}
 
 pub fn benchmark_global_guard(config: &mut Config) {
     let iter = 100; // iter per step
