@@ -2,7 +2,7 @@
 #![allow(unused)]
 
 use backend::comm::{self, LockT};
-use backend::shmemx::{self, libc::{c_int, size_t, c_long}};
+use backend::shmemx::{self, libc::{c_int, size_t, c_long, c_void}};
 use base::config::Config;
 
 use std::marker::PhantomData;
@@ -93,7 +93,7 @@ impl<T> GlobalValue<T> {
             let len = size_of::<T>();
             let source = self.ptr.add(comm::LOCK_SIZE);
             let target = &mut value as *mut T as *mut u8;
-            shmemx::shmem_getmem(target, source, len as size_t, self.rank as i32);
+            self.getmem(target, source, len, self.rank);
             value
         }
 	}
@@ -102,10 +102,26 @@ impl<T> GlobalValue<T> {
         unsafe{
             let target = self.ptr.add(comm::LOCK_SIZE);
             let source = &value as *const T as *mut u8;
-            let len = size_of::<T>() as size_t;
-            shmemx::shmem_putmem(target, source, len, self.rank as i32);
+            let len = size_of::<T>();
+            self.putmem(target, source, len, self.rank);
         }
 	}
+
+    unsafe fn putmem(&self, target: *mut u8, source: *const u8, len: usize, pe: usize) {
+    	if shmemx::my_pe() == self.rank {
+    		libc::memcpy(target as *mut c_void, source as *const T as *const c_void, len);// * size_of::<T>());
+    	} else {
+	        shmemx::shmem_putmem(target, source, len as size_t, self.rank as c_int);
+    	}
+    }
+
+    unsafe fn getmem(&self, target: *mut u8, source: *const u8, len: usize, pe: usize) {
+    	if shmemx::my_pe() == self.rank {
+    		libc::memcpy(target as *mut c_void, source as *const T as *const c_void, len);//  * size_of::<T>());
+    	} else {
+     	   shmemx::shmem_getmem(target, source, len as size_t, self.rank as c_int);
+    	}
+    }
 }
 
 impl<T> Drop for GlobalValue<T> {

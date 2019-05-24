@@ -24,17 +24,34 @@ pub fn benchmark_guard_array(config: &mut Config, total_workload: usize, label: 
     // Benchmark
     comm::barrier();
     let start = SystemTime::now();
+    let mut ave_time1 = 0;
+    let mut ave_time2 = 0;
+    let mut ave_time3 = 0;
 
-    for _ in 0..local_workload {
+    for i in 0u128..local_workload as u128 {
         let idx = rng.gen_range(0, array_size);
-        let gval = garr.lock(idx);
-        gval.rput(gval.rget() + 1);
+
+        let start1 = SystemTime::now();
+        let mut gval = garr.lock(idx);
+        let time1 = duration_to_nano(&SystemTime::now().duration_since(start1).unwrap());
+        ave_time1 = (time1 + ave_time1 * i) / (i + 1);
+
+        let start2 = SystemTime::now();
+        let t = gval.rget();
+        let time2 = duration_to_nano(&SystemTime::now().duration_since(start2).unwrap());
+        ave_time2 = (time2 + ave_time2 * i) / (i + 1);
+
+        let start3 = SystemTime::now();
+        gval.rput(t + 1);
+        let time3 = duration_to_nano(&SystemTime::now().duration_since(start3).unwrap());
+        ave_time3 = (time3 + ave_time3 * i) / (i + 1);
     }
     comm::barrier();
     let duration = SystemTime::now().duration_since(start)
         .expect("SystemTime::duration_since failed");
     let nanos = duration_to_nano(&duration);
     if config.rank == 0 {
-        println!("GuardArray {}: {}, {}", label, config.rankn, nanos);
+        println!("GuardArray {}: {}, {}; {}, ({}, {}, {})", label, config.rankn, nanos,
+                 local_workload, ave_time1, ave_time2, ave_time3);
     }
 }

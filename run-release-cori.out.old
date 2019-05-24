@@ -1,0 +1,48 @@
+N = 1, n = 1
+GuardArray strong sclaing: 1, 813200792
+Queue strong sclaing: 1, 875876586, 863882403
+N = 1, n = 2
+GuardArray strong sclaing: 2, 367527649
+Queue strong sclaing: 2, 393515171, 341742848
+N = 1, n = 4
+GuardArray strong sclaing: 4, 190099301
+Queue strong sclaing: 4, 197594254, 192995582
+N = 1, n = 8
+GuardArray strong sclaing: 8, 101890857
+Queue strong sclaing: 8, 112676749, 109258802
+N = 1, n = 16
+GuardArray strong sclaing: 16, 57234157
+Queue strong sclaing: 16, 54320739, 46960741
+N = 1, n = 32
+GuardArray strong sclaing: 32, 33859729
+Queue strong sclaing: 32, 32078051, 25249780
+N = 1, n = 1
+GuardArray strong sclaing: 1, 813937291
+Queue strong sclaing: 1, 857423417, 852135413
+GuardArray weak sclaing: 1, 814688021
+Queue weak sclaing: 1, 855467888, 851421026
+N = 1, n = 2
+GuardArray strong sclaing: 2, 369182972
+Queue strong sclaing: 2, 389944294, 346497729
+GuardArray weak sclaing: 2, 728912619
+Queue weak sclaing: 2, 785275234, 690140471
+N = 1, n = 4
+GuardArray strong sclaing: 4, 192344442
+Queue strong sclaing: 4, 200518143, 197150849
+GuardArray weak sclaing: 4, 745417329
+Queue weak sclaing: 4, 795090209, 775430291
+N = 1, n = 8
+GuardArray strong sclaing: 8, 101939574
+Queue strong sclaing: 8, 101753486, 98883890
+GuardArray weak sclaing: 8, 785652519
+Queue weak sclaing: 8, 805726728, 717792328
+N = 1, n = 16
+GuardArray strong sclaing: 16, 56948975
+Queue strong sclaing: 16, 54026512, 51464177
+GuardArray weak sclaing: 16, 873679174
+Queue weak sclaing: 16, 862341893, 820637392
+N = 1, n = 32
+GuardArray strong sclaing: 32, 34004782
+Queue strong sclaing: 32, 31904392, 25645995
+GuardArray weak sclaing: 32, 971758824
+Queue weak sclaing: 32, 1021064970, 819991484
