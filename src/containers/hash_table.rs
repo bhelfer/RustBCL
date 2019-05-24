@@ -76,8 +76,7 @@ impl<K: Bclable, V: Bclable> HashTable<K, V>
         let ready_flag: U = 2;
 
         // used record GlobalPointer
-        let mut used: Vec<GlobalPointer<U>> = Vec::new();
-        used.resize(config.rankn, GlobalPointer::null());
+        let mut used: Vec<GlobalPointer<U>> = vec!(GlobalPointer::null(); config.rankn);
         used[config.rank] = GlobalPointer::init(config, local_size);
         for i in 0 .. local_size {
             (used[config.rank] + i as isize).rput(free_flag);
@@ -89,8 +88,7 @@ impl<K: Bclable, V: Bclable> HashTable<K, V>
         comm::barrier();
 
         // hash entry GlobalPointer
-        let mut hash_table: Vec<GlobalPointer<HE<K, V>>> = Vec::new();
-        hash_table.resize(config.rankn, GlobalPointer::null());
+        let mut hash_table: Vec<GlobalPointer<HE<K, V>>> = vec!(GlobalPointer::null(); config.rankn);
         hash_table[config.rank] = GlobalPointer::init(config, local_size);
         for i in 0 .. local_size {
             (hash_table[config.rank] + i as isize).rput(HashEntry::null());

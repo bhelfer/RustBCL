@@ -1,0 +1,58 @@
+strong scaling
+N = 1, n = 1, local size = 131072
+total_time = 167.783699ms
+N = 1, n = 2, local size = 65536
+total_time = 101.389578ms
+N = 1, n = 4, local size = 32768
+total_time = 62.994179ms
+N = 1, n = 8, local size = 16384
+total_time = 53.570867ms
+N = 1, n = 12, local size = 10922
+only support rankn of 2's power now
+N = 1, n = 16, local size = 8192
+total_time = 91.330423ms
+N = 1, n = 32, local size = 4096
+total_time = 294.531289ms
+N = 1, n = 32, local size = 4096
+total_time = 295.412733ms
+N = 2, n = 64, local size = 2048
+total_time = 589.397991ms
+N = 4, n = 128, local size = 1024
+total_time = 1.175385908s
+N = 8, n = 256, local size = 512
+total_time = 2.338984244s
+N = 12, n = 384, local size = 341
+only support rankn of 2's power now
+N = 16, n = 512, local size = 256
+total_time = 4.67335397s
+N = 32, n = 1024, local size = 128
+total_time = 9.566710749s
+weak scaling
+N = 1, n = 1, local size = 131072
+total_time = 168.201133ms
+N = 1, n = 2, local size = 131072
+total_time = 211.581884ms
+N = 1, n = 4, local size = 131072
+total_time = 272.93037ms
+N = 1, n = 8, local size = 131072
+total_time = 354.781793ms
+N = 1, n = 12, local size = 131072
+only support rankn of 2's power now
+N = 1, n = 16, local size = 131072
+total_time = 516.520329ms
+N = 1, n = 32, local size = 131072
+total_time = 847.985532ms
+N = 1, n = 32, local size = 131072
+total_time = 847.136896ms
+N = 2, n = 64, local size = 131072
+total_time = 2.1426961s
+N = 4, n = 128, local size = 131072
+total_time = 3.686864598s
+N = 8, n = 256, local size = 131072
+total_time = 5.782977538s
+N = 12, n = 384, local size = 131072
+only support rankn of 2's power now
+N = 16, n = 512, local size = 131072
+total_time = 9.057524124s
+N = 32, n = 1024, local size = 131072
+total_time = 15.350482628s

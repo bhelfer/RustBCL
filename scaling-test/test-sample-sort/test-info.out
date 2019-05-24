@@ -1,0 +1,201 @@
+--------------------------------------------------------------------------------
+
+strong scaling
+
+N = 1, n = 1, local size = 8388608
+scattering data in 2.285805ms
+local sorting in 580.979858ms
+choosing local pivots in 3.216µs
+gather local pivots to rank 0 in 5.961µs
+sort all pivots in rank 0 in 405.013µs
+partitioning by pivots (spare many empty spaces) in 29.081709ms
+exchange local buckets in 3.123254ms
+rearrange buffers in 38.511259ms
+rearranged buffers local sorting in 34.072452ms
+gathering sorted buckets to rank 0 in 7.7371ms
+rearraging buffers in 41.923078ms
+total_time = 738.278504ms
+N = 1, n = 2, local size = 4194304
+scattering data in 15.605739ms
+local sorting in 280.835593ms
+choosing local pivots in 3.13µs
+gather local pivots to rank 0 in 20.551µs
+sort all pivots in rank 0 in 621.402µs
+partitioning by pivots (spare many empty spaces) in 50.480038ms
+exchange local buckets in 16.979399ms
+rearrange buffers in 20.950978ms
+rearranged buffers local sorting in 95.388462ms
+gathering sorted buckets to rank 0 in 28.510727ms
+rearraging buffers in 41.879165ms
+total_time = 551.3896ms
+N = 1, n = 4, local size = 2097152
+scattering data in 22.818296ms
+local sorting in 141.800913ms
+choosing local pivots in 1.499µs
+gather local pivots to rank 0 in 35.085µs
+sort all pivots in rank 0 in 969.274µs
+partitioning by pivots (spare many empty spaces) in 36.442709ms
+exchange local buckets in 28.153952ms
+rearrange buffers in 10.057565ms
+rearranged buffers local sorting in 54.234896ms
+gathering sorted buckets to rank 0 in 17.639419ms
+rearraging buffers in 42.551548ms
+total_time = 354.85511ms
+N = 1, n = 8, local size = 1048576
+scattering data in 34.618934ms
+local sorting in 77.043001ms
+choosing local pivots in 3.024µs
+gather local pivots to rank 0 in 55.149µs
+sort all pivots in rank 0 in 2.135947ms
+partitioning by pivots (spare many empty spaces) in 23.499763ms
+exchange local buckets in 41.471178ms
+rearrange buffers in 5.995981ms
+rearranged buffers local sorting in 35.550248ms
+gathering sorted buckets to rank 0 in 11.009022ms
+rearraging buffers in 45.529861ms
+total_time = 277.079709ms
+N = 1, n = 16, local size = 524288
+scattering data in 38.18179ms
+local sorting in 39.786037ms
+choosing local pivots in 3.683µs
+gather local pivots to rank 0 in 66.475µs
+sort all pivots in rank 0 in 4.289346ms
+partitioning by pivots (spare many empty spaces) in 13.35687ms
+exchange local buckets in 51.313911ms
+rearrange buffers in 3.338768ms
+rearranged buffers local sorting in 20.46007ms
+gathering sorted buckets to rank 0 in 10.551415ms
+rearraging buffers in 52.556767ms
+total_time = 234.06964ms
+N = 1, n = 32, local size = 262144
+scattering data in 39.761128ms
+local sorting in 18.699919ms
+choosing local pivots in 5.503µs
+gather local pivots to rank 0 in 139.012µs
+sort all pivots in rank 0 in 8.90761ms
+partitioning by pivots (spare many empty spaces) in 6.841325ms
+exchange local buckets in 77.26128ms
+rearrange buffers in 1.821407ms
+rearranged buffers local sorting in 10.712173ms
+gathering sorted buckets to rank 0 in 13.056433ms
+rearraging buffers in 51.782594ms
+total_time = 229.195792ms
+N = 1, n = 32, local size = 262144
+scattering data in 40.057868ms
+local sorting in 18.670768ms
+choosing local pivots in 5.575µs
+gather local pivots to rank 0 in 160.248µs
+sort all pivots in rank 0 in 9.027706ms
+partitioning by pivots (spare many empty spaces) in 6.880768ms
+exchange local buckets in 71.312664ms
+rearrange buffers in 1.814788ms
+rearranged buffers local sorting in 10.652906ms
+gathering sorted buckets to rank 0 in 12.361761ms
+rearraging buffers in 52.201402ms
+total_time = 223.360354ms
+N = 2, n = 64, local size = 131072
+scattering data in 22.225599ms
+local sorting in 8.969727ms
+choosing local pivots in 8.538µs
+gather local pivots to rank 0 in 167.789µs
+sort all pivots in rank 0 in 9.211885ms
+partitioning by pivots (spare many empty spaces) in 259.770508ms
+exchange local buckets in 98.363136ms
+rearrange buffers in 983.146µs
+rearranged buffers local sorting in 5.978574ms
+gathering sorted buckets to rank 0 in 6.188378ms
+rearraging buffers in 52.021255ms
+total_time = 464.052225ms
+N = 4, n = 128, local size = 65536
+scattering data in 13.292749ms
+local sorting in 4.443927ms
+choosing local pivots in 10.923µs
+gather local pivots to rank 0 in 161.859µs
+sort all pivots in rank 0 in 9.782003ms
+partitioning by pivots (spare many empty spaces) in 241.517397ms
+exchange local buckets in 213.599451ms
+rearrange buffers in 632.759µs
+rearranged buffers local sorting in 3.341961ms
+gathering sorted buckets to rank 0 in 4.944114ms
+rearraging buffers in 51.713915ms
+total_time = 543.57402ms
+N = 8, n = 256, local size = 32768
+scattering data in 8.992476ms
+local sorting in 2.13167ms
+choosing local pivots in 18.12µs
+gather local pivots to rank 0 in 197.989µs
+sort all pivots in rank 0 in 12.896614ms
+partitioning by pivots (spare many empty spaces) in 260.387352ms
+exchange local buckets in 437.88497ms
+rearrange buffers in 558.12µs
+rearranged buffers local sorting in 1.898427ms
+gathering sorted buckets to rank 0 in 5.767186ms
+rearraging buffers in 51.752725ms
+total_time = 782.633126ms
+
+--------------------------------------------------------------------------------
+
+weak scaling
+
+N = 1, n = 1, local size = 8388608
+scattering data in 2.320515ms
+local sorting in 585.105603ms
+choosing local pivots in 1.036µs
+gather local pivots to rank 0 in 4.087µs
+sort all pivots in rank 0 in 429.349µs
+partitioning by pivots (spare many empty spaces) in 29.743192ms
+exchange local buckets in 3.251316ms
+rearrange buffers in 38.63616ms
+rearranged buffers local sorting in 35.189001ms
+gathering sorted buckets to rank 0 in 7.899088ms
+rearraging buffers in 42.630896ms
+total_time = 745.340327ms
+N = 1, n = 2, local size = 8388608
+scattering data in 34.53777ms
+local sorting in 581.876198ms
+choosing local pivots in 2.364µs
+gather local pivots to rank 0 in 24.245µs
+sort all pivots in rank 0 in 658.672µs
+partitioning by pivots (spare many empty spaces) in 100.717399ms
+exchange local buckets in 34.882486ms
+rearrange buffers in 38.469568ms
+rearranged buffers local sorting in 197.044215ms
+gathering sorted buckets to rank 0 in 57.360707ms
+rearraging buffers in 84.402848ms
+total_time = 1.130102352s
+N = 1, n = 4, local size = 8388608
+scattering data in 97.179823ms
+local sorting in 596.548555ms
+choosing local pivots in 2.229µs
+gather local pivots to rank 0 in 32.771µs
+sort all pivots in rank 0 in 965.166µs
+partitioning by pivots (spare many empty spaces) in 139.045463ms
+exchange local buckets in 118.583122ms
+rearrange buffers in 39.834042ms
+rearranged buffers local sorting in 224.799862ms
+gathering sorted buckets to rank 0 in 72.647988ms
+rearraging buffers in 168.445103ms
+total_time = 1.458226947s
+N = 1, n = 8, local size = 8388608
+scattering data in 239.248072ms
+local sorting in 655.062762ms
+choosing local pivots in 3.219µs
+gather local pivots to rank 0 in 38.906µs
+sort all pivots in rank 0 in 1.956389ms
+partitioning by pivots (spare many empty spaces) in 171.128256ms
+exchange local buckets in 314.677563ms
+rearrange buffers in 43.177961ms
+rearranged buffers local sorting in 273.006313ms
+gathering sorted buckets to rank 0 in 108.347143ms
+rearraging buffers in 363.114821ms
+total_time = 2.169927358s
+N = 1, n = 16, local size = 8388608
+scattering data in 550.480576ms
+local sorting in 759.345496ms
+choosing local pivots in 4.602µs
+gather local pivots to rank 0 in 56.658µs
+sort all pivots in rank 0 in 4.232996ms
+partitioning by pivots (spare many empty spaces) in 207.422838ms
+exchange local buckets in 964.173263ms
+rearrange buffers in 49.101354ms
+rearranged buffers local sorting in 342.254512ms

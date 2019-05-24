@@ -39,7 +39,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use self::num::complex::{Complex, Complex32, Complex64};
 
 fn main() {
-    let mut config = Config::init(1024);
+    let mut config = Config::init(2048);
     let rankn = config.rankn;
 
 //    test_ptr(&mut config);
@@ -188,26 +188,21 @@ fn test_global_pointer(config: &mut Config) {
     if config.rank == 0 { println!("Global Pointer correctness test pass!   "); }
 }
 
+
 fn test_array(config: &mut Config) {
-    //let args: Vec<String> = env::args().collect();
-    //if args.len() <= 1 { panic!("not enough arguments"); }
 
     let rankn: i32 = config.rankn as i32;
     let rank: i32 = config.rank as i32;
-    
-    //let n: i32 = args[1].clone().parse().unwrap();
-    let n = 120;
-    let size_array = (n*rankn) as usize;
-    let workload = 131072 * rankn;
-    let iters = workload as usize / size_array;
-//    println!("n, rankn, rank = ({}, {}, {})", n, rankn, rank);
-    let mut arr = Array::<i64>::init(config, size_array);
+    let array_size = 1024;
+    let total_workload = 131072; // strong scaling
+   // let total_workload = 131072 * config.rankn; // weak scaling
+    let local_workload = (total_workload + config.rankn - 1) / config.rankn;
+    let mut arr = Array::<i64>::init(config, array_size);
     let mut rng: StdRng = SeedableRng::from_seed([rankn as u8; 32]);
-    /*for i in 0..(n*rankn)  {
-        arr.write(0 as i64, i);
-    }*/
-    for i in rank..(rank+n) {
-        arr.write(0 as i64, i as usize);
+    if config.rank == 0 {
+        for i in 0.. array_size {
+            arr.write(0 as i64, i as usize);
+        }
     }
     comm::barrier();
     let mut time1: time::Tm = time::now();
@@ -216,24 +211,24 @@ fn test_array(config: &mut Config) {
     if config.rank == 0 {
         time1 = time::now();
     }
-    for i in 0..iters {
-        for j in 0..size_array {
-            //let mut ptr = arr.get_ptr(j);
-            let mut ptr = arr.get_ptr(rng.gen_range(0, size_array as i32) as usize);
-            comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
-        }
+    for i in 0..local_workload/array_size{
+//        let mut ptr = arr.get_ptr(rng.gen_range(0, array_size as i32) as usize);
+//        comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
+	for j in 0..array_size{  
+		let mut ptr = arr.get_ptr(j);
+        	comm::long_atomic_fetch_add(&mut ptr, 1 as i64);
+    	}
     }
     comm::barrier();
     if config.rank == 0 {
         time2 = time::now();
         time_res = time2 - time1;
-        for i in 0..size_array {
+        for i in 0..array_size {
             println!("{}: {}", i, arr.read(i));
         }
         println!("time is {:?}", time_res);
     }
 }
-
 fn test_queue(config: &mut Config) {
     if config.rank == 0 { println!("\n------------Queue's strong scaling------------\n"); }
     let rankn = config.rankn;
@@ -361,54 +356,6 @@ fn test_shmem_atomic(config: &mut Config) {
         Ok(value) => println!("Get the lock again!"),
         Err(error) => println!("That's right! It should not be able to get the lock!"),
     };
-}
-
-/// hash_table benchmarks
-pub fn hash_table_benchmark(scale: i64) {
-    let mut config = Config::init(512);
-    let rankn: i64 = config.rankn as i64;
-    let rank: i64 = config.rank as i64;
-
-    let n: i64 = scale;
-    let m: i64 = n / 2;
-
-    let mut hash_table_lfz: HashTable<i64, i64> = HashTable::new(&mut config, (n * 2) as usize);
-    comm::barrier();
-
-    let mut rng: StdRng = SeedableRng::from_seed([233; 32]);
-
-    comm::barrier();
-    let insert_start = SystemTime::now();
-    for i in -m..m {
-        // all PE
-        let key = rng.gen_range(-m, m);
-        let value = rng.gen_range(-m, m);
-        let success = hash_table_lfz.insert(&key, &value);
-        if success == false {
-            panic!("HashTable({}) Agh! insertion failed", shmemx::my_pe());
-        }
-        comm::barrier();
-    }
-    comm::barrier();
-    let insert_time = SystemTime::now().duration_since(insert_start)
-        .expect("SystemTime::duration_since failed");
-
-    // println!("HashTable({}) Done with insert!", shmemx::my_pe());
-
-    comm::barrier();
-    let find_start = SystemTime::now();
-    for i in -m..m {
-        let mut v_lfz: i64 = 0;
-        let mut success: bool = false;
-        success = hash_table_lfz.find(&i, &mut v_lfz);
-        comm::barrier();
-    }
-    comm::barrier();
-    let find_time = SystemTime::now().duration_since(find_start)
-        .expect("SystemTime::duration_since failed");
-    if shmemx::my_pe() == 0 {
-        println!("(insert_time, find_time) = ({:?}, {:?})", insert_time, find_time);
-    }
 }
 
 fn test_global_guard_vec(config: &mut Config) {

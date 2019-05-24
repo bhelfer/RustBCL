@@ -203,7 +203,7 @@ pub fn scatter<T: Bclable>(dest: &mut GlobalPointer<T>, src: &mut GlobalPointer<
         if rank == root {
             for i in 0 .. rankn {
                 let off_source = source.add(i * count);
-                shmem_putmem(target as *mut u8, off_source as *mut u8, nelem * count, i as i32);
+                shmem_putmem(target as *mut u8, off_source as *const u8, nelem * count, i as i32);
             }
         }
     }
@@ -221,7 +221,7 @@ pub fn gather<T: Bclable>(dest: &mut GlobalPointer<T>, src: &mut GlobalPointer<T
         shmemx::barrier();
 
         let off_target = target.add(rank * count);
-        shmem_putmem(off_target as *mut u8, source as *mut u8, nelem * count, root as i32);
+        shmem_putmem(off_target as *mut u8, source as *const u8, nelem * count, root as i32);
     }
 }
 
@@ -239,7 +239,7 @@ pub fn all_to_all<T: Bclable>(dest: &mut GlobalPointer<T>, src: &mut GlobalPoint
         let off_target = target.add(rank * count);
         for i in 0 .. rankn {
             let off_source = source.add(i * count);
-            shmem_putmem(off_target as *mut u8, off_source as *mut u8, nelem * count, i as i32);
+            shmem_putmem(off_target as *mut u8, off_source as *const u8, nelem * count, i as i32);
         }
     }
 }

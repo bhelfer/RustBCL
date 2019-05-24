@@ -153,7 +153,7 @@ impl<T: Bclable> GlobalPointer<T> {
 
     unsafe fn putmem(&self, target: *mut u8, source: *const u8, len: usize, pe: usize) {
     	if shmemx::my_pe() == self.rank {
-    		libc::memcpy(target as *mut c_void, source as *const T as *const c_void, len * size_of::<T>());
+    		libc::memcpy(target as *mut c_void, source as *const T as *const c_void, len);// * size_of::<T>());
     	} else {
 	        shmemx::shmem_putmem(target, source, len as size_t, self.rank as c_int);
     	}
@@ -161,7 +161,7 @@ impl<T: Bclable> GlobalPointer<T> {
 
     unsafe fn getmem(&self, target: *mut u8, source: *const u8, len: usize, pe: usize) {
     	if shmemx::my_pe() == self.rank {
-    		libc::memcpy(target as *mut c_void, source as *const T as *const c_void, len * size_of::<T>());
+    		libc::memcpy(target as *mut c_void, source as *const T as *const c_void, len);//  * size_of::<T>());
     	} else {
      	   shmemx::shmem_getmem(target, source, len as size_t, self.rank as c_int);
     	}
