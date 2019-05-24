@@ -13,17 +13,8 @@ pub struct Array<T: Bclable>{
 impl <'a, T: Bclable> Array<T>
     where T: Clone + Copy + Default
 {
-    /*
-    JY:
-    My intention with Config is to let it hold all the global variables.
-    So every program should only have one unique Config.
-    My suggestion is not to init another Config.
-    You can either pass the &mut Config to this function,
-    or implement the initialization of array as a method of Config, just like the init of GlobalPointer.
-    I have implemented the first way in your init function.
-    */
     pub fn init(config: &mut Config, n:usize) -> Array<T> {
-        let local_size = (n + shmemx::n_pes() - 1) / config.rankn;
+        let local_size = (n + config.rankn - 1) / config.rankn;
         let mut ptrs = vec!(GlobalPointer::null(); config.rankn);
         ptrs[config.rank] = GlobalPointer::init(config, local_size);
 

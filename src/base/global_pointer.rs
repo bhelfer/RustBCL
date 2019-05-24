@@ -42,7 +42,7 @@ pub struct GlobalPointer<T: Bclable> {
 
 // implement GlobalPointer
 impl<T: Bclable> GlobalPointer<T> {
-    pub fn init(config: &mut Config, mut size: usize) -> GlobalPointer<T> {
+    pub fn init(config: &mut Config, size: usize) -> GlobalPointer<T> {
         let (ptr, _) = config.alloc(size * size_of::<T>());
         
         GlobalPointer {

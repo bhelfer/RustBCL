@@ -1,34 +1,25 @@
-#![allow(dead_code)]
-#![allow(unused)]
-#![allow(deprecated)]
+//#![allow(dead_code)]
+//#![allow(unused)]
+//#![allow(deprecated)]
 
-use base::{global_pointer::GlobalPointer, config::Config};
-use backend::{comm, shmemx};
+use base::config::Config;
+use backend::comm;
 use containers::hash_table::HashTable;
 
 use std::time::{SystemTime, Duration};
-use std::vec::Vec;
-use std::env;
-
-use rand::{rngs::StdRng, Rng, thread_rng, SeedableRng, ChaChaRng, seq::SliceRandom};
+use rand::{rngs::StdRng, Rng, thread_rng, SeedableRng, seq::SliceRandom};
+use benchmark::tools::duration_to_nano;
 
 /// hash_table benchmarks
-pub fn benchmark_hash_table(config: &mut Config) {
-    let args: Vec<String> = env::args().collect();
-    if args.len() <= 1 { panic!("not enough arguments"); }
+pub fn benchmark_hash_table(config: &mut Config, total_workload: usize, label: &str) {
+    let local_workload = (total_workload + config.rankn - 1) / config.rankn;
 
-    let rankn: i32 = config.rankn as i32;
-    let rank: i32 = config.rank as i32;
+    let mut hash_table_lfz: HashTable<i32, i32> = HashTable::new(config, (total_workload * 2) as usize);
 
-    let n: i32 = args[1].clone().parse().unwrap();
-//    println!("n, rankn, rank = ({}, {}, {})", n, rankn, rank);
-
-    let mut hash_table_lfz: HashTable<i32, i32> = HashTable::new(config, (n * rankn * 2) as usize);
-
-    let mut rng: StdRng = SeedableRng::from_seed([rankn as u8; 32]);
+    let mut rng: StdRng = SeedableRng::from_seed([config.rankn as u8; 32]);
     let mut keys: Vec<i32> = Vec::new();
     let mut values: Vec<i32> = Vec::new();
-    for i in 0 .. n {
+    for i in 0 .. local_workload {
         keys.push(rng.gen_range(std::i32::MIN, std::i32::MAX));
         values.push(rng.gen_range(std::i32::MIN, std::i32::MAX));
     }
@@ -37,19 +28,17 @@ pub fn benchmark_hash_table(config: &mut Config) {
 
     comm::barrier();
     let insert_start = SystemTime::now();
-    for i in 0 .. n {
+    for i in 0 .. local_workload {
         // all PE
         let success = hash_table_lfz.insert(&keys[i as usize], &values[i as usize]);
         if success == false {
-            panic!("HashTable({}) Agh! insertion failed", shmemx::my_pe());
+            panic!("HashTable({}) Agh! insertion failed", config.rank);
         }
-//        comm::barrier();
     }
     comm::barrier();
-    let insert_time = SystemTime::now().duration_since(insert_start)
+    let insert_duration = SystemTime::now().duration_since(insert_start)
         .expect("SystemTime::duration_since failed");
-
-    // println!("HashTable({}) Done with insert!", shmemx::my_pe());
+    let insert_nanos = duration_to_nano(&insert_duration);
 
     comm::barrier();
     let find_start = SystemTime::now();
@@ -57,12 +46,13 @@ pub fn benchmark_hash_table(config: &mut Config) {
         let mut v_lfz: i32 = 0;
         let mut success: bool = false;
         success = hash_table_lfz.find(&i, &mut v_lfz);
-//        comm::barrier();
     }
     comm::barrier();
-    let find_time = SystemTime::now().duration_since(find_start)
+    let find_duration = SystemTime::now().duration_since(find_start)
         .expect("SystemTime::duration_since failed");
-    if shmemx::my_pe() == 0 {
-        println!("(insert_time, find_time) = ({:?}, {:?})", insert_time, find_time);
+    let find_nanos = duration_to_nano(&find_duration);
+
+    if config.rank == 0 {
+        println!("HashTable {}: {}, {}, {}", label, config.rankn, insert_nanos, find_nanos);
     }
 }

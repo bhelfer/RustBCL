@@ -9,8 +9,6 @@ use benchmark::tools::duration_to_nano;
 
 pub fn benchmark_guard_array(config: &mut Config, total_workload: usize, label: &str) {
     let array_size = 1024;
-//    let total_workload = 131072; // strong scaling
-//    let total_workload = 131072 * config.rankn; // weak scaling
     let local_workload = (total_workload + config.rankn - 1) / config.rankn;
 
     let mut rng = rand::thread_rng();

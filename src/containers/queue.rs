@@ -22,7 +22,7 @@ pub struct Queue<T: Bclable> {
 }
 
 impl<T: Bclable> Queue<T> {
-    pub fn init(config: &mut Config, n: usize) -> Queue<T> {
+    pub fn new(config: &mut Config, n: usize) -> Queue<T> {
         if n >= std::i32::MAX as usize {
             panic!("Please set the size of queue less than {}!", std::i32::MAX);
         }

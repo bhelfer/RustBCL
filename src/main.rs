@@ -77,6 +77,7 @@ fn main() {
 fn benchmark(config: &mut Config, workload: usize, label: &str) {
     bench_guard_array::benchmark_guard_array(config, workload, label);
     bench_queue::benchmark_queue(config, workload, label);
+    bench_hashtable::benchmark_hash_table(config, workload, label);
 }
 
 
