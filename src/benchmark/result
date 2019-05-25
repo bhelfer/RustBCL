@@ -1,16 +1,23 @@
 Across cores
-Global Guard's remote Benchmark: mean: 5288.19 nanos, std: 198.22 nanos
-Global Guard's local Benchmark: mean: 4636.81 nanos, std: 16.29 nanos
-Global Pointer(remote)'s Benchmark: mean: 51.07 nanos, std: 1.96 nanos
-Global Pointer(local)'s Benchmark: mean: 6.01 nanos, std: 0.71 nanos
-Global Pointer(local_raw)'s Benchmark: mean: 2.01 nanos, std: 0.78 nanos
+Global Guard(remote)'s Benchmark: mean: 3381.60 nanos, std: 15.98 nanos
+Global Guard(local)'s Benchmark: mean: 2962.33 nanos, std: 12.34 nanos
+Global Pointer(remote)'s Benchmark: mean: 50.13 nanos, std: 1.69 nanos
+Global Pointer(local)'s Benchmark: mean: 6.01 nanos, std: 0.51 nanos
+Global Pointer(local_raw)'s Benchmark: mean: 3.00 nanos, std: 0.00 nanos
+shmem_get/putmem(1->0) Benchmark: mean: 44.38 nanos, std: 1.63 nanos
+shmem_atomic_compare_swap(1->0) Benchmark: mean: 1946.67 nanos, std: 11.20 nanos
+shmem_atomic_fetch_set(1->0) Benchmark: mean: 3295.88 nanos, std: 15.56 nanos
 
 Across nodes
-Global Guard's Benchmark: mean: 6806.64 nanos, std: 544.69 nanos
-Global Pointer(remote)'s Benchmark: mean: 2098.53 nanos, std: 84.76 nanos
-Global Pointer(local)'s Benchmark: mean: 15.02 nanos, std: 0.95 nanos
-Global Pointer(local_raw)'s Benchmark: mean: 4.01 nanos, std: 0.80 nanos
-Shmem_get/putmem's Benchmark: mean: 2094.19 nanos, std: 83.67 nanos
+Global Guard(remote)'s Benchmark: mean: 5094.98 nanos, std: 28.51 nanos
+Global Guard(local)'s Benchmark: mean: 3003.34 nanos, std: 12.87 nanos
+Global Pointer(remote)'s Benchmark: mean: 2105.74 nanos, std: 495.69 nanos
+Global Pointer(local)'s Benchmark: mean: 6.01 nanos, std: 0.49 nanos
+Global Pointer(local_raw)'s Benchmark: mean: 2.01 nanos, std: 0.79 nanos
+shmem_get/putmem(1->0) Benchmark: mean: 2101.98 nanos, std: 10.48 nanos
+shmem_atomic_compare_swap(1->0) Benchmark: mean: 1760.40 nanos, std: 13.01 nanos
+shmem_atomic_fetch_set(1->0) Benchmark: mean: 2899.27 nanos, std: 14.02 nanos
+
 
 # CSV body
 # Across cores
@@ -28,3 +35,8 @@ GlobalPointer(remote), 2098.53, 84.76
 GlobalPointer(local), 15.02, 0.95
 GlobalPointer(local_raw), 4.01 0.80
 Shmem_get/putmem, 2094.19, 83.67
+
+shmem_get/putmem(0->0) Benchmark: mean: 30.18 nanos, std: 1.38 nanos
+shmem_get/putmem(1->0) Benchmark: mean: 44.38 nanos, std: 1.63 nanos
+shmem_atomic_compare_swap(0->0) Benchmark: mean: 2370.25 nanos, std: 117.25 nanos
+shmem_atomic_fetch_set(0->0) Benchmark: mean: 3607.37 nanos, std: 143.38 nanos

@@ -46,6 +46,7 @@ pub fn benchmark_queue(config: &mut Config, total_workload: usize, label: &str) 
 
     // print out result
     if config.rank == 0 {
-        println!("Queue {}: {}, {}, {}", label, config.rankn, push_nanos, pop_nanos);
+        println!("Queue push {}: {}, {}, {}", label, config.rankn, push_nanos);
+        println!("Queue pop {}: {}, {}, {}", label, config.rankn, pop_nanos);
     }
 }

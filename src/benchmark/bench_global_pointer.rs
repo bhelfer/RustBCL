@@ -27,7 +27,7 @@ pub fn benchmark_global_pointer_remote(config: &mut Config) {
 
     // benchmark code
     let mut data = Vec::new();
-    if config.rank == 1 {
+    if config.rank == config.rankn-1 {
         for _ in 0..step {
             let start = SystemTime::now();
             for _ in 0..iter {
@@ -41,11 +41,15 @@ pub fn benchmark_global_pointer_remote(config: &mut Config) {
     }
     comm::barrier();
 
-    if config.rank == 1 {
-    	assert_eq!(ptr1.rget(), iter*step);
-        let mean = statistical::mean(&data);
-        let standard_deviation = statistical::standard_deviation(&data, None);
-        println!("Global Pointer(remote)'s Benchmark: mean: {:.2} nanos, std: {:.2} nanos", mean, standard_deviation);
+    if config.rank == config.rankn-1 {
+//    	assert_eq!(ptr1.rget(), iter*step);
+        if ptr1.rget() != iter * step {
+            println!("Global Pointer(remote)'s Benchmark: error! {} != {}", ptr1.rget(), iter * step);
+        } else {
+            let mean = statistical::mean(&data);
+            let standard_deviation = statistical::standard_deviation(&data, None);
+            println!("Global Pointer(remote)'s Benchmark: mean: {:.2} nanos, std: {:.2} nanos", mean, standard_deviation);
+        }
     }
 }
 

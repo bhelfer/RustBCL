@@ -31,7 +31,7 @@ pub fn benchmark_shmem_getmem_putmem(config: &mut Config) {
 
     // benchmark code
     let mut data = Vec::new();
-    if config.rank == 1 {
+    if config.rank == config.rankn-1 {
         for _ in 0..step {
             let start = SystemTime::now();
             for _ in 0..iter {
@@ -48,11 +48,12 @@ pub fn benchmark_shmem_getmem_putmem(config: &mut Config) {
     }
     comm::barrier();
 
-    if config.rank == 1 {
+    if config.rank == config.rankn-1 {
     	assert_eq!(ptr1.rget(), iter*step);
         let mean = statistical::mean(&data);
         let standard_deviation = statistical::standard_deviation(&data, None);
-        println!("shmem_get/putmem Benchmark: mean: {:.2} nanos, std: {:.2} nanos", mean, standard_deviation);
+        println!("shmem_get/putmem({}->{}) Benchmark: mean: {:.2} nanos, std: {:.2} nanos",
+                 config.rankn-1, 0, mean, standard_deviation);
     }
 }
 
@@ -74,7 +75,7 @@ pub fn benchmark_shmem_atomic_cas(config: &mut Config) {
 
     // benchmark code
     let mut data = Vec::new();
-    if config.rank == 1 {
+    if config.rank == config.rankn-1 {
         for _ in 0..step {
             let start = SystemTime::now();
             for _ in 0..iter/2 {
@@ -90,11 +91,12 @@ pub fn benchmark_shmem_atomic_cas(config: &mut Config) {
     }
     comm::barrier();
 
-    if config.rank == 1 {
+    if config.rank == config.rankn-1 {
     	assert_eq!(ptr1.rget(), 0);
         let mean = statistical::mean(&data);
         let standard_deviation = statistical::standard_deviation(&data, None);
-        println!("shmem_atomic_compare_swap Benchmark: mean: {:.2} nanos, std: {:.2} nanos", mean, standard_deviation);
+        println!("shmem_atomic_compare_swap({}->{}) Benchmark: mean: {:.2} nanos, std: {:.2} nanos",
+                 config.rankn-1, 0, mean, standard_deviation);
     }
 }
 
@@ -116,7 +118,7 @@ pub fn benchmark_shmem_atomic_fetch_put(config: &mut Config) {
 
     // benchmark code
     let mut data = Vec::new();
-    if config.rank == 1 {
+    if config.rank == config.rankn-1 {
         for _ in 0..step {
             let start = SystemTime::now();
             for _ in 0..iter {
@@ -132,10 +134,11 @@ pub fn benchmark_shmem_atomic_fetch_put(config: &mut Config) {
     }
     comm::barrier();
 
-    if config.rank == 1 {
+    if config.rank == config.rankn-1 {
     	assert_eq!(ptr1.rget(), (iter*step) as i64);
         let mean = statistical::mean(&data);
         let standard_deviation = statistical::standard_deviation(&data, None);
-        println!("shmem_atomic_fetch_set Benchmark: mean: {:.2} nanos, std: {:.2} nanos", mean, standard_deviation);
+        println!("shmem_atomic_fetch_set({}->{}) Benchmark: mean: {:.2} nanos, std: {:.2} nanos",
+                 config.rankn-1, 0, mean, standard_deviation);
     }
 }

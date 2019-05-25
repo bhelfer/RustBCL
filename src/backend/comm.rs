@@ -60,21 +60,20 @@ unsafe fn atomic_compare_swap(dest: *mut LockT, cond: LockT, value: LockT, pe: i
 }
 
 pub fn set_lock(lock: *mut LockT, rank: usize) {
+    let mut wait_time = 1;
+    let expected = UNLOCKED;
     loop {
         unsafe {
-            let current = shmemx::shmem_long_atomic_fetch(lock, rank as c_int);
-            if current != LOCKED && current != UNLOCKED {
+            let status = atomic_compare_swap(lock, UNLOCKED, LOCKED, rank as i32);
+            if status == expected {
+                break;
+            }
+            if status != LOCKED && status != UNLOCKED {
                 panic!("not a lock!");
             }
-            if current == UNLOCKED {
-                let expected = UNLOCKED;
-                let status = atomic_compare_swap(lock, UNLOCKED, LOCKED, rank as i32);
-                if status == expected {
-                    break;
-                }
-            }
             // emit a pause
-            thread::sleep(Duration::from_nanos(10));
+            thread::sleep(Duration::from_nanos(wait_time));
+            wait_time *= 2;
         }
     }
 }

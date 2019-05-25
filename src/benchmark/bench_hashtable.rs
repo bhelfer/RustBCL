@@ -53,6 +53,7 @@ pub fn benchmark_hash_table(config: &mut Config, total_workload: usize, label: &
     let find_nanos = duration_to_nano(&find_duration);
 
     if config.rank == 0 {
-        println!("HashTable {}: {}, {}, {}", label, config.rankn, insert_nanos, find_nanos);
+        println!("HashTable insert {}: {}, {}", label, config.rankn, insert_nanos);
+        println!("HashTable find {}: {}, {}", label, config.rankn, find_nanos);
     }
 }

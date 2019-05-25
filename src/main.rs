@@ -42,6 +42,14 @@ fn main() {
     let mut config = Config::init(2048);
     let rankn = config.rankn;
 
+    let workload = 131072;
+    let label = "strong sclaing";
+    benchmark(&mut config, workload, label);
+
+    let workload = 131072 * config.rankn;
+    let label = "weak sclaing";
+    benchmark(&mut config, workload, label);
+
 //    test_ptr(&mut config);
 //    test_global_pointer(&mut config);
 //    test_shmem_atomic(&mut config);
@@ -52,25 +60,20 @@ fn main() {
 //    test_global_guard_vec(&mut config);
 //    test_guard_array(&mut config);
 
-//    bench_global_guard::benchmark_global_guard_remote(&mut config);
-//    bench_global_guard::benchmark_global_guard_local(&mut config);
-//    bench_global_pointer::benchmark_global_pointer_remote(&mut config);
-//    bench_global_pointer::benchmark_global_pointer_local(&mut config);
-//    bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
+//    if config.rankn >= 2 {
+//        bench_global_guard::benchmark_global_guard_remote(&mut config);
+//        bench_global_guard::benchmark_global_guard_local(&mut config);
+//        bench_global_pointer::benchmark_global_pointer_remote(&mut config);
+//        bench_global_pointer::benchmark_global_pointer_local(&mut config);
+//        bench_global_pointer::benchmark_global_pointer_local_raw(&mut config);
+    }
+//    bench_shmem::benchmark_shmem_getmem_putmem(&mut config);
 //    bench_shmem::benchmark_shmem_atomic_cas(&mut config);
 //    bench_shmem::benchmark_shmem_atomic_fetch_put(&mut config);
 //    bench_hashtable::benchmark_hash_table(&mut config);
 //    bench_sample_sort::benchmark_sample_sort(&mut config);
 //    bench_fft::benchmark_fft(&mut config);
 //    bench_sample_sort::benchmark_sample_sort(&mut config);
-
-//    let workload = 131072;
-//    let label = "strong sclaing";
-//    benchmark(&mut config, workload, label);
-
-    let workload = 131072 * config.rankn;
-    let label = "weak sclaing";
-    benchmark(&mut config, workload, label);
 }
 
 fn benchmark(config: &mut Config, workload: usize, label: &str) {
